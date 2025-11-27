@@ -41,3 +41,6 @@ next-env.d.ts
 
 # dev backup (keep legacy context)
 # dev_backup/
+
+# large archive files
+*.zip

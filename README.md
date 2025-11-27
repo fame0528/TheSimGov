@@ -1,43 +1,69 @@
 # TheSimGov
 
-A comprehensive government and business simulation MMO built with Next.js, featuring political systems, business management, media operations, and social dynamics.
+A comprehensive government and business simulation MMO built with Next.js 16, React 18, and TypeScript.
 
-## Features
+## Overview
 
-- **Business Management**: Run companies across multiple industries (Energy, Technology, Media, Finance)
-- **Political System**: Elections, bills, voting, and government operations
-- **Media Operations**: News outlets, content creation, and public opinion management
-- **Social Dynamics**: Employee hiring, training, and social interactions
-- **Real-time Updates**: Socket.io powered live updates across the game
+TheSimGov is a multiplayer simulation game where players manage businesses, participate in politics, and interact in a dynamic economy. The game features:
+
+- **Company Management**: Build and operate companies across multiple industries (Energy, Media, Technology, Finance, R&D)
+- **Political System**: Run for office, vote on bills, manage government departments
+- **Employee Marketplace**: Hire employees, manage training, and optimize workforce
+- **Real Estate**: Purchase and develop properties
+- **Media Ecosystem**: Create content, build audiences, manage monetization
+- **Social Features**: Clans, chat, endorsements, and player interactions
 
 ## Tech Stack
 
-- **Framework**: Next.js 16 with Turbopack
-- **UI**: React 18, HeroUI, Tailwind CSS
-- **Database**: MongoDB with Mongoose
-- **Authentication**: NextAuth.js
-- **Real-time**: Socket.io
-- **Language**: TypeScript
+- **Framework**: Next.js 16 with App Router and Turbopack
+- **UI**: React 18, HeroUI components, Tailwind CSS
+- **Authentication**: NextAuth.js with credentials provider
+- **Database**: MongoDB with Mongoose ODM
+- **Real-time**: Socket.IO for live updates
+- **TypeScript**: Strict type checking throughout
 
 ## Getting Started
+
+### Prerequisites
+
+- Node.js 18+ 
+- MongoDB instance (local or cloud)
+
+### Installation
 
 ```bash
 # Install dependencies
 npm install
 
+# Set up environment variables
+cp .env.example .env.local
+# Edit .env.local with your MongoDB URI and NextAuth secret
+
 # Run development server
 npm run dev
+```
 
-# Build for production
+Open [http://localhost:3000](http://localhost:3000) to start playing.
+
+### Building for Production
+
+```bash
 npm run build
-
-# Start production server
 npm start
 ```
 
+## Project Structure
+
+- `/src/app` - Next.js app router pages and layouts
+- `/src/components` - Reusable React components
+- `/src/lib/db` - Database models and utilities
+- `/src/services` - Business logic and API services
+- `/dev` - Development tracking and documentation
+- `/docs` - Technical documentation
+
 ## Development
 
-The project follows a modular architecture with strict TypeScript typing and comprehensive error handling. See `/dev` folder for project planning and tracking documentation.
+This project follows AAA quality standards with comprehensive documentation, type safety, and testing requirements. See `/dev/README.md` for development guidelines and tracking.
 
 ## License
 
