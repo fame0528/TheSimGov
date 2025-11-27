@@ -214,6 +214,20 @@ This file tracks features currently being implemented. Features move here from `
 - 📐 Architecture: Utility-first layering preceding API endpoints/UI implementation
 - 📊 Aggregation Metrics: Counts per type, influence/reputation net, momentum average prepared for forthcoming dashboard endpoints
 - 🧪 Next: Integrate utilities into API layer (Phase 7 endpoints) + develop tests (engine evaluation, logger flush, aggregation correctness)
+**Phase 7 API Endpoints Progress (2025-11-27):**
+- ✅ ECHO Re-Read complete (instructions lines 1-END) prior to endpoint implementation
+- 🔍 Discovery: Existing API route patterns analyzed (`departments`, `time`, `media/influencers`) for structure & auth usage
+- 📋 Planned Endpoints (new):
+  - GET `/api/politics/achievements` → list definitions + unlocked status (will invoke evaluation metrics provider)
+  - POST `/api/politics/achievements/redeem` → apply reward (idempotent)
+  - GET `/api/politics/telemetry/events` → filtered raw events (type, sinceEpoch, limit, pagination)
+  - GET `/api/politics/telemetry/stats` → aggregated DAILY/WEEKLY rollups (optionally trigger on-demand aggregation)
+- 🧩 Contracts: Response shapes drafted (definitions[], unlocks[], events[], stats{daily[], weekly[]}) pending code implementation
+- 🛡️ Auth Pattern: Will mirror existing session-based company/player resolution (NextAuth `auth()` usage)
+- 🧪 Validation: Zod schemas for telemetry events reused; additional query param Zod validators to be added
+- 🔄 Reuse: Achievement engine (`evaluateAchievements`, `applyAchievementReward`), aggregation (`aggregateWindow`, `runDailyAggregation`, `runWeeklyAggregation`), logger
+- 📊 Contract Matrix: Initial matrix to be generated & saved before coding endpoints
+- 🚧 Status: Implementation NOT started yet — discovery & contract design phase complete
 
 
 **Phase 7 Pending Acceptance Targets (Snapshot):** Deterministic unlocks, idempotent reward application, validated telemetry ingestion (<10ms avg), aggregation job (<2s daily), zero duplicate unlock writes.
