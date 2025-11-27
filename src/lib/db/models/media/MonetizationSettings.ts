@@ -188,8 +188,7 @@ const MonetizationSettingsSchema = new Schema<IMonetizationSettings>(
       type: Schema.Types.ObjectId,
       ref: 'Company',
       required: [true, 'Company reference is required'],
-      unique: true,
-      // index: true removed - already indexed via schema-level .index({ company: 1 })
+      unique: true, // unique constraint automatically creates index - no need for index: true or schema-level index
     },
     isActive: {
       type: Boolean,
@@ -404,7 +403,7 @@ const MonetizationSettingsSchema = new Schema<IMonetizationSettings>(
 /**
  * Indexes for query optimization
  */
-MonetizationSettingsSchema.index({ company: 1 }); // Unique company settings
+// MonetizationSettingsSchema.index({ company: 1 }); // REMOVED - unique: true on company field already creates index
 MonetizationSettingsSchema.index({ isActive: 1 }); // Active monetization configs
 
 /**
