@@ -12,8 +12,9 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import useSWR from 'swr';
 import { Card, CardBody, CardHeader } from '@heroui/card';
 import { Button } from '@heroui/button';
 import { Input, Textarea } from '@heroui/input';
@@ -89,8 +90,35 @@ export function BillCreationWizard({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
-  // Fetch limits on mount
-  // TODO: Add useEffect to fetch limits from /api/politics/bills (check active bills count)
+  // Fetch anti-abuse limits from API with real-time updates
+  const { data: limitsResponse } = useSWR<{
+    success: boolean;
+    data: {
+      activeBills: number;
+      maxActiveBills: number;
+      billsToday: number;
+      maxBillsPerDay: number;
+      cooldownEndsAt: string | null;
+      canCreateBill: boolean;
+    };
+  }>('/api/politics/bills?status=ACTIVE', {
+    refreshInterval: 30000, // Refresh every 30 seconds
+    revalidateOnFocus: true,
+  });
+
+  // Update limits when API response changes
+  useEffect(() => {
+    if (limitsResponse?.success) {
+      setLimits({
+        activeBills: limitsResponse.data.activeBills,
+        maxActiveBills: limitsResponse.data.maxActiveBills,
+        billsToday: limitsResponse.data.billsToday,
+        maxBillsPerDay: limitsResponse.data.maxBillsPerDay,
+        cooldownEndsAt: limitsResponse.data.cooldownEndsAt ? new Date(limitsResponse.data.cooldownEndsAt) : null,
+        canCreateBill: limitsResponse.data.canCreateBill,
+      });
+    }
+  }, [limitsResponse]);
   
   const updateField = <K extends keyof BillCreationFormData>(
     field: K,

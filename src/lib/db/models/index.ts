@@ -56,6 +56,9 @@ export { default as LobbyingAction } from './LobbyingAction';
 export { default as Bill } from './Bill';
 export { default as LobbyPayment } from './LobbyPayment';
 export { default as DebateStatement } from './DebateStatement';
+export { default as AchievementUnlock } from './AchievementUnlock';
+export { default as TelemetryEvent } from './TelemetryEvent';
+export { default as TelemetryAggregate } from './TelemetryAggregate';
 
 // Type exports for interfaces
 export type { CompanyDocument as ICompany } from './Company';
@@ -80,6 +83,9 @@ export type { ILobbyingAction } from './LobbyingAction';
 export type { BillDocument as IBill } from './Bill';
 export type { LobbyPaymentDocument as ILobbyPayment } from './LobbyPayment';
 export type { DebateStatementDocument as IDebateStatement } from './DebateStatement';
+export type { IAchievementUnlock } from './AchievementUnlock';
+export type { ITelemetryEvent } from './TelemetryEvent';
+export type { ITelemetryAggregate } from './TelemetryAggregate';
 
 // Healthcare model types
 export type { HospitalDocument as IHospital } from './healthcare/Hospital';

@@ -55,6 +55,33 @@ export {
 	TrendDirection
 } from './politics';
 
+// Phase 7 Achievements & Telemetry
+export type {
+	AchievementDefinition,
+	AchievementCriteriaExpression,
+	AchievementReward,
+	AchievementUnlock,
+	AchievementProgressSnapshot,
+	AchievementProgressEntry,
+	TelemetryEvent,
+	TelemetryEventBase,
+	TelemetryCampaignPhaseChangeEvent,
+	TelemetryDebateResultEvent,
+	TelemetryEndorsementEvent,
+	TelemetryBillVoteEvent,
+	TelemetryPolicyEnactedEvent,
+	TelemetryLobbyAttemptEvent,
+	TelemetryMomentumShiftEvent,
+	TelemetryPollIntervalEvent,
+	TelemetrySystemBalanceAppliedEvent,
+	TelemetryAggregate
+} from './politicsPhase7';
+export {
+	AchievementRewardType,
+	TelemetryEventType,
+	AchievementStatus
+} from './politicsPhase7';
+
 // Influence & Lobbying (Baseline Phase 4)
 export type {
   BaseInfluenceInputs,

@@ -101,3 +101,22 @@ export {
   generateAdAnalysis,
 } from './negativeAds';
 
+// Dynamic Balance Scaler
+export {
+  UNDERDOG_GAP_THRESHOLD,
+  UNDERDOG_BUFF_FACTOR,
+  UNDERDOG_BUFF_MAX,
+  FRONTRUNNER_LEAD_THRESHOLD,
+  FRONTRUNNER_PENALTY_FACTOR,
+  SYSTEMIC_CAP_THRESHOLD,
+  SYSTEMIC_CAP_COMPRESSION,
+  computeUnderdogBuff,
+  computeFrontrunnerPenaltyMultiplier,
+  applySystemicCap,
+  computeBalanceAdjustments,
+  computeFairProbability,
+  describeBalanceAdjustments,
+  getFairAdjustedPolling,
+  type BalanceAdjustmentResult,
+} from './dynamicBalanceScaler';
+
