@@ -1,0 +1,14 @@
+{
+  "users": [
+    {
+      "_id": "691958509c348c8d26079e00",
+      "email": "spencerhowell84@gmail.com",
+      "firstName": "spencer",
+      "lastName": "howell",
+      "state": "CA",
+      "createdAt": "2025-11-16T04:51:28.937Z",
+      "updatedAt": "2025-11-16T04:51:28.937Z",
+      "__v": 0
+    }
+  ]
+}

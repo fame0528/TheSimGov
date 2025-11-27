@@ -1,0 +1,60 @@
+/**
+ * @fileoverview Barrel exports for politics utilities (baseline influence & lobbying).
+ * @created 2025-11-25
+ * @updated 2025-11-26 - Added Phase 1 FID-001B utilities (Campaign Engine & Scheduler)
++ * 
++ * NOTE: campaignEngine.ts and campaignPhase.ts are DIFFERENT models:
++ * - campaignEngine: 4-phase simplified FSM (ANNOUNCEMENT → FUNDRAISING → ACTIVE → RESOLUTION)
++ * - campaignPhase: 7-phase detailed cycle (FUNDRAISING → LOBBYING → PR → DEBATE_PREP → DEBATE → POST_DEBATE → ELECTION)
++ * Both export PHASE_DURATIONS, hence using explicit re-exports to avoid ambiguity.
+ */
+
+// ===== Phase 0 Utilities (Baseline - FID-001A) =====
+export * from './stateDerivedMetrics';
+export * from './influenceConstants';
+export * from './influenceBase';
+export * from './lobbyingBase';
+export * from './offlineProtection';
+export * from './timeScaling';
+
+// ===== Phase 1 Utilities (FID-001B - Campaign Engine & Scheduler) =====
+// ===== Phase 1 Utilities (FID-001B - Campaign Engine & Scheduler - 4-Phase FSM) =====
++// Types
++export type {
++  CampaignState,
++  CampaignEngineConfig,
++  PhaseTransitionHook,
++} from './campaignEngine';
++
++// Enums and values
++export {
++  CampaignPhase as SimpleCampaignPhase,
++  CampaignStatus,
++  PHASE_DURATIONS as SIMPLE_PHASE_DURATIONS,
++  CampaignEngine,
++  getActiveDebateHours,
++  getNextPollingInterval,
++  formatCampaignState,
++} from './campaignEngine';
+
+// ===== Phase 3 Utilities (Advanced Engagement - Legacy Exports) =====
+// ===== Phase 3 Utilities (Advanced Engagement - 7-Phase Detailed Cycle) =====
+export {
+	PHASE_DURATIONS as DETAILED_PHASE_DURATIONS,
+	initializeCampaign,
+	advancePhase,
+	getPhaseProgress,
+	canAdvancePhase,
+	getFundraisingEfficiency,
+	getLobbyingInfluenceModifier,
+	getPREffectiveness,
+	getRemainingPhaseTime,
+	getPhaseRecommendations,
+} from './campaignPhase';
+
+export * from './polling';
+export * from './debate';
+export * from './scandal';
+export * from './endorsement';
+export * from './election';
+export * from './achievements';

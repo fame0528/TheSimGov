@@ -1,0 +1,127 @@
+/**
+ * @fileoverview Department List Component
+ * @module components/departments/DepartmentList
+ * 
+ * OVERVIEW:
+ * Grid view of all departments with filtering and sorting.
+ * Provides overview of company's department structure.
+ * 
+ * @created 2025-11-21
+ * @author ECHO v1.3.0
+ */
+
+'use client';
+
+import { useState } from 'react';
+import { Card, CardBody } from '@heroui/card';
+import { Tabs, Tab } from '@heroui/tabs';
+import DepartmentCard from './DepartmentCard';
+import type { AnyDepartment } from '@/lib/types/department';
+
+interface DepartmentListProps {
+  departments: AnyDepartment[];
+  onSelectDepartment?: (department: AnyDepartment) => void;
+  onUpgradeDepartment?: (department: AnyDepartment) => void;
+}
+
+export default function DepartmentList({ 
+  departments, 
+  onSelectDepartment, 
+  onUpgradeDepartment 
+}: DepartmentListProps) {
+  const [filter, setFilter] = useState<'all' | 'active' | 'inactive'>('all');
+
+  // Filter departments
+  const filteredDepts = departments.filter(dept => {
+    if (filter === 'active') return dept.active;
+    if (filter === 'inactive') return !dept.active;
+    return true;
+  });
+
+  // Calculate summary stats
+  const stats = {
+    total: departments.length,
+    active: departments.filter(d => d.active).length,
+    totalBudget: departments.reduce((sum, d) => sum + d.budget, 0),
+    avgEfficiency: departments.reduce((sum, d) => sum + d.kpis.efficiency, 0) / (departments.length || 1),
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Summary Stats */}
+      <Card>
+        <CardBody>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="text-center">
+              <p className="text-2xl font-bold">{stats.total}</p>
+              <p className="text-sm text-default-500">Total Departments</p>
+            </div>
+            <div className="text-center">
+              <p className="text-2xl font-bold text-success">{stats.active}</p>
+              <p className="text-sm text-default-500">Active</p>
+            </div>
+            <div className="text-center">
+              <p className="text-2xl font-bold">${stats.totalBudget.toLocaleString()}</p>
+              <p className="text-sm text-default-500">Total Budget</p>
+            </div>
+            <div className="text-center">
+              <p className="text-2xl font-bold">{Math.round(stats.avgEfficiency)}%</p>
+              <p className="text-sm text-default-500">Avg Efficiency</p>
+            </div>
+          </div>
+        </CardBody>
+      </Card>
+
+      {/* Filter Tabs */}
+      <Tabs
+        selectedKey={filter}
+        onSelectionChange={(key) => setFilter(key as 'all' | 'active' | 'inactive')}
+        aria-label="Department filters"
+      >
+        <Tab key="all" title={`All (${stats.total})`} />
+        <Tab key="active" title={`Active (${stats.active})`} />
+        <Tab key="inactive" title={`Inactive (${stats.total - stats.active})`} />
+      </Tabs>
+
+      {/* Department Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {filteredDepts.map(dept => (
+          <DepartmentCard
+            key={dept.id}
+            department={dept}
+            onSelect={onSelectDepartment}
+            onUpgrade={onUpgradeDepartment}
+          />
+        ))}
+      </div>
+
+      {filteredDepts.length === 0 && (
+        <Card>
+          <CardBody className="text-center py-12">
+            <p className="text-default-500">No departments match this filter</p>
+          </CardBody>
+        </Card>
+      )}
+    </div>
+  );
+}
+
+/**
+ * IMPLEMENTATION NOTES:
+ * 
+ * 1. **Summary Stats**: Total count, active, budget, efficiency
+ * 2. **Filter Tabs**: All, Active, Inactive with counts
+ * 3. **Grid Layout**: Responsive 1/2/4 column grid
+ * 4. **Card Reuse**: Uses DepartmentCard component
+ * 5. **Empty State**: Message when no departments match filter
+ * 6. **Event Handling**: Passes select/upgrade callbacks to cards
+ * 
+ * USAGE:
+ * ```tsx
+ * <DepartmentList 
+ *   departments={allDepartments}
+ *   onSelectDepartment={(dept) => router.push(`/departments/${dept.type}`)}
+ *   onUpgradeDepartment={(dept) => handleUpgrade(dept)}
+ * />
+ * ```
+ */
