@@ -209,7 +209,12 @@ const EventResolutionSchema = new Schema<EventResolution>({
 }, { _id: false });
 
 const GlobalImpactEventSchema = new Schema<IGlobalImpactEvent>({
-  company: { type: Schema.Types.ObjectId, ref: 'Company', required: true },
+  company: {
+    type: Schema.Types.ObjectId,
+    ref: 'Company',
+    required: true,
+    // index: true removed - already indexed via compound index { company: 1, triggeredAt: -1 }
+  },
   eventType: {
     type: String,
     required: true,

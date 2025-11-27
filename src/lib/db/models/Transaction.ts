@@ -130,7 +130,7 @@ const TransactionSchema = new Schema<TransactionDocument>(
       type: Schema.Types.ObjectId,
       ref: 'Company',
       required: [true, 'Company reference is required'],
-     
+      // index: true removed - already indexed via compound index { company: 1, createdAt: -1 }
       immutable: true, // Cannot change after creation
     },
     from: {

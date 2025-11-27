@@ -189,7 +189,7 @@ const MonetizationSettingsSchema = new Schema<IMonetizationSettings>(
       ref: 'Company',
       required: [true, 'Company reference is required'],
       unique: true,
-      index: true,
+      // index: true removed - already indexed via schema-level .index({ company: 1 })
     },
     isActive: {
       type: Boolean,

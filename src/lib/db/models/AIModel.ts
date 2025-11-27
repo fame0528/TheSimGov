@@ -99,6 +99,7 @@ const aiModelSchema = new Schema<AIModelDocument>({
     type: Schema.Types.ObjectId,
     ref: 'Company',
     required: true,
+    // index: true removed - already indexed via compound index { company: 1, name: 1 }
   },
   name: {
     type: String,

@@ -61,7 +61,7 @@ const LobbyingActionSchema = new Schema<ILobbyingAction>(
       type: Schema.Types.ObjectId,
       ref: 'Company',
       required: [true, 'Company is required'],
-     
+      // index: true removed - already indexed via compound index { company: 1, initiatedAt: -1 }
     },
     targetLegislation: {
       type: String,

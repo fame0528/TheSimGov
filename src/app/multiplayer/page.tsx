@@ -4,6 +4,8 @@
  * @created 2025-11-24
  */
 
+'use client';
+
 import { Suspense } from 'react';
 import { Card, CardHeader, CardBody } from '@heroui/card';
 import { Spinner } from '@heroui/spinner';

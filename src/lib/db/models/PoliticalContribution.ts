@@ -53,7 +53,7 @@ const PoliticalContributionSchema = new Schema<IPoliticalContribution>(
       type: Schema.Types.ObjectId,
       ref: 'Company',
       required: [true, 'Company is required'],
-     
+      // index: true removed - already indexed via compound index { company: 1, donatedAt: -1 }
     },
     candidateName: {
       type: String,
