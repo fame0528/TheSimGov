@@ -14,7 +14,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button, Input, Card, CardBody, Divider, Link } from '@heroui/react';
@@ -27,19 +27,10 @@ import PrivacyPolicyModal from '@/components/legal/PrivacyPolicyModal';
 import type { StateAbbreviation } from '@/lib/utils/stateHelpers';
 
 /**
- * RegisterPage - New user registration with state selection
- * 
- * Features:
- * - First name, last name, username, email, password fields
- * - State selection with perk display
- * - Password confirmation validation
- * - Client-side and server-side validation
- * - Auto sign-in after successful registration
- * - Error handling and loading states
- * 
- * @returns Registration page component
+ * RegisterForm - Internal component that uses useSearchParams
+ * Wrapped in Suspense boundary by parent component
  */
-export default function RegisterPage() {
+function RegisterForm() {
   const router = useRouter();
   const search = useSearchParams();
   const [formData, setFormData] = useState({
@@ -932,6 +923,31 @@ export default function RegisterPage() {
       <TermsOfServiceModal isOpen={showTOS} onClose={() => setShowTOS(false)} />
       <PrivacyPolicyModal isOpen={showPrivacy} onClose={() => setShowPrivacy(false)} />
     </div>
+  );
+}
+
+/**
+ * RegisterPage - User registration page with Suspense wrapper
+ * 
+ * Features:
+ * - First name, last name, username, email, password fields
+ * - State selection with perk display
+ * - Password confirmation validation
+ * - Client-side and server-side validation
+ * - Auto sign-in after successful registration
+ * - Error handling and loading states
+ * 
+ * @returns Registration page component wrapped in Suspense
+ */
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center">
+        <div className="w-16 h-16 border-4 border-emerald-500/30 border-t-emerald-500 rounded-full animate-spin" />
+      </div>
+    }>
+      <RegisterForm />
+    </Suspense>
   );
 }
 

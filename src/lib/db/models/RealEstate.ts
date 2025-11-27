@@ -225,7 +225,6 @@ const RealEstateSchema = new Schema<IRealEstate>(
         message: '{VALUE} is not a valid property type',
       },
       required: [true, 'Property type is required'],
-      index: true,
     },
     zoneClassification: {
       type: String,
@@ -234,7 +233,6 @@ const RealEstateSchema = new Schema<IRealEstate>(
         message: '{VALUE} is not a valid zone classification',
       },
       required: [true, 'Zone classification is required'],
-      index: true,
     },
     size: {
       type: Number,
@@ -249,7 +247,6 @@ const RealEstateSchema = new Schema<IRealEstate>(
         message: '{VALUE} is not a valid acquisition type',
       },
       required: [true, 'Acquisition type is required'],
-      index: true,
     },
     purchasePrice: {
       type: Number,

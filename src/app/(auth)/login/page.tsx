@@ -12,24 +12,16 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button, Input, Card, CardBody, Divider, Link } from '@heroui/react';
 
 /**
- * LoginPage - User authentication page
- * 
- * Features:
- * - Email/password credentials login
- * - Form validation with error states
- * - Loading states during submission
- * - Link to registration page
- * - Automatic redirect to dashboard on success
- * 
- * @returns Login page component
+ * LoginForm - Internal component that uses useSearchParams
+ * Wrapped in Suspense boundary by parent component
  */
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
   const search = useSearchParams();
   const [email, setEmail] = useState('');
@@ -308,6 +300,30 @@ export default function LoginPage() {
         </CardBody>
       </Card>
     </div>
+  );
+}
+
+/**
+ * LoginPage - User authentication page with Suspense wrapper
+ * 
+ * Features:
+ * - Email/password credentials login
+ * - Form validation with error states
+ * - Loading states during submission
+ * - Link to registration page
+ * - Automatic redirect to dashboard on success
+ * 
+ * @returns Login page component wrapped in Suspense
+ */
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center">
+        <div className="w-16 h-16 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
+      </div>
+    }>
+      <LoginForm />
+    </Suspense>
   );
 }
 

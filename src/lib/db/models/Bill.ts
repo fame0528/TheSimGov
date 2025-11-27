@@ -229,7 +229,6 @@ const VoteSchema = new Schema<IVote>({
     type: Schema.Types.ObjectId,
     ref: 'User',
     required: [true, 'Player ID is required'],
-    index: true,
   },
   vote: {
     type: String,

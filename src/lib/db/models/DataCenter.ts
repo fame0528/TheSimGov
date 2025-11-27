@@ -208,13 +208,12 @@ const DataCenterSchema = new Schema<IDataCenter>(
       type: Schema.Types.ObjectId,
       ref: 'Company',
       required: [true, 'Company reference is required'],
-      index: true,
+      // index: true removed - already indexed via compound index { company: 1, constructionPhase: 1 } on line 432
     },
     realEstate: {
       type: Schema.Types.ObjectId,
       ref: 'RealEstate',
       required: [true, 'Real estate reference is required'],
-      index: true,
     },
     name: {
       type: String,
@@ -230,7 +229,7 @@ const DataCenterSchema = new Schema<IDataCenter>(
         message: 'Tier must be 1, 2, 3, or 4',
       },
       required: [true, 'Tier certification is required'],
-      index: true,
+      // index: true removed - already indexed via compound index { tierCertification: 1, actualUptime: -1 } on line 435
     },
     targetUptime: {
       type: Number,
@@ -312,7 +311,7 @@ const DataCenterSchema = new Schema<IDataCenter>(
         message: '{VALUE} is not a valid cooling system',
       },
       required: [true, 'Cooling system is required'],
-      index: true,
+      // index: true removed - not used in queries frequently enough to justify standalone index
     },
     coolingCapacityKW: {
       type: Number,
@@ -396,7 +395,7 @@ const DataCenterSchema = new Schema<IDataCenter>(
         message: '{VALUE} is not a valid construction phase',
       },
       default: 'Planning',
-      index: true,
+      // index: true removed - already indexed via compound index { company: 1, constructionPhase: 1 } on line 432
     },
     constructionStartDate: {
       type: Date,
