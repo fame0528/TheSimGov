@@ -1,0 +1,16 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "outDir": "dist-server",
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "target": "ES2019",
+    "isolatedModules": false,
+    "types": ["node"],
+    "declaration": false,
+    "sourceMap": true
+  },
+  "include": ["server.ts", "src/realtime/socketInit.ts", "src/types/global.d.ts", "src/lib/db/**/*.ts"],
+  "exclude": ["node_modules", "dist-server", "tests"]
+}

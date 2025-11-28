@@ -17,6 +17,8 @@ module.exports = {
   testMatch: [
     '**/tests/**/*.test.ts',
     '**/tests/**/*.test.tsx',
+    '**/tests/**/*.spec.ts',
+    '**/tests/**/*.spec.tsx',
   ],
   
   // Load environment variables before tests run

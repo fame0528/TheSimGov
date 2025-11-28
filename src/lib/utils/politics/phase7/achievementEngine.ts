@@ -145,7 +145,7 @@ async function persistUnlock(playerId: string, def: AchievementDefinition, repea
       repeatIndex: repeatIndex ?? 0,
       reward: def.reward,
       applied: false,
-      status: 'UNLOCKED',
+      status: AchievementStatus.UNLOCKED,
     };
   } catch (err: any) {
     if (err?.code === 11000) { // duplicate key – already unlocked this repeat

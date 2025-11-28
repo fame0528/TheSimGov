@@ -139,6 +139,62 @@ export const industryEndpoints = {
 } as const;
 
 /**
+ * AI Industry endpoints (Technology + AI subcategory)
+ * Covers models, research, infrastructure, talent, marketplace
+ */
+export const aiEndpoints = {
+  // AI Models
+  models: {
+    list: (companyId: string) => `/api/ai/models?companyId=${companyId}` as const,
+    create: '/api/ai/models',
+    byId: (id: string) => `/api/ai/models/${id}` as const,
+    train: (id: string) => `/api/ai/models/${id}/train` as const,
+    deploy: (id: string) => `/api/ai/models/${id}/deploy` as const,
+  },
+  
+  // Research Projects
+  research: {
+    projects: (companyId: string) => `/api/ai/research/projects?companyId=${companyId}` as const,
+    create: '/api/ai/research/projects',
+    byId: (id: string) => `/api/ai/research/projects/${id}` as const,
+    breakthroughs: (companyId: string) => `/api/ai/breakthroughs?companyId=${companyId}` as const,
+    patents: (companyId: string) => `/api/ai/patents?companyId=${companyId}` as const,
+  },
+  
+  // Infrastructure (GPU clusters, data centers)
+  infrastructure: {
+    gpuClusters: (companyId: string) => `/api/ai/infrastructure?companyId=${companyId}` as const,
+    pueTrend: (companyId: string) => `/api/ai/infrastructure/pue-trend?companyId=${companyId}` as const,
+    powerUtilization: (companyId: string) => `/api/ai/infrastructure/power-utilization?companyId=${companyId}` as const,
+    alerts: (companyId: string) => `/api/ai/infrastructure/alerts?companyId=${companyId}` as const,
+  },
+  
+  // Talent
+  talent: {
+    list: (companyId: string) => `/api/ai/talent?companyId=${companyId}` as const,
+    marketplace: '/api/ai/talent/marketplace',
+    hire: '/api/ai/talent/hire',
+  },
+  
+  // Marketplace (model monetization)
+  marketplace: {
+    list: '/api/ai/marketplace',
+    publish: (modelId: string) => `/api/ai/marketplace/${modelId}/publish` as const,
+    revenue: (companyId: string) => `/api/ai/marketplace/revenue?companyId=${companyId}` as const,
+  },
+  
+  // Competition
+  competition: {
+    global: '/api/ai/global-competition',
+    dominance: (companyId: string) => `/api/ai/dominance?companyId=${companyId}` as const,
+    leaderboard: '/api/ai/global-competition/leaderboard',
+  },
+  
+  // Summary (for dashboard)
+  summary: (companyId: string) => `/api/ai/summary?companyId=${companyId}` as const,
+} as const;
+
+/**
  * Admin endpoints
  */
 export const adminEndpoints = {
@@ -160,6 +216,7 @@ export const endpoints = {
   banking: bankingEndpoints,
   users: userEndpoints,
   industries: industryEndpoints,
+  ai: aiEndpoints,
   admin: adminEndpoints,
 } as const;
 

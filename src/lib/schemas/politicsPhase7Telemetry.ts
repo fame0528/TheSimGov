@@ -19,7 +19,7 @@ import {
   AchievementReward,
   AchievementDefinition,
   TelemetryEvent
-} from '@/lib/types';
+} from '@/lib/types/politicsPhase7';
 
 // ===================== ACHIEVEMENTS =====================
 
@@ -140,8 +140,89 @@ export const TelemetryEventSchema = z.discriminatedUnion('type', [
   SystemBalanceAppliedSchema
 ]) satisfies z.ZodType<TelemetryEvent>;
 
+// Input schemas for enqueue operations (without auto-generated fields)
+const TelemetryEventEnqueueBaseSchema = z.object({
+  playerId: z.string(),
+  type: z.nativeEnum(TelemetryEventType)
+});
+
+const CampaignPhaseChangeEnqueueSchema = TelemetryEventEnqueueBaseSchema.extend({
+  type: z.literal(TelemetryEventType.CAMPAIGN_PHASE_CHANGE),
+  fromPhase: z.string(),
+  toPhase: z.string(),
+  cycleSequence: z.number().int().nonnegative()
+});
+
+const DebateResultEnqueueSchema = TelemetryEventEnqueueBaseSchema.extend({
+  type: z.literal(TelemetryEventType.DEBATE_RESULT),
+  debateId: z.string(),
+  performanceScore: z.number(),
+  pollShiftImmediatePercent: z.number()
+});
+
+const EndorsementEnqueueSchema = TelemetryEventEnqueueBaseSchema.extend({
+  type: z.literal(TelemetryEventType.ENDORSEMENT),
+  endorsementId: z.string(),
+  tier: z.string(),
+  influenceBonusPercent: z.number()
+});
+
+const BillVoteEnqueueSchema = TelemetryEventEnqueueBaseSchema.extend({
+  type: z.literal(TelemetryEventType.BILL_VOTE),
+  legislationId: z.string(),
+  vote: z.enum(['FOR', 'AGAINST', 'ABSTAIN']),
+  outcome: z.enum(['PASSED', 'FAILED'])
+});
+
+const PolicyEnactedEnqueueSchema = TelemetryEventEnqueueBaseSchema.extend({
+  type: z.literal(TelemetryEventType.POLICY_ENACTED),
+  policyCode: z.string(),
+  impactPercent: z.number()
+});
+
+const LobbyAttemptEnqueueSchema = TelemetryEventEnqueueBaseSchema.extend({
+  type: z.literal(TelemetryEventType.LOBBY_ATTEMPT),
+  legislationId: z.string(),
+  success: z.boolean(),
+  influenceAppliedPercent: z.number()
+});
+
+const MomentumShiftEnqueueSchema = TelemetryEventEnqueueBaseSchema.extend({
+  type: z.literal(TelemetryEventType.MOMENTUM_SHIFT),
+  previousMomentumIndex: z.number().min(0).max(1),
+  newMomentumIndex: z.number().min(0).max(1),
+  delta: z.number()
+});
+
+const PollIntervalEnqueueSchema = TelemetryEventEnqueueBaseSchema.extend({
+  type: z.literal(TelemetryEventType.POLL_INTERVAL),
+  finalSupportPercent: z.number(),
+  volatilityAppliedPercent: z.number(),
+  reputationScore: z.number()
+});
+
+const SystemBalanceAppliedEnqueueSchema = TelemetryEventEnqueueBaseSchema.extend({
+  type: z.literal(TelemetryEventType.SYSTEM_BALANCE_APPLIED),
+  underdogBuffAppliedPercent: z.number().optional(),
+  frontrunnerPenaltyAppliedPercent: z.number().optional(),
+  fairnessFloorPercent: z.number()
+});
+
+export const TelemetryEventEnqueueSchema = z.discriminatedUnion('type', [
+  CampaignPhaseChangeEnqueueSchema,
+  DebateResultEnqueueSchema,
+  EndorsementEnqueueSchema,
+  BillVoteEnqueueSchema,
+  PolicyEnactedEnqueueSchema,
+  LobbyAttemptEnqueueSchema,
+  MomentumShiftEnqueueSchema,
+  PollIntervalEnqueueSchema,
+  SystemBalanceAppliedEnqueueSchema
+]);
+
 export type TelemetryEventInput = z.input<typeof TelemetryEventSchema>;
 export type TelemetryEventOutput = z.output<typeof TelemetryEventSchema>;
+export type TelemetryEventEnqueueInput = z.input<typeof TelemetryEventEnqueueSchema>;
 
 // ===================== AGGREGATES =====================
 export const TelemetryAggregateSchema = z.object({

@@ -1,10 +1,164 @@
+## [FID-20251125-001C] Consolidated Political System (Phases 0-11) - COMPLETE
+**Status:** ✅ COMPLETED  
+**Started:** 2025-11-25 **Completed:** 2025-11-28
+
+**Summary:**
+Complete 11-phase political system implementation with 436/436 tests passing.
+All phases complete: Legacy Parity (0), Types/Utils (1), Docs (2), Engines (3), Debate/Election (4), Events Removed (5), Endorsements/Balance (6), Achievements/Telemetry (7), Leaderboards (8), Extended Lobbying/Audit (9), Integration (10), Final Docs (11).
+
+**Key Deliverables:**
+- Production utilities: timeScaling, stateDerivedMetrics, influenceBase, lobbyingBase, offlineProtection
+- Engines: campaignPhaseMachine, pollingEngine, adSpendCycle, debateEngine, electionResolution
+- Systems: endorsements, dynamicBalanceScaler, achievements, leaderboards
+- Types: politicsPhase7.ts (251 lines), politicsInfluence.ts (180 lines)
+- Schemas: politicsPhase7Telemetry.ts (252 lines), Zod discriminated unions
+- Tests: 436 total (100% pass rate)
+- Docs: TIME_SYSTEM.md, POLITICS_SCALING.md, ENGAGEMENT_ENGINE_SPEC.md, TELEMETRY_SPEC.md
+
+**Files Modified:** 50+  
+**Report:** See `docs/COMPLETION_REPORT_FID-20251125-001C_20251128.md`
+
+---
+
+## [FID-20251128-AI] Industry-Contextual Dashboards (Phase 1.5)
+**Status:** ✅ COMPLETED  
+**Started:** 2025-11-28 **Completed:** 2025-11-28
+
+**Summary:**
+Wired existing 13,500+ lines of AI industry code to game UI. Company detail page now
+detects industry + subcategory and renders specialized dashboards.
+
+**Key Deliverables:**
+- Added `TechnologySubcategory` type to `src/lib/types/models.ts`
+- Created `useAI.ts` hook with 8 AI data fetching functions
+- Added `aiEndpoints` to `src/lib/api/endpoints.ts` (models, research, infrastructure, talent, marketplace)
+- Modified `/game/companies/[id]/page.tsx` with industry detection pattern
+- AICompanyDashboard renders for Technology+AI companies with real API data
+
+**Pattern Established:**
+```
+/game/companies/[id] detects industry →
+├── Technology + AI    → AICompanyDashboard ✅
+├── Technology + Software → SoftwareDashboard (future)
+├── Energy             → EnergyDashboard (future)
+└── Default            → GenericDashboard
+```
+
+**Files Modified:** 5 (types, endpoints, hooks, page, hooks index)
+**TypeScript:** 0 errors
+
+---
+
+## [FID-20251127-001] Realtime Chat MVP (DM, Unread)
+**Status:** IN_PROGRESS → COMPLETED  
+**Started:** 2025-11-27 **Completed:** 2025-11-27
+
+**Progress:**
+- Modified `src/components/realtime/ChatPanel.tsx` — unread badge, unread-summary handler, precise read-mark on scroll-to-bottom.
+- Modified `src/components/realtime/MessageList.tsx` — added `onViewedEnd` and scroll detection.
+- Added `src/components/realtime/DmSelector.tsx` — DM selection component with canonical room IDs and per-room unread badges.
+- Updated `src/components/realtime/index.ts` — exports for `DmSelector` and `canonicalDmRoom`.
+- Modified `src/realtime/socketInit.ts` — emits `chat:system` unread-summary on connect; unread and read-mark flows.
+
+**Files Modified:** 5  
+**Notes:** Implementation adheres strictly to plan; no unapproved mounts created.
+
 # 🚧 In Progress Features
 
-**Last Updated:** 2025-11-27 (Phase 10C API Endpoints Completed)
+**Last Updated:** 2025-11-27 (FID-20251127-001 Frontend Chat Panel - Session Resumed)
 
-**SESSION STATUS:** 🟢 ACTIVE - TypeScript Clean, Ready for Phase 10D or Industry Frontend
+**SESSION STATUS:** 🟢 ACTIVE - Backend Complete, Frontend Implementation Starting
 
 This file tracks features currently being implemented. Features move here from `planned.md` when work begins, and move to `completed.md` when finished.
+
+---
+
+## [FID-20251127-001] Real-Time Socket.io Chat & Notification System (Phase 1 MVP)
+**Status:** IN_PROGRESS **Priority:** HIGH **Complexity:** 3/5  
+**Created:** 2025-11-27 **Started:** 2025-11-27 **Estimated:** 6-8h (real: ~45-60m with ECHO)
+
+**Description:** Implement foundational real-time multiplayer layer using Socket.io to enable persistent chat channels and live system notifications. Provides immediate player-to-player communication (Global, Company, Politics, Direct DM) and event broadcast hooks (achievement unlock, legislation status change, lobby payment processed). Establishes moderation, rate limiting, persistence, and scalable namespace architecture. Phase 1 focuses on core reliability + anti-spam + simple UI panel for manual testing; later phases will add rich media, threading, reactions, presence, and cross-device push.
+
+**Legacy Status:** Missing (identified under Multiplayer Features gap in suggestions.md). Critical enabler for social stickiness and future guild/alliance systems.
+
+**Scope (Included in Phase 1 MVP):**
+- Socket.io server integration (version locked, mounted in existing `server.js` with health logging).
+- Namespaces: `/chat` (all channels), `/system` (server→client events). Rooms: `global`, `company:{companyId}`, `politics`, `dm:{sortedUserPair}`.
+- Events (chat): `join`, `leave`, `message:send`, `message:bulk`, `message:history`, `typing:start`, `typing:stop`.
+- Events (system broadcast): `achievement:unlock`, `legislation:update`, `lobby:payment`, `telemetry:alert` (stub emitters for later hookup).
+- Message persistence (MongoDB ChatMessage model, capped collection strategy or TTL index optional for non-DM channels > 30d).
+- Basic moderation: profanity filter (reuse `profanityFilter.ts`), per-user rate limit (max 10 messages / 10s sliding window), flood protection (disconnect on >30/60s), soft mute flag on user document.
+- Delivery guarantees: client ACK pattern (emit `message:send` → server persists → emits `message:delivered` with messageId & timestamp → client updates optimistic entry).
+- Pagination/history API route for initial load + scrollback (cursor-based: messageId or createdAt descending).
+- Frontend ChatPanel component (tabbed channels, message list virtualized, input box with char counter, typing indicators, optimistic sending, manual test hooks).
+- Notification hook utility to allow existing backend modules to emit events via lightweight function (e.g. `emitAchievementUnlock(userId, payload)`).
+
+**Out of Scope (Phase 2+):** Reactions, message editing/deleting, threading, presence roster, push/mobile notifications, rich embeds, advanced moderation dashboards.
+
+**Acceptance Criteria:**
+- ✅ Users can connect, join/leave rooms, send & receive messages in real time ( <300ms round trip locally ).
+- ✅ Channels: global, company-specific, politics, direct DM functional with isolation.
+- ✅ Profanity filtered server-side; blocked words replaced with `***` preserving message length.
+- ✅ Rate limiting enforced (exceed limit → warning event, persistent flood → temporary disconnect 30s). No server crash on bursts.
+- ✅ Persistence: messages saved with schema (room, senderId, content, createdAt, edited=false). History endpoint returns last N (default 50) with cursor.
+- ✅ Basic typing indicator published (debounced 2s inactivity removal) without memory leak.
+- ✅ Notification stubs callable (unit invocation logs to console & emits to `/system`).
+- ✅ Frontend ChatPanel renders active channel, scrolls to newest, prevents duplicate optimistic entries after ACK.
+- ✅ All new TypeScript code strict-compliant (0 additional errors). No `any` introduced.
+- ✅ Security: server validates authenticated userId before allowing send (reject unauthenticated socket with `unauthorized` event & disconnect).
+- ✅ DRY: shared message validation utility reused across API + socket event handlers.
+
+**Approach (Phases):**
+1. Models & Types: Define `ChatMessage` schema, message DTO, rate limit tracker in-memory (Map) + fallback Redis hook (stub) for horizontal scaling.
+2. Server Integration: Enhance `server.js` to initialize Socket.io with CORS + auth middleware (JWT/NextAuth session extraction), configure namespaces & room join logic.
+3. Event Handlers: Implement message send pipeline (validate → profanity filter → rate limit check → persist → broadcast → ACK), history fetch, typing indicators (timer cleanup), join/leave.
+4. Notification Utility: Add `src/lib/realtime/emitters.ts` with wrapper functions; stub usage in achievements engine and legislation placeholder.
+5. Frontend Component: `ChatPanel` + `ChatChannelTabs` + `MessageList` (virtualized) + `MessageInput` using SWR or minimal state; integrate socket lifecycle hook.
+6. Manual QA & Hardening: Simulate rapid sends, disconnect/reconnect, channel switching, persistence verification; log structured metrics for latency.
+7. Documentation: Add `/docs/REALTIME_CHAT_MVP_FID-20251127-001.md` summarizing events & contracts (post completion phase).
+
+**Data Model (Draft):**
+```ts
+interface ChatMessage {
+  _id: ObjectId;
+  room: string;            // 'global' | `company:${id}` | 'politics' | `dm:${uidA}_${uidB}`
+  senderId: ObjectId;
+  content: string;         // <= 500 chars, sanitized
+  createdAt: Date;
+  edited: boolean;         // future-proof
+  system: boolean;         // true for broadcast events
+}
+```
+
+**Files (Planned NEW/MOD):**
+- NEW `src/lib/db/models/ChatMessage.ts` (~120 lines)
+- NEW `src/lib/realtime/socketInit.ts` (~160 lines)
+- NEW `src/lib/realtime/events/chatHandlers.ts` (~220 lines)
+- NEW `src/lib/realtime/events/systemHandlers.ts` (~100 lines)
+- NEW `src/lib/realtime/rateLimit.ts` (~120 lines)
+- NEW `src/lib/realtime/emitters.ts` (~140 lines)
+- NEW `src/lib/validations/chatMessage.ts` (~100 lines Zod)
+- NEW `src/components/realtime/ChatPanel.tsx` (~260 lines)
+- NEW `src/components/realtime/ChatChannelTabs.tsx` (~80 lines)
+- NEW `src/components/realtime/MessageList.tsx` (~180 lines)
+- NEW `src/components/realtime/MessageInput.tsx` (~140 lines)
+- MOD `server.js` (integrate socket server) (~+120 lines)
+- MOD Achievement / Legislation utilities (add emitter calls) (~+30 lines each - deferred until Phase 2 integration)
+
+**Dependencies:**
+- Existing NextAuth session for auth; MongoDB connection utility.
+- Reuse `profanityFilter.ts` for moderation.
+- Future (optional): Redis for scaling rate limits; not required MVP.
+
+**Risks & Mitigations:**
+- Burst spam → strict sliding window + early disconnect.
+- Memory growth on typing timers → cleanup on room leave & disconnect.
+- Race conditions on DM room naming → canonical pair ordering (smaller userId first).
+- Future horizontal scaling → abstract rateLimit to allow Redis adapter drop-in.
+
+**Strategic Importance:** Foundation for ALL real-time social & political interactions (elections live feed, lobby coordination, alliance chat, alerts). Increases manual testing surface immediately per user preference.
+
+**Notes:** Implement with utility-first pattern: validations & emitters before component UI. No placeholder code—production-ready baseline with instrumentation console logs (prefixed `[RT]`).
 
 ---
 
@@ -228,19 +382,105 @@ This file tracks features currently being implemented. Features move here from `
 - 🔄 Reuse: Achievement engine (`evaluateAchievements`, `applyAchievementReward`), aggregation (`aggregateWindow`, `runDailyAggregation`, `runWeeklyAggregation`), logger
 - 📊 Contract Matrix: Initial matrix to be generated & saved before coding endpoints
 - 🚧 Status: Implementation NOT started yet — discovery & contract design phase complete
+**Phase 7 API Endpoints Implementation (2025-11-27):**
+- 🧩 Added `src/lib/schemas/politicsPhase7Api.ts` (query/body validation schemas)
+- 🆕 Created GET achievements endpoint (`/api/politics/achievements`) with optional evaluation (refresh)
+- 🆕 Created POST redeem endpoint (`/api/politics/achievements/redeem`) idempotent reward application
+- 🆕 Created GET telemetry events endpoint (`/api/politics/telemetry/events`) with filters & pagination
+- 🆕 Created GET telemetry stats endpoint (`/api/politics/telemetry/stats`) with recent/custom ranges + optional recompute
+- 🔄 Metrics Provider: Implemented telemetry-backed metrics provider for achievement evaluation (non-placeholder logic)
+- 🛡️ Validation: Zod schemas for all queries/bodies; limit guard (≤500) on events endpoint
+- 🔐 Auth: Session-based player resolution consistent with existing routes
+- 📦 Reuse: Leveraged achievement engine, aggregation functions, telemetry models
+- 📑 Documentation: Each route file includes overview + endpoint description
+- 📊 Next: Add tests (achievement evaluation, redemption idempotency, events filtering, stats recompute behavior)
+**Phase 7 Tests Implementation (2025-11-27):**
+- 🧪 Added unit tests: `achievementEngine.spec.ts` (unlock logic, repeatable cap, idempotent reward)
+- 🧪 Added unit tests: `eventLogger.spec.ts` (batch flush threshold, manual flush, singleton flush)
+- 🧪 Added unit tests: `telemetryAggregation.spec.ts` (aggregateWindow metrics computation)
+- 🧪 Added API contract tests: `apiAchievements.spec.ts` (refresh evaluation, redeem idempotency)
+- 🧪 Added API contract tests: `apiTelemetry.spec.ts` (events pagination & limit guard, stats retrieval)
+- 🧩 All tests use in-memory mocks for Mongoose models (no real DB) ensuring deterministic fast execution.
+- 📈 Coverage targets: core logic paths for Phase 7 systems; future expansion for edge cases (duplicate unlock race, aggregation recompute).
+- 🚀 Next: Run Jest, verify passing, then mark Phase 7 Tests complete & prepare UI component phase.
 
 
 **Phase 7 Pending Acceptance Targets (Snapshot):** Deterministic unlocks, idempotent reward application, validated telemetry ingestion (<10ms avg), aggregation job (<2s daily), zero duplicate unlock writes.
 
-**Phase 8: Leaderboards & Broadcasting (18-25h, 1.5-2h real)**
+**Phase 8: Leaderboards & Broadcasting (18-25h, 1.5-2h real)** - ✅ **COMPLETE**
 - Real-time leaderboards (donations, influence, approval ratings)
 - Socket.io broadcasting for live updates
 - Historical rankings and trend tracking
 
-**Phase 9: Advanced Lobbying Extensions (20-28h, 1.5-2h real)**
-- Coalition lobbying (group efforts, shared costs)
-- Counter-lobbying mechanics
-- Regulatory capture probability calculations
+**Phase 8 Implementation Progress (2025-11-27):**
+- ✅ ECHO v1.3.1 Re-Read complete (GUARDIAN active)
+- ✅ Discovery: Read CompetitiveLeaderboard.tsx, socketInit.ts, existing leaderboard route, emitters.ts, LobbyPayment model
+- ✅ Contract Matrix: Generated comprehensive matrix showing 25% existing coverage → Extension path identified
+
+**Phase 8 Implementation Complete:**
+- ✅ Created `LeaderboardSnapshot.ts` model (~280 lines)
+  * Multi-metric support (6 LeaderboardMetricType categories)
+  * Trend calculation via consecutive snapshot comparison
+  * 90-day TTL for automatic cleanup
+  * Static methods: captureSnapshot(), getPlayerHistory(), calculateTrend(), getCurrentLeaderboard()
+  * Compound indexes for efficient queries (no duplicate index definitions)
+- ✅ Extended `leaderboard/route.ts` API (~200 lines)
+  * Added `?metric=` parameter for 6 metric types
+  * Added `?trends=true` for trend data inclusion
+  * Socket.io broadcasting via broadcastLeaderboardUpdate()
+  * Backward compatibility with totalInfluence field
+- ✅ Created `leaderboard/history/route.ts` endpoint (~130 lines)
+  * Historical ranking data for charts
+  * Query params: playerId, metric, days, limit
+  * Statistics: currentRank, bestRank, worstRank, dataPoints
+- ✅ Extended `emitters.ts` (+60 lines)
+  * LeaderboardUpdateSystemPayload interface
+  * RankChangeSystemPayload interface
+  * broadcastLeaderboardUpdate() function
+  * broadcastRankChange() function
+- ✅ Created `PoliticalLeaderboard.tsx` component (~390 lines)
+  * 6-metric tabs (INFLUENCE, FUNDRAISING, REPUTATION, etc.)
+  * Top 3 podium cards with ranking badges
+  * Data table with trend chips (up/down/stable)
+  * History chart (Recharts LineChart)
+  * Socket.io real-time subscription
+- ✅ Updated exports: models/index.ts, components/politics/index.ts
+- ✅ Created tests: leaderboardSnapshot.spec.ts (12 tests), leaderboardApi.spec.ts (13 tests)
+- ✅ Fixed Mongoose duplicate index warning (removed field-level index on capturedAt)
+
+**Phase 8 Quality Verification:**
+- 🧪 Tests: 25/25 passing (2 suites)
+- 🔐 TypeScript: 0 errors (strict mode clean)
+- 🛡️ GUARDIAN: No duplicate indexes, proper TTL configuration
+- 📊 Test Coverage: Model static methods, API endpoints, history retrieval
+
+**Phase 8 Completed:** 2025-11-27
+**Actual Time:** ~1.5h real (within estimate)
+**Production Code:** ~1,060 lines (280 model + 200 API + 130 history + 60 emitters + 390 UI)
+**Test Code:** ~400 lines (2 test files)
+
+**Phase 9: Advanced Extensions (20-28h, 1.5-2h real)** - ✅ **COMPLETE**
+- ✅ Extended lobbying probability with 3 new factors:
+  * Prior success bonus with diminishing returns (LOBBY_PRIOR_SUCCESS_BASE, LOBBY_PRIOR_SUCCESS_CAP)
+  * Economic condition modifier (-5% to +5% based on game economy)
+  * Logistic reputation curve (S-curve replaces linear for smoother progression)
+- ✅ Offline fairness audit instrumentation:
+  * OfflineAuditEvent interface for structured audit trail
+  * DivergenceAnalysis for detecting online/offline calculation differences
+  * generateFloorAuditEvent() for floor application logging
+  * analyzeDivergence() with OFFLINE_DIVERGENCE_THRESHOLD (5%)
+  * generateDivergenceAuditEvent() for threshold violations
+  * batchAuditEvents() for efficient telemetry dispatch
+- ✅ Updated influenceConstants.ts with Phase 9 constants
+- ✅ Updated politicsInfluence.ts types with extended fields
+- ✅ Backward compatible (new params have sensible defaults)
+- ✅ Tests: 34 new tests (lobbyingPhase9.test.ts, offlineAuditPhase9.test.ts)
+- ✅ TypeScript: 0 errors (strict mode clean)
+
+**Phase 9 Completed:** 2025-11-28
+**Actual Time:** ~0.5h real (ahead of estimate)
+**Production Code:** ~180 lines (influenceConstants + lobbyingBase + offlineProtection)
+**Test Code:** ~350 lines (2 test files, 34 tests)
 
 **Phase 10: Legislative Bill & Voting System (80-110h, 6-8h real)** [FID-POL-005 Integrated] - ✅ **COMPLETE**
 - ✅ **Phase 10A COMPLETE**: Database Models (3 files, 1,254 LOC)

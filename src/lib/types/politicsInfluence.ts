@@ -61,6 +61,10 @@ export interface LobbyingProbabilityInputs {
   compositeInfluenceWeight: number;       // State composite (0..1)
   weeksUntilElection: number;             // Non-negative weeks until election
   seed?: string;                          // Seed for deterministic jitter
+  // Phase 9 Extended Factors
+  priorSuccessCount?: number;             // Count of prior successful lobbying attempts (0+)
+  economicCondition?: number;             // Economy health indicator (-1 to +1, 0 = neutral)
+  useLogisticReputation?: boolean;        // Use logistic curve instead of linear (default: true in v2)
 }
 
 /** Breakdown for lobbying probability showing each component and clamps. */
@@ -72,12 +76,16 @@ export interface LobbyingProbabilityBreakdown {
   stateCompositeWeight: number;           // Raw compositeInfluenceWeight input (0..1)
   stateCompositeContribution: number;     // 1 + stateCompositeWeight * stateCompositeFactor
   proximityMultiplier: number;            // 1 + proximityWeight * exp(-weeksUntilElection / decayHalfLife)
-  reputationTerm: number;                 // Linear reputation term (reputation/100 * reputationWeight)
+  reputationTerm: number;                 // Linear or logistic reputation term
   jitter: number;                         // Deterministic micro jitter (0 if suppressed)
   rawUnclamped: number;                   // Probability before soft easing & final clamp
   softened: number;                       // Probability after softMax easing (if triggered)
   final: number;                          // Final probability after 5–95 clamp
   seed?: string;                          // Echoed seed when provided
+  // Phase 9 Extended Breakdown
+  priorSuccessBonus?: number;             // Bonus from prior successful lobbies (0 to LOBBY_PRIOR_SUCCESS_CAP)
+  economicModifier?: number;              // Economic condition adjustment (-0.05 to +0.05)
+  reputationCurveType?: 'linear' | 'logistic'; // Which reputation formula was used
 }
 
 /** Result wrapper for lobbying probability including breakdown. */

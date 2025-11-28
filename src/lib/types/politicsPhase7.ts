@@ -24,6 +24,8 @@
  */
 
 import { AchievementCategory } from './politics';
+// Re-export AchievementCategory so Phase 7 engine/importers can consume from this barrel
+export { AchievementCategory } from './politics';
 
 // ===================== ENUMS =====================
 

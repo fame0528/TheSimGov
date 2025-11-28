@@ -22,7 +22,7 @@
 import { Types } from 'mongoose';
 import TelemetryEventModel from '@/lib/db/models/TelemetryEvent';
 import { TelemetryEventType } from '@/lib/types/politicsPhase7';
-import { validateTelemetryEvent, TelemetryEventInput } from '@/lib/schemas/politicsPhase7Telemetry';
+import { validateTelemetryEvent, TelemetryEventInput, TelemetryEventEnqueueInput, TelemetryEventEnqueueSchema } from '@/lib/schemas/politicsPhase7Telemetry';
 import { createComponentLogger } from '@/lib/utils/logger';
 
 const logger = createComponentLogger('phase7-event-logger');
@@ -36,9 +36,7 @@ export interface TelemetryEventLoggerConfig {
 }
 
 /** Internal queued entry shape prior to persistence */
-interface QueuedTelemetryEvent extends Omit<TelemetryEventInput, 'id' | 'createdEpoch' | 'schemaVersion'> {
-  type: TelemetryEventType; // Discriminator retained
-}
+type QueuedTelemetryEvent = TelemetryEventEnqueueInput;
 
 /** Flush result summary */
 export interface FlushResult {
@@ -112,17 +110,11 @@ export class TelemetryEventLogger {
    * Enqueue a telemetry event after validation. Adds ID, epoch, schemaVersion
    * at flush time; keeps queue lean during memory residency.
    */
-  enqueue(input: Omit<TelemetryEventInput, 'id' | 'createdEpoch' | 'schemaVersion'>): void {
-    // Validate shape (adds safety early; still validated again on flush for defense in depth)
-    const provisional: TelemetryEventInput = {
-      ...(input as TelemetryEventInput),
-      id: 'QUEUE', // placeholder for validation only
-      createdEpoch: nowEpoch(),
-      schemaVersion: 1,
-    };
-    validateTelemetryEvent(provisional); // throws on invalid
+  enqueue(input: TelemetryEventEnqueueInput): void {
+    // Validate shape using enqueue schema (validates input without auto-generated fields)
+    TelemetryEventEnqueueSchema.parse(input); // throws on invalid
 
-    this.queue.push(input as QueuedTelemetryEvent);
+    this.queue.push(input);
     if (this.queue.length >= this.batchSize) {
       void this.flush(); // fire and forget (errors logged)
     }
@@ -185,7 +177,7 @@ export class TelemetryEventLogger {
 export const telemetryEventLogger = new TelemetryEventLogger();
 
 /** Convenience helper */
-export function logTelemetry(evt: Omit<TelemetryEventInput, 'id' | 'createdEpoch' | 'schemaVersion'>) {
+export function logTelemetry(evt: TelemetryEventEnqueueInput) {
   telemetryEventLogger.enqueue(evt);
 }
 

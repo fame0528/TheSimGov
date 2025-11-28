@@ -14,7 +14,7 @@
 export type { ApiResponse, PaginatedResponse } from './api';
 
 // Domain models
-export type { User, Company, Employee, Contract, Loan, Bank, EmployeeSkills, EmployeePerformance, TrainingRecord, PerformanceReview } from './models';
+export type { User, Company, Employee, Contract, Loan, Bank, EmployeeSkills, EmployeePerformance, TrainingRecord, PerformanceReview, TechnologySubcategory } from './models';
 
 // Enumerations
 export { IndustryType, LoanType, ContractType, ContractStatus, LoanStatus, InvestmentType } from './enums';
@@ -59,7 +59,7 @@ export {
 export type {
 	AchievementDefinition,
 	AchievementCriteriaExpression,
-	AchievementReward,
+	AchievementReward as Phase7AchievementReward,
 	AchievementUnlock,
 	AchievementProgressSnapshot,
 	AchievementProgressEntry,

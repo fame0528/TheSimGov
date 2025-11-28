@@ -1,6 +1,6 @@
 # 📚 Lessons Learned
 
-**Last Updated:** 2025-11-25
+**Last Updated:** 2025-11-27
 
 This file captures insights, patterns, and lessons from completed features. Auto-updated by AUTO_UPDATE_COMPLETED().
 
@@ -18,6 +18,13 @@ Each lesson includes:
 ---
 
 ## 🎓 Lessons
+
+### 0. Session Recovery Requires Complete Tracking File Updates (FID-20251127-001)
+**Date:** 2025-11-27  
+**Context:** QUICK_START.md showed outdated information despite massive changes, preventing proper session recovery  
+**Lesson:** When session closure is improper or interrupted, tracking files become desynchronized. QUICK_START.md must be manually regenerated to reflect current active work, not just completed features. Session recovery depends on accurate, current information about active FIDs and next steps.  
+**Impact:** Resolved session recovery issues by updating QUICK_START.md with current active work (Chat frontend starting, Political Phase 10 complete). User can now resume with correct context and next action recommendations.  
+**Action:** After any session interruption, immediately verify and update QUICK_START.md to reflect current progress.md state. Include active FIDs, recent completions, and clear next steps. Never leave session status as "closed" when active work exists.
 
 ### 0. Type Declaration Files Are The Proper Way To Extend Third-Party Types (FID-20251125-001)
 **Date:** 2025-11-25  

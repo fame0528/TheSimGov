@@ -100,6 +100,35 @@ export const LOBBY_DIFFICULTY_BASE: Record<string, number> = {
 export const LOBBY_MIN_PROBABILITY = 0.05;
 export const LOBBY_MAX_PROBABILITY = 0.95;
 
+// ---------------- Phase 9: Extended Lobbying Factors ----------------
+
+/** Prior success bonus - diminishing returns per successful lobby (priorSuccessBonus). */
+export const LOBBY_PRIOR_SUCCESS_BASE = 0.02; // +2% base per prior success
+export const LOBBY_PRIOR_SUCCESS_DECAY = 0.7; // Diminishing: 0.02, 0.014, 0.0098...
+export const LOBBY_PRIOR_SUCCESS_CAP = 0.08; // Max +8% from prior successes
+
+/** Economic condition modifier range (economicConditionModifier). */
+export const LOBBY_ECONOMIC_MODIFIER_MIN = -0.05; // -5% in bad economy
+export const LOBBY_ECONOMIC_MODIFIER_MAX = 0.05; // +5% in good economy
+
+/** Logistic reputation curve constants (replacing linear term). */
+export const LOBBY_REPUTATION_MIDPOINT = 50; // Inflection point
+export const LOBBY_REPUTATION_STEEPNESS = 0.08; // Curve steepness
+
+// ---------------- Phase 9: Offline Audit Instrumentation ----------------
+
+/** Maximum divergence threshold for fairness alerts (5%). */
+export const OFFLINE_DIVERGENCE_THRESHOLD = 0.05;
+
+/** Audit event types for telemetry. */
+export const OFFLINE_AUDIT_EVENTS = {
+  FLOOR_APPLIED: 'offline:floor_applied',
+  RETENTION_TRIGGERED: 'offline:retention_triggered',
+  CATCH_UP_GRANTED: 'offline:catch_up_granted',
+  DIVERGENCE_WARNING: 'offline:divergence_warning',
+  GRACE_PERIOD_ACTIVE: 'offline:grace_period_active'
+} as const;
+
 // ---------------- Utility Helpers (Hash Placeholder Notes) ----------------
 // A stable non-cryptographic hash (e.g. murmurhash3 32-bit) will be implemented in a future utility
 // file (deterministicHash.ts). Jitter derivation must use only deterministic arithmetic.

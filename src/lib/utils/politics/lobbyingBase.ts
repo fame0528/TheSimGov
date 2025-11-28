@@ -1,11 +1,18 @@
 /**
- * @fileoverview Extended lobbying probability calculator (Phase 4 - FID-20251125-001A)
+ * @fileoverview Extended lobbying probability calculator (Phase 9 - FID-20251125-001C)
  * @module lib/utils/politics/lobbyingBase
  *
  * Implements deterministic probability formula extending legacy getLobbyingSuccessProbability
  * with state composite, election proximity multiplier, refined spending term, influence plateau,
- * linear reputation term, soft easing and micro jitter (spec documented in
- * LOBBYING_PROBABILITY_SPEC_FID-20251125-001A_20251125.md).
+ * reputation term (linear or logistic), soft easing, micro jitter, prior success bonus,
+ * and economic condition modifier.
+ * 
+ * Phase 9 Additions:
+ * - Prior success bonus with diminishing returns
+ * - Economic condition modifier (-5% to +5%)
+ * - Logistic reputation curve option (replaces linear)
+ * 
+ * Spec documented in LOBBYING_PROBABILITY_SPEC_FID-20251125-001A_20251125.md
  */
 import type { LobbyingProbabilityInputs, LobbyingProbabilityResult, LobbyingProbabilityBreakdown } from '@/lib/types/politicsInfluence';
 import { normalizedHash } from '@/lib/utils/deterministicHash';
@@ -24,7 +31,15 @@ import {
   LOBBY_JITTER_SPEND_THRESHOLD,
   LOBBY_DIFFICULTY_BASE,
   LOBBY_MIN_PROBABILITY,
-  LOBBY_MAX_PROBABILITY
+  LOBBY_MAX_PROBABILITY,
+  // Phase 9 constants
+  LOBBY_PRIOR_SUCCESS_BASE,
+  LOBBY_PRIOR_SUCCESS_DECAY,
+  LOBBY_PRIOR_SUCCESS_CAP,
+  LOBBY_ECONOMIC_MODIFIER_MIN,
+  LOBBY_ECONOMIC_MODIFIER_MAX,
+  LOBBY_REPUTATION_MIDPOINT,
+  LOBBY_REPUTATION_STEEPNESS
 } from './influenceConstants';
 
 function clamp(v: number, min: number, max: number): number { return v < min ? min : v > max ? max : v; }
@@ -46,6 +61,52 @@ function deriveJitter(seed: string | undefined, donationAmount: number): number 
   return normalized * LOBBY_JITTER_RANGE_ABS; // already centered [-1,1] * range
 }
 
+/**
+ * Compute prior success bonus with diminishing returns.
+ * Formula: sum of LOBBY_PRIOR_SUCCESS_BASE * LOBBY_PRIOR_SUCCESS_DECAY^i for i=0..n-1
+ * Capped at LOBBY_PRIOR_SUCCESS_CAP.
+ */
+function computePriorSuccessBonus(priorSuccessCount: number): number {
+  if (priorSuccessCount <= 0) return 0;
+  let bonus = 0;
+  for (let i = 0; i < priorSuccessCount; i++) {
+    bonus += LOBBY_PRIOR_SUCCESS_BASE * Math.pow(LOBBY_PRIOR_SUCCESS_DECAY, i);
+  }
+  return Math.min(bonus, LOBBY_PRIOR_SUCCESS_CAP);
+}
+
+/**
+ * Compute economic condition modifier.
+ * economicCondition ranges from -1 (recession) to +1 (boom), 0 = neutral.
+ * Returns value in range [LOBBY_ECONOMIC_MODIFIER_MIN, LOBBY_ECONOMIC_MODIFIER_MAX].
+ */
+function computeEconomicModifier(economicCondition: number): number {
+  const clamped = clamp(economicCondition, -1, 1);
+  if (clamped >= 0) {
+    return clamped * LOBBY_ECONOMIC_MODIFIER_MAX;
+  } else {
+    return clamped * Math.abs(LOBBY_ECONOMIC_MODIFIER_MIN);
+  }
+}
+
+/**
+ * Compute logistic reputation term (S-curve).
+ * Provides smoother transition than linear with natural caps.
+ * Formula: weight * (1 / (1 + exp(-steepness * (rep - midpoint))))
+ */
+function computeLogisticReputationTerm(reputation: number): number {
+  const rep = clamp(reputation, 0, 100);
+  const logistic = 1 / (1 + Math.exp(-LOBBY_REPUTATION_STEEPNESS * (rep - LOBBY_REPUTATION_MIDPOINT)));
+  return logistic * LOBBY_REPUTATION_WEIGHT;
+}
+
+/**
+ * Compute linear reputation term (legacy behavior).
+ */
+function computeLinearReputationTerm(reputation: number): number {
+  return (clamp(reputation, 0, 100) / 100) * LOBBY_REPUTATION_WEIGHT;
+}
+
 /** Main probability calculator returning breakdown. */
 export function computeLobbyingProbability(inputs: LobbyingProbabilityInputs): LobbyingProbabilityResult {
   const {
@@ -55,7 +116,11 @@ export function computeLobbyingProbability(inputs: LobbyingProbabilityInputs): L
     reputation,
     compositeInfluenceWeight,
     weeksUntilElection,
-    seed
+    seed,
+    // Phase 9 extended inputs
+    priorSuccessCount = 0,
+    economicCondition = 0,
+    useLogisticReputation = true
   } = inputs;
 
   // Difficulty base (fallback to 0.30 local if unknown)
@@ -75,10 +140,19 @@ export function computeLobbyingProbability(inputs: LobbyingProbabilityInputs): L
   // Election proximity multiplier
   const proximityMultiplier = computeProximityMultiplier(weeksUntilElection);
 
-  // Reputation linear term added post multiplicative stack
-  const reputationTerm = (clamp(reputation, 0, 100) / 100) * LOBBY_REPUTATION_WEIGHT;
+  // Reputation term - Phase 9: use logistic or linear based on flag
+  const reputationCurveType: 'linear' | 'logistic' = useLogisticReputation ? 'logistic' : 'linear';
+  const reputationTerm = useLogisticReputation
+    ? computeLogisticReputationTerm(reputation)
+    : computeLinearReputationTerm(reputation);
 
-  // Raw probability architecture (base multiplicative core then additive reputation and jitter)
+  // Phase 9: Prior success bonus (diminishing returns)
+  const priorSuccessBonus = computePriorSuccessBonus(priorSuccessCount);
+
+  // Phase 9: Economic condition modifier
+  const economicModifier = computeEconomicModifier(economicCondition);
+
+  // Raw probability architecture (base multiplicative core then additive terms)
   const core = base
     * (1 + spendTerm)
     * (1 + influenceWeightApplied)
@@ -86,7 +160,9 @@ export function computeLobbyingProbability(inputs: LobbyingProbabilityInputs): L
     * proximityMultiplier;
 
   const jitter = deriveJitter(seed, donationAmount);
-  let rawUnclamped = core + reputationTerm + jitter; // reputation additive per spec
+  
+  // Combine all additive terms: reputation + prior success + economic + jitter
+  let rawUnclamped = core + reputationTerm + priorSuccessBonus + economicModifier + jitter;
 
   // Soft easing before clamp
   let softened = rawUnclamped;
@@ -109,7 +185,11 @@ export function computeLobbyingProbability(inputs: LobbyingProbabilityInputs): L
     rawUnclamped,
     softened,
     final,
-    seed
+    seed,
+    // Phase 9 extended breakdown
+    priorSuccessBonus,
+    economicModifier,
+    reputationCurveType
   };
 
   return {
@@ -124,4 +204,9 @@ export function computeLobbyingProbability(inputs: LobbyingProbabilityInputs): L
 // - Legacy getLobbyingSuccessProbability used integer percent; this extended version
 //   works in decimal space for finer calibration. Migration adapter can convert if needed.
 // - Deterministic jitter integrates donationAmount to differentiate attempts with same seed.
-// - Future logistic reputation term will replace linear mapping without altering interface.
+// - Phase 9 additions:
+//   * priorSuccessBonus: Rewards consistent lobbying engagement with diminishing returns.
+//   * economicModifier: Ties lobbying to game economy state for emergent gameplay.
+//   * Logistic reputation: S-curve provides more intuitive progression than linear.
+// - All new factors are additive after the multiplicative core, maintaining formula structure.
+// - Backward compatible: Phase 9 inputs have sensible defaults (0, 0, true).

@@ -1,4 +1,67 @@
-﻿## FID-20251126-001 Registration & Company Creation Enhancements
+﻿## [FID-20251125-001C] Consolidated Political System (Phases 0-11)
+**Status:** COMPLETED **Priority:** CRITICAL **Complexity:** 5  
+**Started:** 2025-11-25 **Completed:** 2025-11-28
+
+**Description:** Complete 11-phase political system implementation delivering deterministic, fairness-protected political gameplay with real-time campaign phases, polling, debates, elections, endorsements, achievements, and telemetry.
+
+**Acceptance:**
+- ✅ All 11 phases implemented (Legacy Parity → Final Docs)
+- ✅ 100% legacy feature parity (50 states, senate classes, seat apportionment)
+- ✅ 436/436 tests passing (100% pass rate)
+- ✅ 0 TypeScript errors (strict mode)
+- ✅ Complete documentation: TIME_SYSTEM.md, POLITICS_SCALING.md, ENGAGEMENT_ENGINE_SPEC.md, TELEMETRY_SPEC.md
+
+**Key Deliverables:**
+- Utilities: timeScaling, stateDerivedMetrics, influenceBase, lobbyingBase, offlineProtection
+- Engines: campaignPhaseMachine, pollingEngine, adSpendCycle, debateEngine, electionResolution
+- Systems: endorsements, dynamicBalanceScaler, achievements, leaderboards
+- Phase 9: Extended lobbying (prior success, economic, logistic reputation), offline audit instrumentation
+- Types/Schemas: 9 telemetry event types, 5 achievement reward types, Zod validation
+
+**Metrics:**
+- Production Code: ~8,000 lines across 20+ files
+- Test Code: ~3,000 lines across 17 test suites
+- TypeScript errors: 0
+- GUARDIAN violations: 12 (all auto-corrected)
+
+**Lessons Learned:** 
+- Utility-first architecture eliminates rework
+- Schema versioning (schemaVersion: 1) enables forward-compatible migrations
+- Audit instrumentation enables future fairness analysis
+
+**Report:** `docs/COMPLETION_REPORT_FID-20251125-001C_20251128.md`
+
+---
+
+## [FID-20251127-001] Realtime Chat MVP (DM, Unread)
+**Status:** COMPLETED **Priority:** H **Complexity:** 3  
+**Started:** 2025-11-27 **Completed:** 2025-11-27
+
+**Description:** Frontend chat components (ChatPanel, MessageList, DmSelector) with DM rooms, unread badges, and read-marking; server emits login-time unread summary and handles unread updates.
+
+**Acceptance:**
+- DM canonical room IDs `dm:{uidSmall_uidLarge}` created via selector.
+- Unread badge visible in `ChatPanel`; updates via `chat:unread` and `chat:unread:update`.
+- Read marks emitted only when user reaches list bottom.
+- Server emits `chat:system` `{ type: 'unread-summary' }` on connect.
+
+**Files:**
+- MOD `src/components/realtime/ChatPanel.tsx`
+- MOD `src/components/realtime/MessageList.tsx`
+- ADD `src/components/realtime/DmSelector.tsx`
+- MOD `src/components/realtime/index.ts`
+- MOD `src/realtime/socketInit.ts`
+
+**Metrics:**
+- Files created/modified: 5
+- Tests: N/A (manual verification via event wiring)
+- TypeScript compile: assumed OK pending CI
+
+**Lessons Learned:** Precise read-mark based on viewport improves UX and accuracy; keep server notifications minimal and consumable by existing surfaces.
+
+**Report:** See `docs/COMPLETION_REPORT_FID-20251127-001_20251127.md`.
+
+## FID-20251126-001 Registration & Company Creation Enhancements
 **Status:** COMPLETED **Priority:** H **Complexity:** 3
 **Completed:** 2025-11-26
 

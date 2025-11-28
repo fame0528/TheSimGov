@@ -59,6 +59,8 @@ export { default as DebateStatement } from './DebateStatement';
 export { default as AchievementUnlock } from './AchievementUnlock';
 export { default as TelemetryEvent } from './TelemetryEvent';
 export { default as TelemetryAggregate } from './TelemetryAggregate';
+export { default as ChatMessage } from './ChatMessage';
+export { default as LeaderboardSnapshot } from './LeaderboardSnapshot';
 
 // Type exports for interfaces
 export type { CompanyDocument as ICompany } from './Company';
@@ -86,6 +88,8 @@ export type { DebateStatementDocument as IDebateStatement } from './DebateStatem
 export type { IAchievementUnlock } from './AchievementUnlock';
 export type { ITelemetryEvent } from './TelemetryEvent';
 export type { ITelemetryAggregate } from './TelemetryAggregate';
+export type { IChatMessage } from './ChatMessage';
+export type { ILeaderboardSnapshot, LeaderboardEntryWithTrend, RankingHistoryPoint } from './LeaderboardSnapshot';
 
 // Healthcare model types
 export type { HospitalDocument as IHospital } from './healthcare/Hospital';

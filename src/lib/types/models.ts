@@ -36,6 +36,12 @@ export interface User {
 }
 
 /**
+ * Technology industry subcategories
+ * Used to determine specialized dashboards and features
+ */
+export type TechnologySubcategory = 'AI' | 'Software' | 'Hardware';
+
+/**
  * Company model
  */
 export interface Company {
@@ -43,6 +49,7 @@ export interface Company {
   userId: string;
   name: string;
   industry: IndustryType;
+  subcategory?: TechnologySubcategory; // Technology industry specialization (AI, Software, Hardware)
   description?: string;
   foundedAt: Date;
   level: number;

@@ -29,6 +29,22 @@ export { useContract, useMarketplace as useMarketplaceContracts, useContracts as
 // Domain hooks - Banking
 export { useBanks, useLoans, useCreditScore, useApplyLoan, usePayLoan } from './useBanking';
 
+// Domain hooks - AI Industry (Technology + AI subcategory)
+export { 
+  useAIModels, 
+  useAIResearchProjects, 
+  useAIInfrastructure, 
+  useAIBreakthroughs,
+  useAIPatents,
+  useAIMarketplaceRevenue,
+  useAIDominance,
+  useAICompanySummary,
+  type AIModel,
+  type AIResearchProject,
+  type GPUCluster,
+  type AICompanySummary,
+} from './useAI';
+
 // Socket.io hooks - Real-time multiplayer
 export { useSocket } from './useSocket';
 export { useChat } from './useChat';
