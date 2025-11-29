@@ -153,7 +153,8 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const {
       sponsor,
-      dealValue,
+      dealValue: requestDealValue,
+      budget: requestBudget,
       dealStructure,
       duration,
       upfrontPayment,
@@ -176,6 +177,9 @@ export async function POST(request: NextRequest) {
       startDate,
       endDate
     } = body;
+
+    // Support frontend alias: `budget` (UI) -> canonical `dealValue` (backend/domain)
+    const dealValue = requestDealValue ?? requestBudget;
 
     // Validate required fields
     if (!sponsor || !dealValue || !dealStructure || !duration || !requiredMentions) {

@@ -69,11 +69,12 @@
 import mongoose, { Schema, Document, Model, Types } from 'mongoose';
 
 // Centralized Media domain types import (DRY + utility-first)
-import type {
-  SponsorshipContract as SponsorshipDomain,
-  DealStructure,
+// Import DealStatus as VALUE (not just type) for Object.values() and enum comparisons
+import {
   DealStatus,
-  BonusThreshold
+  type SponsorshipContract as SponsorshipDomain,
+  type DealStructure,
+  type BonusThreshold
 } from '../../../types/media';
 
 // Extract domain shape excluding Mongoose-specific fields AND fields with schema-specific types
@@ -93,6 +94,11 @@ interface SponsorshipDealDocument extends Document, SponsorshipBase {
   milestonesAchieved: number;
   remainingPayments: number;
   completionRate: number;
+  
+  // Additional performance metrics (schema has defaults, so required here)
+  totalClicks: number;
+  totalConversions: number;
+  influencerRating: number;
   
   createdAt: Date;
   updatedAt: Date;
@@ -220,15 +226,31 @@ const SponsorshipDealSchema = new Schema<ISponsorshipDeal>(
       required: [true, 'Deal value is required'],
       min: [0, 'Deal value cannot be negative'],
     },
+    // Optional human-friendly title & description for the deal
+    title: {
+      type: String,
+      trim: true,
+      maxlength: [200, 'Title cannot exceed 200 characters'],
+    },
+    description: {
+      type: String,
+      trim: true,
+      maxlength: [2000, 'Description cannot exceed 2000 characters'],
+    },
+    // Optional list of platforms this deal targets (UI-friendly)
+    platforms: {
+      type: [String],
+      default: [],
+    },
     dealStructure: {
       type: String,
       required: true,
       enum: {
-        values: ['FlatFee', 'RevenueShare', 'PerformanceBased', 'Hybrid'],
+        values: ['Flat', 'Tiered', 'PerformanceBased', 'RevenueShare', 'Hybrid'] satisfies DealStructure[],
         message: '{VALUE} is not a valid deal structure',
       },
-      default: 'FlatFee',
-    } as any,
+      default: 'Flat' satisfies DealStructure,
+    },
     duration: {
       type: Number,
       required: [true, 'Deal duration is required'],
@@ -238,10 +260,10 @@ const SponsorshipDealSchema = new Schema<ISponsorshipDeal>(
       type: String,
       required: true,
       enum: {
-        values: ['Pending', 'Active', 'Completed', 'Cancelled', 'Disputed'],
+        values: Object.values(DealStatus),
         message: '{VALUE} is not a valid deal status',
       },
-      default: 'Pending',
+      default: DealStatus.PENDING,
       index: true,
     },
     startDate: {
@@ -338,6 +360,20 @@ const SponsorshipDealSchema = new Schema<ISponsorshipDeal>(
         },
       },
     ],
+    // UI-facing deliverables (detailed deliverable records with metrics)
+    deliverables: [
+      {
+        type: { type: String, enum: ['Article', 'Video', 'Podcast', 'Livestream', 'SocialPost'] },
+        platform: { type: String },
+        dueDate: { type: Date },
+        completed: { type: Boolean, default: false },
+        metrics: {
+          reach: { type: Number, default: 0 },
+          engagement: { type: Number, default: 0 },
+          clicks: { type: Number, default: 0 }
+        }
+      }
+    ],
     deliveredContent: [
       {
         type: Schema.Types.ObjectId,
@@ -422,6 +458,26 @@ const SponsorshipDealSchema = new Schema<ISponsorshipDeal>(
       default: 0,
       min: [0, 'Actual reach cannot be negative'],
     },
+    // Additional performance metrics
+    totalClicks: {
+      type: Number,
+      required: true,
+      default: 0,
+      min: [0, 'Clicks cannot be negative']
+    },
+    totalConversions: {
+      type: Number,
+      required: true,
+      default: 0,
+      min: [0, 'Conversions cannot be negative']
+    },
+    influencerRating: {
+      type: Number,
+      required: true,
+      default: 0,
+      min: [0, 'Rating cannot be negative'],
+      max: [5, 'Rating cannot exceed 5']
+    },
 
     // Fulfillment Tracking
     milestonesAchieved: {
@@ -505,10 +561,33 @@ SponsorshipDealSchema.index({ dealValue: -1 }); // Deal size sorting
  * @returns {boolean} Is deal active
  */
 SponsorshipDealSchema.virtual('isActive').get(function (this: ISponsorshipDeal): boolean {
-  if (this.status !== 'Active') return false;
+  if (this.status !== DealStatus.ACTIVE) return false;
   const now = new Date();
   return now >= this.startDate && now <= this.endDate;
 });
+
+/**
+ * Virtual alias: budget -> dealValue
+ * Provides a frontend-friendly alias that maps to the canonical `dealValue` field.
+ */
+SponsorshipDealSchema.virtual('budget')
+  .get(function (this: ISponsorshipDeal): number {
+    return this.dealValue;
+  })
+  .set(function (this: ISponsorshipDeal, value: number) {
+    this.dealValue = value;
+  });
+
+  /**
+   * Virtual alias: 'commission' -> 'revenueSharePercent'
+   */
+  SponsorshipDealSchema.virtual('commission')
+    .get(function (this: ISponsorshipDeal): number {
+      return this.revenueSharePercent;
+    })
+    .set(function (this: ISponsorshipDeal, value: number) {
+      this.revenueSharePercent = value;
+    });
 
 /**
  * Virtual field: fulfillmentProgress
@@ -556,6 +635,22 @@ SponsorshipDealSchema.virtual('totalEarnedBonuses').get(function (
 });
 
 /**
+ * Virtual: performance
+ * Returns a UI-friendly performance object mapping existing schema fields.
+ */
+SponsorshipDealSchema.virtual('performance').get(function (this: ISponsorshipDeal) {
+  return {
+    totalReach: this.actualReach || this.estimatedReach || 0,
+    totalEngagement: this.totalEngagement || 0,
+    totalClicks: this.totalClicks || 0,
+    conversions: this.totalConversions || 0,
+    roi: this.actualROI || 0,
+    brandSatisfaction: this.brandSentiment ?? 0,
+    influencerRating: this.influencerRating ?? 0
+  };
+});
+
+/**
  * Pre-save hook: Calculate derived metrics
  */
 SponsorshipDealSchema.pre<ISponsorshipDeal>('save', function (next) {
@@ -580,17 +675,17 @@ SponsorshipDealSchema.pre<ISponsorshipDeal>('save', function (next) {
 
   // Auto-activate if status is Pending and within date range
   const now = new Date();
-  if (this.status === 'Pending' && now >= this.startDate && now <= this.endDate) {
-    this.status = 'Active';
+  if (this.status === DealStatus.PENDING && now >= this.startDate && now <= this.endDate) {
+    this.status = DealStatus.ACTIVE;
   }
 
   // Auto-complete if all milestones achieved and past end date
   if (
-    this.status === 'Active' &&
+    this.status === DealStatus.ACTIVE &&
     this.milestonesAchieved >= this.totalMilestones &&
     now > this.endDate
   ) {
-    this.status = 'Completed';
+    this.status = DealStatus.COMPLETED;
   }
 
   next();

@@ -55,14 +55,15 @@
 import mongoose, { Schema, Document, Model, Types } from 'mongoose';
 
 // Centralized Media domain types import (DRY + utility-first)
-import type {
-  AdCampaign as AdCampaignDomain,
-  AdCampaignType,
+// Import CampaignStatus as VALUE for Object.values() usage in enum
+import {
   CampaignStatus,
-  AudienceType,
-  BiddingModel,
-  CampaignGoals,
-  CampaignMetrics
+  type AdCampaign as AdCampaignDomain,
+  type AdCampaignType,
+  type AudienceType,
+  type BiddingModel,
+  type CampaignGoals,
+  type CampaignMetrics
 } from '../../../types/media';
 
 // Extract domain shape excluding Mongoose-specific fields AND nested objects (schema uses flattened structure)
@@ -144,20 +145,20 @@ const MediaAdCampaignSchema = new Schema<IMediaAdCampaign>(
       type: String,
       required: true,
       enum: {
-        values: ['SponsoredContent', 'Display', 'Influencer', 'Video'],
+        values: ['Display', 'Video', 'Search', 'Social', 'Influencer', 'Sponsored'] satisfies AdCampaignType[],
         message: '{VALUE} is not a valid ad type',
       },
-      default: 'SponsoredContent',
+      default: 'Sponsored' satisfies AdCampaignType,
       index: true,
-    } as any,
+    },
     status: {
       type: String,
       required: true,
       enum: {
-        values: ['Active', 'Paused', 'Completed'],
+        values: Object.values(CampaignStatus),
         message: '{VALUE} is not a valid campaign status',
       },
-      default: 'Active',
+      default: CampaignStatus.ACTIVE,
       index: true,
     },
     startDate: {

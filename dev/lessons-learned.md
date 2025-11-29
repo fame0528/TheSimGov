@@ -19,6 +19,18 @@ Each lesson includes:
 
 ## 🎓 Lessons
 
+### 2025-11-28: Preflight Matrix Prevents Major Rework
+**Context:** FID-20251127-MEDIA Phase 2.5 - Executed dual-loading protocol before API integration  
+**Lesson:** Skipping preflight analysis leads to implementing components against mismatched contracts, requiring major rework  
+**Impact:** 4 fully implemented components (2,135 LOC) blocked by contract mismatches that would have been caught with proper preflight  
+**Action:** Always execute complete dual-loading protocol (DISCOVER→LOAD→VERIFY→RESOLVE→REPORT) before implementing ANY UI components
+
+### 2025-11-28: Contract Matrix is Non-Negotiable
+**Context:** Media Industry components designed assuming API contracts without verification  
+**Lesson:** Components designed against assumed APIs waste significant development time when actual contracts differ  
+**Impact:** 50% of components incompatible due to influencer profiles vs contracts, audience demographics vs ObjectIds  
+**Action:** Generate explicit Backend-Frontend Contract Matrix for EVERY feature, document exact request/response shapes, block integration until 100% compatibility verified
+
 ### 0. Session Recovery Requires Complete Tracking File Updates (FID-20251127-001)
 **Date:** 2025-11-27  
 **Context:** QUICK_START.md showed outdated information despite massive changes, preventing proper session recovery  

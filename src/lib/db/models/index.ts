@@ -108,3 +108,33 @@ export type { IMonetizationSettings as IMonetizationSettings } from './media/Mon
 export type { IInfluencerContract as IInfluencerContract } from './media/InfluencerContract';
 export type { ISponsorshipDeal as ISponsorshipDeal } from './media/SponsorshipDeal';
 export type { IContentPerformance as IContentPerformance } from './media/ContentPerformance';
+
+// ============================================================================
+// ENERGY INDUSTRY MODELS
+// ============================================================================
+export { OilWell, GasField, SolarFarm, WindTurbine, PowerPlant, EnergyStorage, TransmissionLine, GridNode, CommodityPrice, PPA, EnergyTradeOrder } from './energy';
+export type {
+  IOilWell, WellType, WellStatus, WellLocation, WellEquipment,
+  IGasField, GasQuality, FieldStatus, FieldLocation,
+  ISolarFarm, PanelType, SolarStatus, SolarLocation, BatteryStorage, GridConnection,
+  IWindTurbine, TurbineType, TurbineStatus, TurbineLocation, BladeCondition, DrivetrainCondition,
+  IPowerPlant, PlantType, PlantStatus, FuelEfficiency, Emissions,
+  IEnergyStorage, StorageType, StorageStatus,
+  ITransmissionLine, VoltageLevel, LineStatus,
+  IGridNode, NodeType, NodeStatus, VoltageStatus,
+  ICommodityPrice, CommodityType, IOPECEvent,
+  IPPA, IDeliveryRecord, IPenaltyRecord, IBonusRecord,
+  IEnergyTradeOrder, OrderSide, OrderType, OrderStatus, IOrderFill,
+} from './energy';
+
+// ============================================================================
+// SOFTWARE INDUSTRY MODELS
+// ============================================================================
+export { SoftwareProduct, SoftwareRelease, SaaSSubscription, Bug, Feature } from './software';
+export type {
+  ISoftwareProduct, SoftwareCategory, ProductStatus, ProductPricing, ReleaseHistory,
+  ISoftwareRelease, ReleaseType, ReleaseStatus, BugSeverityCount,
+  ISaaSSubscription, SubscriptionTier, SupportTier,
+  IBug, BugSeverity, BugStatus, Reproducibility,
+  IFeature, FeatureStatus, FeatureType,
+} from './software';

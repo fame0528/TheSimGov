@@ -61,14 +61,15 @@
 import mongoose, { Schema, Document, Model, Types } from 'mongoose';
 
 // Centralized Media domain types import (DRY + utility-first)
-import type {
-  InfluencerDeal as InfluencerDealDomain,
-  DealType,
+// Import DealStatus as VALUE (not just type) for Object.values() and enum comparisons
+import {
   DealStatus,
-  PaymentStructure,
-  PaymentSchedule,
-  BonusThreshold,
-  UsageRights
+  type InfluencerDeal as InfluencerDealDomain,
+  type DealType,
+  type PaymentStructure,
+  type PaymentSchedule,
+  type BonusThreshold,
+  type UsageRights
 } from '../../../types/media';
 
 // Extract domain shape excluding Mongoose-specific fields
@@ -199,10 +200,10 @@ const InfluencerContractSchema = new Schema<IInfluencerContract>(
       type: String,
       required: true,
       enum: {
-        values: ['Pending', 'Active', 'Completed', 'Cancelled'],
+        values: Object.values(DealStatus),
         message: '{VALUE} is not a valid contract status',
       },
-      default: 'Pending',
+      default: DealStatus.PENDING,
       index: true,
     },
     startDate: {
@@ -442,7 +443,7 @@ InfluencerContractSchema.index({ startDate: 1, endDate: 1 }); // Time-based quer
  * @returns {boolean} Is contract active
  */
 InfluencerContractSchema.virtual('isActive').get(function (this: IInfluencerContract): boolean {
-  if (this.status !== 'Active') return false;
+  if (this.status !== DealStatus.ACTIVE) return false;
   const now = new Date();
   return now >= this.startDate && now <= this.endDate;
 });
@@ -521,17 +522,17 @@ InfluencerContractSchema.pre<IInfluencerContract>('save', function (next) {
 
   // Auto-activate if status is Pending and within date range
   const now = new Date();
-  if (this.status === 'Pending' && now >= this.startDate && now <= this.endDate) {
-    this.status = 'Active';
+  if (this.status === DealStatus.PENDING && now >= this.startDate && now <= this.endDate) {
+    this.status = DealStatus.ACTIVE;
   }
 
   // Auto-complete if all content delivered and past end date
   if (
-    this.status === 'Active' &&
+    this.status === DealStatus.ACTIVE &&
     this.deliveredContent.length >= this.requiredContent &&
     now > this.endDate
   ) {
-    this.status = 'Completed';
+    this.status = DealStatus.COMPLETED;
   }
 
   next();

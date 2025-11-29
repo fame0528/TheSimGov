@@ -48,6 +48,21 @@ export type PlatformType =
   | 'Blog';
 
 /**
+ * Media platform enum for component usage
+ * Provides enum values for platform selection in UI components
+ */
+export enum MediaPlatform {
+  INSTAGRAM = 'Instagram',
+  YOUTUBE = 'YouTube',
+  TIKTOK = 'TikTok',
+  TWITTER = 'Twitter',
+  FACEBOOK = 'Facebook',
+  LINKEDIN = 'LinkedIn',
+  PODCAST = 'Podcast',
+  BLOG = 'Blog'
+}
+
+/**
  * Monetization tier levels
  * Progressive revenue-sharing tiers based on platform engagement
  */
@@ -767,6 +782,58 @@ export interface MonetizationConfig {
   
   /** Last update timestamp */
   updatedAt: Date;
+
+  // UI-friendly fields used by MonetizationSettings
+  revenueStreams?: RevenueStream[];
+  pricingTiers?: PricingTier[];
+  paymentMethods?: PaymentMethod[];
+  payoutSettings?: {
+    schedule: PayoutSchedule;
+    method: string;
+    minimumThreshold: number;
+    processingFee: number;
+  };
+  taxSettings?: {
+    collectTaxes: boolean;
+    taxRate: number;
+    taxId?: string;
+  };
+}
+
+// Types used by MonetizationSettings UI
+export interface RevenueStream {
+  id: string;
+  type: string;
+  enabled: boolean;
+  commission: number;
+  minimumPayout: number;
+  payoutSchedule: 'weekly' | 'biweekly' | 'monthly';
+  settings: Record<string, unknown>;
+}
+
+export interface PricingTier {
+  id: string;
+  name: string;
+  price: number;
+  features: string[];
+  limits: { campaigns: number; influencers: number };
+  popular?: boolean;
+}
+
+export interface PaymentMethod {
+  id: string;
+  type: string;
+  enabled: boolean;
+  settings: Record<string, unknown>;
+}
+
+export type PayoutSchedule = 'weekly' | 'biweekly' | 'monthly';
+
+export interface RevenueAnalytics {
+  month: string;
+  revenue: number;
+  transactions: number;
+  avgOrder: number;
 }
 
 // ============================================================================
@@ -789,11 +856,12 @@ export type AdCampaignType =
  * Campaign status
  * Lifecycle states for ad campaigns
  */
-export type CampaignStatus = 
-  | 'Active'      // Currently running
-  | 'Paused'      // Temporarily paused
-  | 'Completed'   // Finished successfully
-  | 'Cancelled';  // Cancelled before completion
+export enum CampaignStatus {
+  ACTIVE = 'Active',
+  PAUSED = 'Paused',
+  COMPLETED = 'Completed',
+  CANCELLED = 'Cancelled'
+}
 
 /**
  * Audience targeting types
@@ -864,14 +932,20 @@ export interface CampaignMetrics {
 export interface AdCampaign {
   _id: string;
   
-  /** Platform where campaign runs */
-  platform: string;
+  /** Primary platform where campaign runs (legacy) */
+  platform?: string;
+  
+  /** Platforms where campaign runs (UI-facing) */
+  platforms?: string[];
   
   /** Advertiser company ID */
   advertiser: string;
   
   /** Campaign name */
   name: string;
+
+  /** Campaign description (UI-facing) */
+  description?: string;
   
   /** Campaign type */
   type: AdCampaignType;
@@ -893,6 +967,9 @@ export interface AdCampaign {
   
   /** Targeted audience IDs */
   targetedAudience: string[];
+
+  /** Targeted audience demographics (UI-facing) */
+  targetAudience?: TargetAudience;
   
   /** Audience targeting type */
   audienceType: AudienceType;
@@ -909,11 +986,20 @@ export interface AdCampaign {
   /** Total campaign budget */
   totalBudget: number;
   
+  /** Campaign objective (short) */
+  objective?: string;
+
   /** Campaign goals */
   goals: CampaignGoals;
   
   /** Performance metrics */
   metrics: CampaignMetrics;
+
+  /** Campaign budget details */
+  budget?: CampaignBudget;
+
+  /** Campaign performance (optional) */
+  performance?: CampaignPerformance;
   
   /** Quality score (1-10) */
   qualityScore: number;
@@ -949,12 +1035,15 @@ export type DealType =
  * Influencer deal status
  * Lifecycle states for deals
  */
-export type DealStatus = 
-  | 'Pending'    // Awaiting approval/signature
-  | 'Active'     // Currently active
-  | 'Completed'  // Successfully completed
-  | 'Cancelled'  // Cancelled before completion
-  | 'Breached';  // Contract breach occurred
+export enum DealStatus {
+  PENDING = 'Pending',
+  NEGOTIATING = 'Negotiating',
+  DRAFT = 'Draft',
+  ACTIVE = 'Active',
+  COMPLETED = 'Completed',
+  CANCELLED = 'Cancelled',
+  BREACHED = 'Breached'
+}
 
 /**
  * Payment structures
@@ -1133,6 +1222,44 @@ export interface InfluencerDeal {
   updatedAt: Date;
 }
 
+/**
+ * Influencer profile used by the UI (directory)
+ */
+export interface InfluencerProfile {
+  _id: string;
+  userId?: string;
+  companyId?: string;
+  name: string;
+  bio?: string;
+  niche: string[];
+  platforms: Array<{
+    platform: MediaPlatform;
+    handle: string;
+    followers: number;
+    engagement: number;
+    verified?: boolean;
+    connected?: boolean;
+    lastSync?: Date;
+  }>;
+  rates: Record<string, number>;
+  portfolio?: string[];
+  rating?: number;
+  reviewsCount?: number;
+  dealsCompleted?: number;
+  totalEarnings?: number;
+  availability?: string;
+  location?: string;
+  languages?: string[];
+  avatar?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+// Aliases for UI convenience to match existing component imports
+export type SponsorshipDeal = SponsorshipContract;
+// Rename alias to avoid collision with the MonetizationSettings React component export
+export type MonetizationSettingsType = MonetizationConfig;
+
 // ============================================================================
 // SPONSORSHIP TYPES
 // ============================================================================
@@ -1163,6 +1290,34 @@ export interface SponsorshipContract {
   
   /** Total deal value */
   dealValue: number;
+  /**
+   * UI-friendly alias for `dealValue` used by frontend components.
+   * This field is optional and kept for compatibility; backend canonical field remains `dealValue`.
+   */
+  budget?: number;
+  /** Optional human-friendly title & description */
+  title?: string;
+  description?: string;
+  /** Targeted platforms for the sponsorship */
+  platforms?: string[];
+  /** UI-friendly deliverables list */
+  deliverables?: Array<{
+    type: 'Article' | 'Video' | 'Podcast' | 'Livestream' | 'SocialPost';
+    platform?: string;
+    dueDate?: Date;
+    completed?: boolean;
+    metrics?: {
+      reach?: number;
+      engagement?: number;
+      clicks?: number;
+    };
+  }>;
+  /** UI alias for revenueSharePercent */
+  commission?: number;
+  /** Additional performance metrics that frontend uses */
+  totalClicks?: number;
+  totalConversions?: number;
+  influencerRating?: number;
   
   /** Deal structure model */
   dealStructure: DealStructure;
@@ -1286,6 +1441,15 @@ export interface SponsorshipContract {
   
   /** Last update timestamp */
   updatedAt: Date;
+
+  /** Optional runtime-friendly payment status for UI (e.g., 'pending', 'paid') */
+  paymentStatus?: 'pending' | 'paid' | 'failed' | 'processing' | 'refunded' | 'held' | 'released';
+
+  /**
+   * UI friendly performance object. Alias for convenience to match existing components
+   * that expect a `performance` object rather than separate fields.
+   */
+  performance?: CampaignPerformance;
 }
 
 // ============================================================================
@@ -1599,6 +1763,146 @@ export interface QueryParams {
   /** Additional filter params */
   [key: string]: unknown;
 }
+
+// ============================================================================
+// MISSING COMPONENT INTERFACES (Added for AdCampaignBuilder compatibility)
+// ============================================================================
+
+/**
+ * Target audience demographics for ad campaigns
+ * Defines the audience segment to target with advertising
+ */
+export interface TargetAudience {
+  /** Age range [min, max] */
+  ageRange: [number, number];
+  
+  /** Gender targeting */
+  gender: string[];
+  
+  /** Interest categories */
+  interests: string[];
+  
+  /** Geographic locations */
+  locations: string[];
+  
+  /** Language preferences */
+  languages: string[];
+  
+  /** Follower count range [min, max] */
+  followerCount?: [number, number];
+}
+
+/**
+ * Creative asset for ad campaigns
+ * Represents media content used in advertising
+ */
+export interface CreativeAsset {
+  /** Asset ID */
+  id: string;
+  
+  /** Asset type */
+  type: 'image' | 'video' | 'carousel' | 'story';
+  
+  /** Asset URL */
+  url: string;
+  
+  /** Asset title */
+  title: string;
+  
+  /** Asset description */
+  description?: string;
+  
+  /** Asset dimensions */
+  dimensions?: {
+    width: number;
+    height: number;
+  };
+  
+  /** File size in bytes */
+  fileSize?: number;
+  
+  /** Upload timestamp */
+  uploadedAt: Date;
+}
+
+/**
+ * Campaign budget allocation
+ * Defines spending limits and distribution
+ */
+export interface CampaignBudget {
+  /** Total campaign budget */
+  total: number;
+  
+  /** Daily spending limit */
+  daily: number;
+  
+  /** Platform-specific budget breakdown */
+  platformBreakdown: Record<string, number>;
+  
+  /** Currency code */
+  currency: string;
+  
+  /** Auto-optimization enabled */
+  autoOptimize: boolean;
+}
+
+/**
+ * Campaign performance metrics
+ * Real-time performance tracking
+ */
+export interface CampaignPerformance {
+  /** Total impressions */
+  impressions: number;
+  
+  /** Total clicks */
+  clicks: number;
+  
+  /** Click-through rate */
+  ctr: number;
+  
+  /** Cost per click */
+  cpc: number;
+  
+  /** Total conversions */
+  conversions: number;
+  
+  /** Conversion rate */
+  conversionRate: number;
+  
+  /** Return on ad spend */
+  roas: number;
+  
+  /** Total spend */
+  spend: number;
+  
+  /** Campaign reach */
+  reach: number;
+  /** Alias used by various UI components for reach */
+  totalReach?: number;
+  /** Total engagement count or percentage depending on context */
+  totalEngagement?: number;
+  /** Total clicks count */
+  totalClicks?: number;
+  /** Return on ad spend (may be expressed as ratio or percent depending on context) */
+  roi?: number;
+  /** Brand satisfaction / rating (optional) */
+  brandSatisfaction?: number;
+  /** Influencer rating (optional) */
+  influencerRating?: number;
+  
+  /** Engagement rate */
+  engagementRate: number;
+}
+
+/**
+ * DealPerformance alias for UI convenience
+ */
+export type DealPerformance = CampaignPerformance;
+
+/**
+ * Payment status enumeration for transactions
+ */
+export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'processing' | 'refunded' | 'held' | 'released';
 
 // ============================================================================
 // EXPORTS

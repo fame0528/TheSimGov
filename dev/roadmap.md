@@ -1,11 +1,15 @@
 # 🗺️ Project Roadmap - TheSimGov (Government Simulation MMO)
 
-**Last Updated:** 2025-11-21  
+> ⚠️ **DEPRECATED:** This file is superseded by **[MASTER_PLAN.md](./MASTER_PLAN.md)**  
+> The MASTER_PLAN is the single source of truth for development sequence.  
+> This file is retained for historical reference only.
+
+**Last Updated:** 2025-11-21 (DEPRECATED - See MASTER_PLAN.md)  
 **Project:** TheSimGov (Clean Rebuild - Infrastructure-First Approach)  
-**Status:** AUDIT COMPLETE - 18/20 Major Features Implemented (87% Complete) - Dev folder synchronized  
-**ECHO Version:** v1.1.0  
+**Status:** SUPERSEDED BY MASTER_PLAN.md  
+**ECHO Version:** v1.1.0 → v1.3.2  
 **Previous Build Reference:** 177,280 LOC (65-77% duplication) - Preserved for game design patterns  
-**Current Clean Build:** ~25,000 LOC (0% duplication, production-ready)
+**Current Clean Build:** ~50,000+ LOC (0% duplication, production-ready)
 
 ---
 

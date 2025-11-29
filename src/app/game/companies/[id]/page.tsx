@@ -23,12 +23,20 @@ import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useCompany } from '@/lib/hooks/useCompany';
 import { useAICompanySummary } from '@/lib/hooks/useAI';
+import { useEnergySummary } from '@/lib/hooks/useEnergy';
+import { useSoftwareProducts } from '@/lib/hooks/useSoftware';
+import { useEcommerceSummary } from '@/lib/hooks/useEcommerce';
 import { IndustryType, TechnologySubcategory } from '@/lib/types';
 import { COMPANY_LEVELS } from '@/lib/utils/constants';
 import { formatCurrency } from '@/lib/utils';
 import { DashboardLayout } from '@/lib/components/layouts';
 import { LoadingSpinner, ErrorMessage, Card } from '@/lib/components/shared';
 import { AICompanyDashboard } from '@/lib/components/ai';
+import { EnergyDashboard } from '@/lib/components/energy';
+import { SoftwareDashboard } from '@/lib/components/software';
+import { EcommerceDashboard } from '@/lib/components/ecommerce';
+import { EdTechDashboardWrapper } from '@/components/edtech';
+import { EmployeeDashboardWrapper } from '@/components/employee';
 import { Button, Progress } from '@heroui/react';
 import Image from 'next/image';
 import ImageUpload from '@/components/shared/ImageUpload';
@@ -60,6 +68,59 @@ function isAICompany(company: ExtendedCompany): boolean {
   const subcategory = company.subcategory?.toLowerCase();
   
   return (industry === 'technology' || industry === 'tech') && subcategory === 'ai';
+}
+
+/**
+ * Detect if company should use Energy Dashboard
+ * Matches: Energy industry (any subcategory: oil, gas, renewable, utilities)
+ */
+function isEnergyCompany(company: ExtendedCompany): boolean {
+  const industry = String(company.industry).toLowerCase();
+  return industry === 'energy';
+}
+
+/**
+ * Detect if company should use Software Dashboard
+ * Matches: Technology industry with Software subcategory
+ */
+function isSoftwareCompany(company: ExtendedCompany): boolean {
+  const industry = String(company.industry).toLowerCase();
+  const subcategory = company.subcategory?.toLowerCase();
+  
+  return (industry === 'technology' || industry === 'tech') && subcategory === 'software';
+}
+
+/**
+ * Detect if company should use E-Commerce Dashboard
+ * Matches: Retail industry OR Technology with E-Commerce subcategory
+ */
+function isEcommerceCompany(company: ExtendedCompany): boolean {
+  const industry = String(company.industry).toLowerCase();
+  const subcategory = company.subcategory?.toLowerCase();
+  
+  return industry === 'retail' || 
+         ((industry === 'technology' || industry === 'tech') && subcategory === 'e-commerce');
+}
+
+/**
+ * Detect if company should use EdTech Dashboard
+ * Matches: Education industry OR Technology with EdTech subcategory
+ */
+function isEdTechCompany(company: ExtendedCompany): boolean {
+  const industry = String(company.industry).toLowerCase();
+  const subcategory = company.subcategory?.toLowerCase();
+  
+  return industry === 'education' || 
+         ((industry === 'technology' || industry === 'tech') && subcategory === 'edtech');
+}
+
+/**
+ * Detect if company should show Employee Management Dashboard
+ * ALL companies with employees should have access to employee management
+ * This is a universal feature, not industry-specific
+ */
+function hasEmployeeManagement(company: ExtendedCompany): boolean {
+  return (company.employees?.length ?? 0) > 0;
 }
 
 /**
@@ -113,6 +174,189 @@ function AICompanyDashboardWrapper({
         onNewModel={() => router.push(`/game/companies/${companyId}/ai/models/new`)}
         onNewResearch={() => router.push(`/game/companies/${companyId}/ai/research/new`)}
         onHireTalent={() => router.push(`/game/companies/${companyId}/ai/talent`)}
+      />
+    </DashboardLayout>
+  );
+}
+
+/**
+ * Energy Company Dashboard Wrapper
+ * Fetches energy-specific data and renders EnergyDashboard
+ */
+function EnergyDashboardWrapper({ 
+  company, 
+  companyId,
+  router 
+}: { 
+  company: ExtendedCompany; 
+  companyId: string;
+  router: ReturnType<typeof useRouter>;
+}) {
+  const { data: energySummary, isLoading: energyLoading, error: energyError } = useEnergySummary(companyId);
+  
+  if (energyLoading) {
+    return (
+      <DashboardLayout title={company.name} subtitle="⚡ Energy Company • Loading...">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <LoadingSpinner size="lg" />
+        </div>
+      </DashboardLayout>
+    );
+  }
+  
+  if (energyError) {
+    return (
+      <DashboardLayout title={company.name} subtitle="⚡ Energy Company">
+        <ErrorMessage error={energyError || 'Failed to load energy data'} />
+        <Button color="primary" onPress={() => router.push('/game/dashboard')}>
+          Back to Dashboard
+        </Button>
+      </DashboardLayout>
+    );
+  }
+  
+  return (
+    <DashboardLayout 
+      title={company.name} 
+      subtitle={`⚡ Energy Company • Level ${company.level}`}
+    >
+      <EnergyDashboard
+        companyId={companyId}
+        totalOilWells={energySummary?.totalOilWells ?? 0}
+        dailyOilProduction={energySummary?.dailyOilProduction ?? 0}
+        totalGasFields={energySummary?.totalGasFields ?? 0}
+        dailyGasProduction={energySummary?.dailyGasProduction ?? 0}
+        totalSolarFarms={energySummary?.totalSolarFarms ?? 0}
+        solarCapacityMW={energySummary?.solarCapacityMW ?? 0}
+        totalWindTurbines={energySummary?.totalWindTurbines ?? 0}
+        windCapacityMW={energySummary?.windCapacityMW ?? 0}
+        totalPowerPlants={energySummary?.totalPowerPlants ?? 0}
+        powerPlantCapacityMW={energySummary?.powerPlantCapacityMW ?? 0}
+        totalStorageUnits={energySummary?.totalStorageUnits ?? 0}
+        storageCapacityMWh={energySummary?.storageCapacityMWh ?? 0}
+        totalCapacityMW={energySummary?.totalCapacityMW ?? 0}
+        currentOutputMW={energySummary?.currentOutputMW ?? 0}
+        renewablePercentage={energySummary?.renewablePercentage ?? 0}
+        carbonEmissions={energySummary?.carbonEmissions ?? 0}
+        monthlyRevenue={energySummary?.monthlyRevenue ?? 0}
+        onNewWell={() => router.push(`/game/companies/${companyId}/energy/wells/new`)}
+        onNewSolarFarm={() => router.push(`/game/companies/${companyId}/energy/solar/new`)}
+        onNewWindFarm={() => router.push(`/game/companies/${companyId}/energy/wind/new`)}
+      />
+    </DashboardLayout>
+  );
+}
+
+/**
+ * Software Company Dashboard Wrapper
+ * Fetches software-specific data and renders SoftwareDashboard
+ */
+function SoftwareDashboardWrapper({ 
+  company, 
+  companyId,
+  router 
+}: { 
+  company: ExtendedCompany; 
+  companyId: string;
+  router: ReturnType<typeof useRouter>;
+}) {
+  const { data: softwareData, isLoading: softwareLoading, error: softwareError } = useSoftwareProducts(companyId);
+  
+  if (softwareLoading) {
+    return (
+      <DashboardLayout title={company.name} subtitle="💻 Software Company • Loading...">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <LoadingSpinner size="lg" />
+        </div>
+      </DashboardLayout>
+    );
+  }
+  
+  if (softwareError) {
+    return (
+      <DashboardLayout title={company.name} subtitle="💻 Software Company">
+        <ErrorMessage error={softwareError || 'Failed to load software data'} />
+        <Button color="primary" onPress={() => router.push('/game/dashboard')}>
+          Back to Dashboard
+        </Button>
+      </DashboardLayout>
+    );
+  }
+  
+  return (
+    <DashboardLayout 
+      title={company.name} 
+      subtitle={`💻 Software Company • Level ${company.level}`}
+    >
+      <SoftwareDashboard
+        companyId={companyId}
+        companyName={company.name}
+        totalProducts={softwareData?.count ?? 0}
+        activeProducts={softwareData?.activeProducts ?? 0}
+        avgQualityScore={softwareData?.avgQuality ?? 0}
+        totalRevenue={softwareData?.totalRevenue ?? 0}
+        mrr={softwareData?.totalMRR ?? 0}
+        arr={(softwareData?.totalMRR ?? 0) * 12}
+        onNewProduct={() => router.push(`/game/companies/${companyId}/software/products/new`)}
+        onViewBugs={() => router.push(`/game/companies/${companyId}/software/bugs`)}
+        onViewFeatures={() => router.push(`/game/companies/${companyId}/software/features`)}
+      />
+    </DashboardLayout>
+  );
+}
+
+/**
+ * E-Commerce Company Dashboard Wrapper
+ * Fetches e-commerce-specific data and renders EcommerceDashboard
+ */
+function EcommerceDashboardWrapper({ 
+  company, 
+  companyId,
+  router 
+}: { 
+  company: ExtendedCompany; 
+  companyId: string;
+  router: ReturnType<typeof useRouter>;
+}) {
+  const { data: ecommerceSummary, isLoading: ecommerceLoading, error: ecommerceError } = useEcommerceSummary(companyId);
+  
+  if (ecommerceLoading) {
+    return (
+      <DashboardLayout title={company.name} subtitle="🛒 E-Commerce Company • Loading...">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <LoadingSpinner size="lg" />
+        </div>
+      </DashboardLayout>
+    );
+  }
+  
+  if (ecommerceError) {
+    return (
+      <DashboardLayout title={company.name} subtitle="🛒 E-Commerce Company">
+        <ErrorMessage error={ecommerceError || 'Failed to load e-commerce data'} />
+        <Button color="primary" onPress={() => router.push('/game/dashboard')}>
+          Back to Dashboard
+        </Button>
+      </DashboardLayout>
+    );
+  }
+  
+  return (
+    <DashboardLayout 
+      title={company.name} 
+      subtitle={`🛒 E-Commerce Company • Level ${company.level}`}
+    >
+      <EcommerceDashboard
+        companyId={companyId}
+        companyName={company.name}
+        totalProducts={ecommerceSummary?.products.total ?? 0}
+        activeProducts={ecommerceSummary?.products.active ?? 0}
+        totalRevenue={ecommerceSummary?.orders.totalRevenue ?? 0}
+        totalOrders={ecommerceSummary?.orders.total ?? 0}
+        avgRating={ecommerceSummary?.products.avgRating ?? 0}
+        onNewProduct={() => router.push(`/game/companies/${companyId}/ecommerce/products/new`)}
+        onViewOrders={() => router.push(`/game/companies/${companyId}/ecommerce/orders`)}
+        onViewReviews={() => router.push(`/game/companies/${companyId}/ecommerce/reviews`)}
       />
     </DashboardLayout>
   );
@@ -352,6 +596,15 @@ function GenericCompanyDashboard({
 
         {/* Quick Actions */}
         <div className="flex gap-3 flex-wrap">
+          {hasEmployeeManagement(company) && (
+            <Button 
+              color="primary" 
+              variant="flat"
+              onPress={() => router.push(`/game/companies/${companyId}/employees`)}
+            >
+              👥 Employee Management
+            </Button>
+          )}
           <Button variant="bordered" onPress={() => router.push(`/companies/${companyId}/edit`)}>
             Edit Company
           </Button>
@@ -420,6 +673,49 @@ export default function CompanyDashboardPage() {
     );
   }
 
+  // Energy industry dashboard
+  if (isEnergyCompany(extendedCompany)) {
+    return (
+      <EnergyDashboardWrapper 
+        company={extendedCompany} 
+        companyId={companyId}
+        router={router}
+      />
+    );
+  }
+
+  // Software industry dashboard
+  if (isSoftwareCompany(extendedCompany)) {
+    return (
+      <SoftwareDashboardWrapper 
+        company={extendedCompany} 
+        companyId={companyId}
+        router={router}
+      />
+    );
+  }
+
+  // E-Commerce industry dashboard
+  if (isEcommerceCompany(extendedCompany)) {
+    return (
+      <EcommerceDashboardWrapper 
+        company={extendedCompany} 
+        companyId={companyId}
+        router={router}
+      />
+    );
+  }
+
+  // EdTech industry dashboard
+  if (isEdTechCompany(extendedCompany)) {
+    return (
+      <EdTechDashboardWrapper
+        company={extendedCompany}
+        companyId={companyId}
+      />
+    );
+  }
+
   // Default: Generic dashboard
   return (
     <GenericCompanyDashboard
@@ -442,16 +738,17 @@ export default function CompanyDashboardPage() {
  * 
  * SUPPORTED INDUSTRIES:
  * - Technology + AI → AICompanyDashboard (13,500+ lines of AI code!)
- * - Technology + Software → SoftwareDashboard (future)
- * - Energy → EnergyDashboard (future)
+ * - Technology + Software → SoftwareDashboard (implemented!)
+ * - Energy → EnergyDashboard (implemented!)
+ * - Retail / Technology + E-Commerce → EcommerceDashboard (implemented!)
  * - Healthcare → HealthcareDashboard (future)
  * - Default → GenericDashboard (current implementation)
  * 
  * TO ADD NEW INDUSTRY:
- * 1. Create detection function (e.g., isSoftwareCompany)
+ * 1. Create detection function (e.g., isHealthcareCompany)
  * 2. Create DashboardWrapper that fetches industry data
  * 3. Add conditional render in CompanyDashboardPage
  * 
- * @updated 2025-11-28
+ * @updated 2025-11-29
  * @author ECHO v1.3.1
  */

@@ -195,6 +195,79 @@ export const aiEndpoints = {
 } as const;
 
 /**
+ * Energy Industry endpoints
+ * Covers oil wells, gas fields, solar farms, wind turbines, 
+ * power plants, storage, and transmission infrastructure
+ */
+export const energyEndpoints = {
+  // Oil Wells
+  oilWells: {
+    list: (companyId: string) => `/api/energy/oil-wells?companyId=${companyId}` as const,
+    create: '/api/energy/oil-wells',
+    byId: (id: string) => `/api/energy/oil-wells/${id}` as const,
+    update: (id: string) => `/api/energy/oil-wells/${id}` as const,
+    delete: (id: string) => `/api/energy/oil-wells/${id}` as const,
+  },
+  
+  // Gas Fields
+  gasFields: {
+    list: (companyId: string) => `/api/energy/gas-fields?companyId=${companyId}` as const,
+    create: '/api/energy/gas-fields',
+    byId: (id: string) => `/api/energy/gas-fields/${id}` as const,
+    update: (id: string) => `/api/energy/gas-fields/${id}` as const,
+    delete: (id: string) => `/api/energy/gas-fields/${id}` as const,
+  },
+  
+  // Solar Farms
+  solarFarms: {
+    list: (companyId: string) => `/api/energy/solar-farms?companyId=${companyId}` as const,
+    create: '/api/energy/solar-farms',
+    byId: (id: string) => `/api/energy/solar-farms/${id}` as const,
+    update: (id: string) => `/api/energy/solar-farms/${id}` as const,
+    delete: (id: string) => `/api/energy/solar-farms/${id}` as const,
+  },
+  
+  // Wind Turbines
+  windTurbines: {
+    list: (companyId: string) => `/api/energy/wind-turbines?companyId=${companyId}` as const,
+    create: '/api/energy/wind-turbines',
+    byId: (id: string) => `/api/energy/wind-turbines/${id}` as const,
+    update: (id: string) => `/api/energy/wind-turbines/${id}` as const,
+    delete: (id: string) => `/api/energy/wind-turbines/${id}` as const,
+  },
+  
+  // Power Plants
+  powerPlants: {
+    list: (companyId: string) => `/api/energy/power-plants?companyId=${companyId}` as const,
+    create: '/api/energy/power-plants',
+    byId: (id: string) => `/api/energy/power-plants/${id}` as const,
+    update: (id: string) => `/api/energy/power-plants/${id}` as const,
+    delete: (id: string) => `/api/energy/power-plants/${id}` as const,
+  },
+  
+  // Energy Storage
+  storage: {
+    list: (companyId: string) => `/api/energy/storage?companyId=${companyId}` as const,
+    create: '/api/energy/storage',
+    byId: (id: string) => `/api/energy/storage/${id}` as const,
+    update: (id: string) => `/api/energy/storage/${id}` as const,
+    delete: (id: string) => `/api/energy/storage/${id}` as const,
+  },
+  
+  // Transmission Lines
+  transmissionLines: {
+    list: (companyId: string) => `/api/energy/transmission-lines?companyId=${companyId}` as const,
+    create: '/api/energy/transmission-lines',
+    byId: (id: string) => `/api/energy/transmission-lines/${id}` as const,
+    update: (id: string) => `/api/energy/transmission-lines/${id}` as const,
+    delete: (id: string) => `/api/energy/transmission-lines/${id}` as const,
+  },
+  
+  // Summary endpoint for dashboard
+  summary: (companyId: string) => `/api/energy/summary?companyId=${companyId}` as const,
+} as const;
+
+/**
  * Admin endpoints
  */
 export const adminEndpoints = {
@@ -203,6 +276,106 @@ export const adminEndpoints = {
   diagnostics: '/api/admin/diagnostics',
   metrics: '/api/admin/metrics',
   banUser: (userId: string) => `/api/admin/users/${userId}/ban` as const,
+} as const;
+
+/**
+ * Software Industry endpoints
+ * Covers software products, releases, bugs, features, and SaaS subscriptions
+ */
+export const softwareEndpoints = {
+  // Software Products
+  products: {
+    list: (companyId: string) => `/api/software/products?company=${companyId}` as const,
+    create: '/api/software/products',
+    byId: (id: string) => `/api/software/products/${id}` as const,
+    update: (id: string) => `/api/software/products/${id}` as const,
+    delete: (id: string) => `/api/software/products/${id}` as const,
+  },
+  
+  // Software Releases
+  releases: {
+    list: (productId: string) => `/api/software/releases?product=${productId}` as const,
+    create: '/api/software/releases',
+    byId: (id: string) => `/api/software/releases/${id}` as const,
+    update: (id: string) => `/api/software/releases/${id}` as const,
+    delete: (id: string) => `/api/software/releases/${id}` as const,
+  },
+  
+  // Bugs
+  bugs: {
+    list: (productId: string) => `/api/software/bugs?product=${productId}` as const,
+    create: '/api/software/bugs',
+    byId: (id: string) => `/api/software/bugs/${id}` as const,
+    update: (id: string) => `/api/software/bugs/${id}` as const,
+    delete: (id: string) => `/api/software/bugs/${id}` as const,
+  },
+  
+  // Features
+  features: {
+    list: (productId: string) => `/api/software/features?product=${productId}` as const,
+    create: '/api/software/features',
+    byId: (id: string) => `/api/software/features/${id}` as const,
+    update: (id: string) => `/api/software/features/${id}` as const,
+    delete: (id: string) => `/api/software/features/${id}` as const,
+  },
+  
+  // SaaS Subscriptions
+  saas: {
+    list: (productId: string) => `/api/software/saas?product=${productId}` as const,
+    create: '/api/software/saas',
+    byId: (id: string) => `/api/software/saas/${id}` as const,
+    update: (id: string) => `/api/software/saas/${id}` as const,
+    delete: (id: string) => `/api/software/saas/${id}` as const,
+  },
+  
+  // Summary endpoint for dashboard
+  summary: (companyId: string) => `/api/software/summary?companyId=${companyId}` as const,
+} as const;
+
+/**
+ * E-Commerce Industry endpoints
+ * Covers products, orders, reviews, and marketing campaigns
+ */
+export const ecommerceEndpoints = {
+  // Product Listings
+  products: {
+    list: (companyId: string) => `/api/ecommerce/products?company=${companyId}` as const,
+    create: '/api/ecommerce/products',
+    byId: (id: string) => `/api/ecommerce/products/${id}` as const,
+    update: (id: string) => `/api/ecommerce/products/${id}` as const,
+    delete: (id: string) => `/api/ecommerce/products/${id}` as const,
+  },
+  
+  // Orders
+  orders: {
+    list: (companyId: string) => `/api/ecommerce/orders?company=${companyId}` as const,
+    create: '/api/ecommerce/orders',
+    byId: (id: string) => `/api/ecommerce/orders/${id}` as const,
+    update: (id: string) => `/api/ecommerce/orders/${id}` as const,
+    delete: (id: string) => `/api/ecommerce/orders/${id}` as const,
+  },
+  
+  // Customer Reviews
+  reviews: {
+    list: (companyId: string) => `/api/ecommerce/reviews?company=${companyId}` as const,
+    byProduct: (productId: string) => `/api/ecommerce/reviews?product=${productId}` as const,
+    create: '/api/ecommerce/reviews',
+    byId: (id: string) => `/api/ecommerce/reviews/${id}` as const,
+    update: (id: string) => `/api/ecommerce/reviews/${id}` as const,
+    delete: (id: string) => `/api/ecommerce/reviews/${id}` as const,
+  },
+  
+  // SEO/PPC Campaigns
+  campaigns: {
+    list: (companyId: string) => `/api/ecommerce/campaigns?company=${companyId}` as const,
+    create: '/api/ecommerce/campaigns',
+    byId: (id: string) => `/api/ecommerce/campaigns/${id}` as const,
+    update: (id: string) => `/api/ecommerce/campaigns/${id}` as const,
+    delete: (id: string) => `/api/ecommerce/campaigns/${id}` as const,
+  },
+  
+  // Summary endpoint for dashboard
+  summary: (companyId: string) => `/api/ecommerce/summary?company=${companyId}` as const,
 } as const;
 
 /**
@@ -217,6 +390,9 @@ export const endpoints = {
   users: userEndpoints,
   industries: industryEndpoints,
   ai: aiEndpoints,
+  energy: energyEndpoints,
+  software: softwareEndpoints,
+  ecommerce: ecommerceEndpoints,
   admin: adminEndpoints,
 } as const;
 

@@ -18,6 +18,7 @@
  */
 
 import { Types } from 'mongoose';
+import { MediaPlatform } from '@/lib/types/media';
 
 /**
  * Audience Demographics Interface
@@ -304,6 +305,60 @@ export function calculateInfluencerROI(
 
   const roi = ((revenueGenerated - totalInvestment) / totalInvestment) * 100;
   return Math.round(roi * 100) / 100;
+}
+
+/**
+ * Calculate deal ROI for SponsorshipContract or InfluencerDeal
+ * This is a lightweight estimator used in UIs for quick ROI visibility.
+ * For SponsorshipContract we use estimatedReach and brandLift as a proxy
+ * for guestimated revenue per campaign. For InfluencerDeal we use actualROI
+ * if available. The implementation avoids overfitting and protects against
+ * division by zero.
+ */
+import type { SponsorshipContract, InfluencerDeal } from '@/lib/types/media';
+
+/**
+ * Type guard to check if deal is a SponsorshipContract
+ */
+function isSponsorshipContract(deal: SponsorshipContract | InfluencerDeal): deal is SponsorshipContract {
+  return 'totalPaid' in deal && 'estimatedReach' in deal && 'brandLift' in deal;
+}
+
+/**
+ * Type guard to check if deal is an InfluencerDeal
+ */
+function isInfluencerDeal(deal: SponsorshipContract | InfluencerDeal): deal is InfluencerDeal {
+  return 'paidToDate' in deal && 'actualROI' in deal;
+}
+
+export function calculateDealROI(deal: SponsorshipContract | InfluencerDeal): number {
+  // For InfluencerDeal, use the actualROI directly if available
+  if (isInfluencerDeal(deal)) {
+    if (deal.actualROI !== 0) {
+      return deal.actualROI;
+    }
+    // Fallback: calculate from projectedROI if no actual ROI yet
+    return deal.projectedROI;
+  }
+
+  // For SponsorshipContract, calculate based on estimatedReach and brandLift
+  if (isSponsorshipContract(deal)) {
+    const totalPaid = deal.totalPaid ?? 0;
+    const estimatedReach = deal.estimatedReach ?? 0;
+    const brandLift = deal.brandLift ?? 0;
+
+    // Use a conservative revenue-per-reach multiplier (USD per reached user)
+    const revenuePerReach = 0.02; // $0.02 per user reached - conservative baseline
+    const estimatedRevenue = estimatedReach * (brandLift / 100) * revenuePerReach;
+
+    if (totalPaid === 0) return 0;
+
+    const roiPercentage = ((estimatedRevenue - totalPaid) / totalPaid) * 100;
+    return Math.round(roiPercentage * 100) / 100; // Round to 2 decimals
+  }
+
+  // Fallback for unknown types
+  return 0;
 }
 
 /**
@@ -677,4 +732,504 @@ function calculateVariance(values: number[]): number {
   const variance = squaredDiffs.reduce((sum, val) => sum + val, 0) / values.length;
 
   return variance;
+}
+
+// ============================================================================
+// CAMPAIGN CONSTANTS (Added for AdCampaignBuilder compatibility)
+// ============================================================================
+
+// ============================================================================
+// INFLUENCER/TIER CONSTANTS
+// ============================================================================
+
+export const INFLUENCER_TIER_THRESHOLDS = {
+  NANO: { min: 1000, max: 9999 },
+  MICRO: { min: 10000, max: 99999 },
+  MID: { min: 100000, max: 499999 },
+  MACRO: { min: 500000, max: 999999 },
+  MEGA: { min: 1000000, max: 99999999 }
+} as const;
+
+export const PLATFORM_ENGAGEMENT_THRESHOLDS = {
+  [MediaPlatform.INSTAGRAM]: { EXCELLENT: 5, GOOD: 3, AVERAGE: 1 },
+  [MediaPlatform.YOUTUBE]: { EXCELLENT: 6, GOOD: 4, AVERAGE: 2 },
+  [MediaPlatform.TIKTOK]: { EXCELLENT: 7, GOOD: 4.5, AVERAGE: 2.5 },
+  [MediaPlatform.TWITTER]: { EXCELLENT: 2.5, GOOD: 1.5, AVERAGE: 0.5 },
+  [MediaPlatform.FACEBOOK]: { EXCELLENT: 3, GOOD: 2, AVERAGE: 1 },
+  [MediaPlatform.LINKEDIN]: { EXCELLENT: 1.5, GOOD: 1.0, AVERAGE: 0.5 },
+  [MediaPlatform.PODCAST]: { EXCELLENT: 0.8, GOOD: 0.5, AVERAGE: 0.2 },
+  [MediaPlatform.BLOG]: { EXCELLENT: 1.0, GOOD: 0.6, AVERAGE: 0.3 }
+} as const;
+
+export const INFLUENCER_BASE_RATES = {
+  NANO: { post: 50, story: 20, video: 100, live: 75 },
+  MICRO: { post: 200, story: 100, video: 400, live: 250 },
+  MID: { post: 800, story: 400, video: 1600, live: 1000 },
+  MACRO: { post: 2500, story: 1200, video: 5000, live: 3000 },
+  MEGA: { post: 7500, story: 3500, video: 15000, live: 10000 }
+} as const;
+
+export const ENGAGEMENT_MULTIPLIERS = {
+  EXCELLENT: 1.5,
+  GOOD: 1.2,
+  AVERAGE: 1.0,
+  POOR: 0.8
+} as const;
+
+export const NICHE_PREMIUMS = {
+  fitness: 1.2,
+  technology: 1.3,
+  fashion: 1.1,
+  food: 1.05,
+  gaming: 1.2,
+  music: 1.15,
+  travel: 1.05,
+  beauty: 1.2
+} as const;
+
+/**
+ * Derive influencer tier (NANO, MICRO, MID, MACRO, MEGA) from follower count
+ */
+export function getInfluencerTier(followers: number) {
+  if (followers >= INFLUENCER_TIER_THRESHOLDS.MEGA.min) return 'MEGA';
+  if (followers >= INFLUENCER_TIER_THRESHOLDS.MACRO.min) return 'MACRO';
+  if (followers >= INFLUENCER_TIER_THRESHOLDS.MID.min) return 'MID';
+  if (followers >= INFLUENCER_TIER_THRESHOLDS.MICRO.min) return 'MICRO';
+  return 'NANO';
+}
+
+/**
+ * Get engagement tier name from platform and engagement rate
+ */
+export function getEngagementTier(platform: MediaPlatform, rate: number) {
+  const thresholds = PLATFORM_ENGAGEMENT_THRESHOLDS[platform];
+  if (!thresholds) return 'AVERAGE';
+  if (rate >= thresholds.EXCELLENT) return 'EXCELLENT';
+  if (rate >= thresholds.GOOD) return 'GOOD';
+  if (rate >= thresholds.AVERAGE) return 'AVERAGE';
+  return 'POOR';
+}
+
+/**
+ * Platform budget multipliers for campaign cost estimation
+ * Multipliers applied to base budget based on platform reach and competition
+ */
+export const PLATFORM_BUDGET_MULTIPLIERS = {
+  [MediaPlatform.INSTAGRAM]: 1.2,
+  [MediaPlatform.YOUTUBE]: 1.5,
+  [MediaPlatform.TIKTOK]: 0.8,
+  [MediaPlatform.TWITTER]: 1.0,
+  [MediaPlatform.FACEBOOK]: 1.1,
+  [MediaPlatform.LINKEDIN]: 1.8,
+  [MediaPlatform.PODCAST]: 0.9,
+  [MediaPlatform.BLOG]: 0.7
+} as const;
+
+/**
+ * Audience size estimates by platform
+ * Estimated reach per dollar spent on each platform
+ */
+export const AUDIENCE_SIZE_ESTIMATES = {
+  [MediaPlatform.INSTAGRAM]: 50000,
+  [MediaPlatform.YOUTUBE]: 25000,
+  [MediaPlatform.TIKTOK]: 75000,
+  [MediaPlatform.TWITTER]: 30000,
+  [MediaPlatform.FACEBOOK]: 40000,
+  [MediaPlatform.LINKEDIN]: 15000,
+  [MediaPlatform.PODCAST]: 20000,
+  [MediaPlatform.BLOG]: 10000
+} as const;
+
+/**
+ * Creative format requirements by platform
+ * Technical specifications for ad creatives on each platform
+ */
+export const CREATIVE_FORMAT_REQUIREMENTS = {
+  [MediaPlatform.INSTAGRAM]: {
+    image: { width: 1080, height: 1080, aspectRatio: '1:1' },
+    video: { width: 1080, height: 1920, maxDuration: 60, aspectRatio: '9:16' },
+    carousel: { minImages: 2, maxImages: 10, aspectRatio: '1:1' },
+    story: { width: 1080, height: 1920, maxDuration: 15, aspectRatio: '9:16' }
+  },
+  [MediaPlatform.YOUTUBE]: {
+    video: { width: 1920, height: 1080, minDuration: 12, maxDuration: 180, aspectRatio: '16:9' },
+    thumbnail: { width: 1280, height: 720, aspectRatio: '16:9' }
+  },
+  [MediaPlatform.TIKTOK]: {
+    video: { width: 1080, height: 1920, minDuration: 15, maxDuration: 180, aspectRatio: '9:16' },
+    sound: { maxDuration: 180 }
+  },
+  [MediaPlatform.TWITTER]: {
+    image: { width: 1200, height: 675, aspectRatio: '16:9' },
+    video: { width: 1280, height: 720, maxDuration: 140, aspectRatio: '16:9' }
+  },
+  [MediaPlatform.FACEBOOK]: {
+    image: { width: 1200, height: 628, aspectRatio: '1.91:1' },
+    video: { width: 1280, height: 720, maxDuration: 240, aspectRatio: '16:9' },
+    carousel: { minImages: 2, maxImages: 10 }
+  },
+  [MediaPlatform.LINKEDIN]: {
+    image: { width: 1200, height: 627, aspectRatio: '1.91:1' },
+    video: { width: 1920, height: 1080, maxDuration: 30, aspectRatio: '16:9' }
+  },
+  [MediaPlatform.PODCAST]: {
+    audio: { maxDuration: 3600, formats: ['mp3', 'wav'] }
+  },
+  [MediaPlatform.BLOG]: {
+    image: { width: 1200, height: 630, aspectRatio: '1.91:1' },
+    text: { maxLength: 5000 }
+  }
+} as const;
+
+/**
+ * Campaign objective options
+ * Available campaign goals for ad targeting
+ */
+export const CAMPAIGN_OBJECTIVES = {
+  brand_awareness: 'Brand Awareness',
+  traffic: 'Website Traffic',
+  engagement: 'Engagement',
+  leads: 'Lead Generation',
+  sales: 'Sales',
+  app_installs: 'App Installs',
+  video_views: 'Video Views',
+  reach: 'Reach'
+} as const;
+
+// ============================================================================
+// CAMPAIGN CALCULATION FUNCTIONS (Added for AdCampaignBuilder compatibility)
+// ============================================================================
+
+/**
+ * Calculate estimated audience reach for a campaign
+ * @param budget - Campaign budget in dollars
+ * @param platforms - Array of target platforms
+ * @param targetAudience - Audience targeting parameters
+ * @returns Estimated reach in impressions
+ */
+export function calculateEstimatedReach(
+  budget: number,
+  platforms: MediaPlatform[],
+  targetAudience?: { followerCount?: [number, number] }
+): number {
+  if (!platforms.length) return 0;
+
+  // Base reach per platform
+  const platformReach = platforms.reduce((total, platform) => {
+    const baseReach = AUDIENCE_SIZE_ESTIMATES[platform] || 30000;
+    const multiplier = PLATFORM_BUDGET_MULTIPLIERS[platform] || 1.0;
+    return total + (baseReach * multiplier);
+  }, 0);
+
+  // Adjust for audience targeting
+  let audienceMultiplier = 1.0;
+  if (targetAudience?.followerCount) {
+    const [min, max] = targetAudience.followerCount;
+    if (max < 10000) audienceMultiplier = 0.6; // Niche audience
+    else if (max < 50000) audienceMultiplier = 0.8; // Medium audience
+    else if (max < 100000) audienceMultiplier = 1.0; // Broad audience
+    else audienceMultiplier = 1.2; // Large audience
+  }
+
+  // Calculate total estimated reach
+  const estimatedReach = (budget / platforms.length) * platformReach * audienceMultiplier;
+
+  return Math.round(estimatedReach);
+}
+
+/**
+ * Calculate estimated campaign cost
+ * @param targetReach - Desired audience reach
+ * @param platforms - Array of target platforms
+ * @param targetAudience - Audience targeting parameters
+ * @returns Estimated cost in dollars
+ */
+export function calculateEstimatedCost(
+  targetReach: number,
+  platforms: MediaPlatform[],
+  targetAudience?: { followerCount?: [number, number] }
+): number {
+  if (!platforms.length || targetReach <= 0) return 0;
+
+  // Base cost per platform
+  const platformCost = platforms.reduce((total, platform) => {
+    const baseReach = AUDIENCE_SIZE_ESTIMATES[platform] || 30000;
+    const multiplier = PLATFORM_BUDGET_MULTIPLIERS[platform] || 1.0;
+    const costPerThousand = 5.0 * multiplier; // Base $5 per 1000 impressions
+    return total + (costPerThousand / baseReach * 1000);
+  }, 0);
+
+  // Adjust for audience targeting
+  let audienceMultiplier = 1.0;
+  if (targetAudience?.followerCount) {
+    const [min, max] = targetAudience.followerCount;
+    if (max < 10000) audienceMultiplier = 1.5; // Niche audience costs more
+    else if (max < 50000) audienceMultiplier = 1.2; // Medium audience
+    else if (max < 100000) audienceMultiplier = 1.0; // Broad audience
+    else audienceMultiplier = 0.8; // Large audience costs less
+  }
+
+  // Calculate total estimated cost
+  const estimatedCost = (targetReach / 1000) * platformCost * audienceMultiplier / platforms.length;
+
+  return Math.round(estimatedCost * 100) / 100; // Round to 2 decimal places
+}
+
+/**
+ * Validate campaign budget allocation
+ * @param budget - Campaign budget object
+ * @param platforms - Array of target platforms
+ * @returns Validation result with errors if any
+ */
+export function validateCampaignBudget(
+  budget: { total: number; daily: number; platformBreakdown: Record<string, number> },
+  platforms: MediaPlatform[]
+): { isValid: boolean; errors: string[] } {
+  const errors: string[] = [];
+
+  // Check total budget
+  if (budget.total <= 0) {
+    errors.push('Total budget must be greater than 0');
+  }
+
+  // Check daily budget
+  if (budget.daily <= 0) {
+    errors.push('Daily budget must be greater than 0');
+  }
+
+  if (budget.daily > budget.total) {
+    errors.push('Daily budget cannot exceed total budget');
+  }
+
+  // Check platform breakdown
+  const platformTotal = Object.values(budget.platformBreakdown).reduce((sum, amount) => sum + amount, 0);
+  if (Math.abs(platformTotal - budget.total) > 0.01) { // Allow for floating point precision
+    errors.push(`Platform breakdown total ($${platformTotal}) must equal total budget ($${budget.total})`);
+  }
+
+  // Check that all platforms have budget allocation
+  for (const platform of platforms) {
+    if (!budget.platformBreakdown[platform] || budget.platformBreakdown[platform] <= 0) {
+      errors.push(`Platform ${platform} must have a budget allocation greater than 0`);
+    }
+  }
+
+  // Check for minimum budget per platform
+  for (const [platform, amount] of Object.entries(budget.platformBreakdown)) {
+    if (amount < 10) { // Minimum $10 per platform
+      errors.push(`Platform ${platform} budget must be at least $10`);
+    }
+  }
+
+  return {
+    isValid: errors.length === 0,
+    errors
+  };
+}
+
+// ============================================================================
+// MONETIZATION SETTINGS CONSTANTS (For MonetizationSettings component)
+// ============================================================================
+
+/**
+ * Platform fees by revenue stream type
+ * Percentage fees charged for each revenue stream
+ */
+export const MONETIZATION_FEES = {
+  sponsorships: 8,
+  affiliates: 15,
+  merchandise: 20,
+  subscriptions: 5,
+  advertising: 30,
+  donations: 10,
+  licensing: 12,
+  events: 18
+} as const;
+
+/**
+ * Minimum payout thresholds by payment method
+ * Minimum amount required for payout processing
+ */
+export const PAYOUT_THRESHOLDS = {
+  bank_transfer: 100,
+  paypal: 25,
+  stripe: 50,
+  crypto: 100,
+  check: 250,
+  wire: 500
+} as const;
+
+/**
+ * Subscription tier configuration
+ * Default tier structures for monetization
+ */
+export const SUBSCRIPTION_TIERS = {
+  free: {
+    name: 'Free',
+    price: 0,
+    features: ['Basic analytics', 'Limited campaigns'],
+    limits: { campaigns: 1, influencers: 5 }
+  },
+  starter: {
+    name: 'Starter',
+    price: 19,
+    features: ['Basic analytics', 'Up to 5 campaigns', 'Email support'],
+    limits: { campaigns: 5, influencers: 15 }
+  },
+  pro: {
+    name: 'Pro',
+    price: 49,
+    features: ['Advanced analytics', 'Unlimited campaigns', 'Priority support'],
+    limits: { campaigns: -1, influencers: 50 }
+  },
+  enterprise: {
+    name: 'Enterprise',
+    price: 199,
+    features: ['White-label solution', 'API access', 'Dedicated support'],
+    limits: { campaigns: -1, influencers: -1 }
+  }
+} as const;
+
+/**
+ * Revenue stream type definitions
+ * Available revenue stream types with metadata
+ */
+export const REVENUE_STREAM_TYPES = {
+  sponsorships: {
+    label: 'Sponsorships',
+    description: 'Brand partnership deals',
+    icon: 'handshake',
+    defaultCommission: 8
+  },
+  affiliates: {
+    label: 'Affiliate Marketing',
+    description: 'Commission-based product promotion',
+    icon: 'link',
+    defaultCommission: 15
+  },
+  merchandise: {
+    label: 'Merchandise',
+    description: 'Branded product sales',
+    icon: 'shopping-bag',
+    defaultCommission: 20
+  },
+  subscriptions: {
+    label: 'Subscriptions',
+    description: 'Recurring membership revenue',
+    icon: 'credit-card',
+    defaultCommission: 5
+  },
+  advertising: {
+    label: 'Advertising',
+    description: 'Display and video ads',
+    icon: 'megaphone',
+    defaultCommission: 30
+  },
+  donations: {
+    label: 'Donations',
+    description: 'Tips and fan contributions',
+    icon: 'heart',
+    defaultCommission: 10
+  }
+} as const;
+
+// ============================================================================
+// MONETIZATION CALCULATION FUNCTIONS (For MonetizationSettings component)
+// ============================================================================
+
+/**
+ * Calculate platform fees for a given revenue stream
+ * @param streamType - Type of revenue stream
+ * @param revenue - Gross revenue amount
+ * @returns Platform fee amount and net revenue
+ */
+export function calculatePlatformFees(
+  streamType: keyof typeof MONETIZATION_FEES,
+  revenue: number
+): { fee: number; netRevenue: number; feeRate: number } {
+  const feeRate = MONETIZATION_FEES[streamType] || 0;
+  const fee = Math.round((revenue * feeRate / 100) * 100) / 100;
+  const netRevenue = Math.round((revenue - fee) * 100) / 100;
+
+  return {
+    fee,
+    netRevenue,
+    feeRate
+  };
+}
+
+/**
+ * Calculate payout amount after fees and thresholds
+ * @param grossAmount - Gross payout amount
+ * @param paymentMethod - Payment method for payout
+ * @param processingFee - Additional processing fee percentage (default 2.9%)
+ * @returns Payout details with net amount and eligibility
+ */
+export function calculatePayoutAmount(
+  grossAmount: number,
+  paymentMethod: keyof typeof PAYOUT_THRESHOLDS,
+  processingFee: number = 2.9
+): { netAmount: number; fees: number; isEligible: boolean; minimumThreshold: number } {
+  const minimumThreshold = PAYOUT_THRESHOLDS[paymentMethod] || 100;
+  const fees = Math.round((grossAmount * processingFee / 100) * 100) / 100;
+  const netAmount = Math.round((grossAmount - fees) * 100) / 100;
+  const isEligible = grossAmount >= minimumThreshold;
+
+  return {
+    netAmount,
+    fees,
+    isEligible,
+    minimumThreshold
+  };
+}
+
+/**
+ * Validate pricing tier configuration
+ * @param tier - Pricing tier to validate
+ * @returns Validation result with errors if any
+ */
+export function validatePricingTier(tier: {
+  name: string;
+  price: number;
+  features: string[];
+  limits: { campaigns: number; influencers: number };
+}): { isValid: boolean; errors: string[] } {
+  const errors: string[] = [];
+
+  // Validate name
+  if (!tier.name || tier.name.trim().length === 0) {
+    errors.push('Tier name is required');
+  }
+  if (tier.name && tier.name.length > 50) {
+    errors.push('Tier name must be 50 characters or less');
+  }
+
+  // Validate price
+  if (tier.price < 0) {
+    errors.push('Price cannot be negative');
+  }
+  if (tier.price > 10000) {
+    errors.push('Price cannot exceed $10,000');
+  }
+
+  // Validate features
+  if (!tier.features || tier.features.length === 0) {
+    errors.push('At least one feature is required');
+  }
+  if (tier.features && tier.features.length > 20) {
+    errors.push('Maximum 20 features allowed');
+  }
+
+  // Validate limits
+  if (tier.limits.campaigns < -1) {
+    errors.push('Campaign limit must be -1 (unlimited) or 0+');
+  }
+  if (tier.limits.influencers < -1) {
+    errors.push('Influencer limit must be -1 (unlimited) or 0+');
+  }
+
+  return {
+    isValid: errors.length === 0,
+    errors
+  };
 }
