@@ -36,9 +36,10 @@
 A sophisticated multiplayer simulation where players build business empires, shape government policy, and compete in a living economy. Features include:
 
 ### 🏢 **Core Systems**
-- **Industries:** Energy (Oil/Gas, Renewables), Media, Technology, Finance, R&D
+- **Industries:** Energy, Media, Technology, Finance, Manufacturing, Consulting
 - **Politics:** Elections, Bills, Government Departments, Policy Impact
 - **Economy:** Real Estate, Employee Marketplace, Dynamic Pricing
+- **Crime:** Illegal Operations, Enforcement, Underground Economy
 - **Social:** Clans, Chat, Endorsements, Player Interactions
 
 ### 🎯 **Key Features**
