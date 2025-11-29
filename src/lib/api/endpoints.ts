@@ -379,6 +379,101 @@ export const ecommerceEndpoints = {
 } as const;
 
 /**
+ * Consulting Industry endpoints
+ * Covers consulting projects, time tracking, billing,
+ * client management, and profitability metrics
+ */
+export const consultingEndpoints = {
+  // Consulting Projects
+  projects: {
+    list: (companyId: string) => `/api/consulting/projects?company=${companyId}` as const,
+    listWithMetrics: (companyId: string) => `/api/consulting/projects?company=${companyId}&includeMetrics=true` as const,
+    listWithRecommendations: (companyId: string) => `/api/consulting/projects?company=${companyId}&includeRecommendations=true` as const,
+    create: '/api/consulting/projects',
+    byId: (id: string) => `/api/consulting/projects/${id}` as const,
+    update: (id: string) => `/api/consulting/projects/${id}` as const,
+    delete: (id: string) => `/api/consulting/projects/${id}` as const,
+  },
+  
+  // Project filtering
+  filters: {
+    byStatus: (companyId: string, status: string) => `/api/consulting/projects?company=${companyId}&status=${status}` as const,
+    byType: (companyId: string, type: string) => `/api/consulting/projects?company=${companyId}&projectType=${type}` as const,
+    byClient: (companyId: string, client: string) => `/api/consulting/projects?company=${companyId}&client=${encodeURIComponent(client)}` as const,
+    byBillingModel: (companyId: string, model: string) => `/api/consulting/projects?company=${companyId}&billingModel=${model}` as const,
+  },
+  
+  // Summary endpoint for dashboard
+  summary: (companyId: string) => `/api/consulting/projects?company=${companyId}&includeMetrics=true&includeRecommendations=true` as const,
+} as const;
+
+/**
+ * Manufacturing Industry endpoints
+ * Covers facilities, production lines, suppliers, inventory,
+ * quality metrics, and supply chain management
+ */
+export const manufacturingEndpoints = {
+  // Manufacturing Facilities
+  facilities: {
+    list: (companyId: string) => `/api/manufacturing/facilities?company=${companyId}` as const,
+    create: '/api/manufacturing/facilities',
+    byId: (id: string) => `/api/manufacturing/facilities/${id}` as const,
+    update: (id: string) => `/api/manufacturing/facilities/${id}` as const,
+    delete: (id: string) => `/api/manufacturing/facilities/${id}` as const,
+  },
+  
+  // Production Lines
+  productionLines: {
+    list: (companyId: string) => `/api/manufacturing/production-lines?company=${companyId}` as const,
+    byFacility: (facilityId: string) => `/api/manufacturing/production-lines?facility=${facilityId}` as const,
+    create: '/api/manufacturing/production-lines',
+    byId: (id: string) => `/api/manufacturing/production-lines/${id}` as const,
+    update: (id: string) => `/api/manufacturing/production-lines/${id}` as const,
+    delete: (id: string) => `/api/manufacturing/production-lines/${id}` as const,
+  },
+  
+  // Suppliers
+  suppliers: {
+    list: (companyId: string) => `/api/manufacturing/suppliers?company=${companyId}` as const,
+    create: '/api/manufacturing/suppliers',
+    byId: (id: string) => `/api/manufacturing/suppliers/${id}` as const,
+    update: (id: string) => `/api/manufacturing/suppliers/${id}` as const,
+    delete: (id: string) => `/api/manufacturing/suppliers/${id}` as const,
+    scorecard: (id: string) => `/api/manufacturing/suppliers/${id}/scorecard` as const,
+  },
+  
+  // Inventory
+  inventory: {
+    list: (companyId: string) => `/api/manufacturing/inventory?company=${companyId}` as const,
+    byFacility: (facilityId: string) => `/api/manufacturing/inventory?facility=${facilityId}` as const,
+    create: '/api/manufacturing/inventory',
+    byId: (id: string) => `/api/manufacturing/inventory/${id}` as const,
+    update: (id: string) => `/api/manufacturing/inventory/${id}` as const,
+    adjustStock: (id: string) => `/api/manufacturing/inventory/${id}/adjust` as const,
+  },
+  
+  // Quality Metrics (OEE, Six Sigma, etc.)
+  quality: {
+    oee: (facilityId: string) => `/api/manufacturing/quality/oee?facility=${facilityId}` as const,
+    sixSigma: (facilityId: string) => `/api/manufacturing/quality/six-sigma?facility=${facilityId}` as const,
+    defects: (companyId: string) => `/api/manufacturing/quality/defects?company=${companyId}` as const,
+    trends: (companyId: string) => `/api/manufacturing/quality/trends?company=${companyId}` as const,
+  },
+  
+  // Procurement
+  procurement: {
+    orders: (companyId: string) => `/api/manufacturing/procurement?company=${companyId}` as const,
+    create: '/api/manufacturing/procurement',
+    byId: (id: string) => `/api/manufacturing/procurement/${id}` as const,
+    approve: (id: string) => `/api/manufacturing/procurement/${id}/approve` as const,
+    receive: (id: string) => `/api/manufacturing/procurement/${id}/receive` as const,
+  },
+  
+  // Summary endpoint for dashboard
+  summary: (companyId: string) => `/api/manufacturing/summary?companyId=${companyId}` as const,
+} as const;
+
+/**
  * All endpoints consolidated
  */
 export const endpoints = {
@@ -393,6 +488,8 @@ export const endpoints = {
   energy: energyEndpoints,
   software: softwareEndpoints,
   ecommerce: ecommerceEndpoints,
+  manufacturing: manufacturingEndpoints,
+  consulting: consultingEndpoints,
   admin: adminEndpoints,
 } as const;
 
