@@ -474,6 +474,81 @@ export const manufacturingEndpoints = {
 } as const;
 
 /**
+ * Politics Industry endpoints
+ * Covers elections, campaigns, bills, donors, districts, and voter outreach
+ */
+export const politicsEndpoints = {
+  // Elections
+  elections: {
+    list: (companyId: string) => `/api/politics/elections?company=${companyId}` as const,
+    create: '/api/politics/elections',
+    byId: (id: string) => `/api/politics/elections/${id}` as const,
+    update: (id: string) => `/api/politics/elections/${id}` as const,
+    delete: (id: string) => `/api/politics/elections/${id}` as const,
+    byType: (companyId: string, type: string) => `/api/politics/elections?company=${companyId}&electionType=${type}` as const,
+    byStatus: (companyId: string, status: string) => `/api/politics/elections?company=${companyId}&status=${status}` as const,
+  },
+  
+  // Campaigns
+  campaigns: {
+    list: (companyId: string) => `/api/politics/campaigns?company=${companyId}` as const,
+    create: '/api/politics/campaigns',
+    byId: (id: string) => `/api/politics/campaigns/${id}` as const,
+    update: (id: string) => `/api/politics/campaigns/${id}` as const,
+    delete: (id: string) => `/api/politics/campaigns/${id}` as const,
+    byParty: (companyId: string, party: string) => `/api/politics/campaigns?company=${companyId}&party=${party}` as const,
+    byStatus: (companyId: string, status: string) => `/api/politics/campaigns?company=${companyId}&status=${status}` as const,
+  },
+  
+  // Bills
+  bills: {
+    list: (companyId: string) => `/api/politics/bills?company=${companyId}` as const,
+    create: '/api/politics/bills',
+    byId: (id: string) => `/api/politics/bills/${id}` as const,
+    update: (id: string) => `/api/politics/bills/${id}` as const,
+    delete: (id: string) => `/api/politics/bills/${id}` as const,
+    byCategory: (companyId: string, category: string) => `/api/politics/bills?company=${companyId}&category=${category}` as const,
+    byStatus: (companyId: string, status: string) => `/api/politics/bills?company=${companyId}&status=${status}` as const,
+  },
+  
+  // Donors
+  donors: {
+    list: (companyId: string) => `/api/politics/donors?company=${companyId}` as const,
+    byCampaign: (campaignId: string) => `/api/politics/donors?campaign=${campaignId}` as const,
+    create: '/api/politics/donors',
+    byId: (id: string) => `/api/politics/donors/${id}` as const,
+    update: (id: string) => `/api/politics/donors/${id}` as const,
+    delete: (id: string) => `/api/politics/donors/${id}` as const,
+    byType: (companyId: string, donorType: string) => `/api/politics/donors?company=${companyId}&donorType=${donorType}` as const,
+  },
+  
+  // Districts
+  districts: {
+    list: (companyId: string) => `/api/politics/districts?company=${companyId}` as const,
+    create: '/api/politics/districts',
+    byId: (id: string) => `/api/politics/districts/${id}` as const,
+    update: (id: string) => `/api/politics/districts/${id}` as const,
+    delete: (id: string) => `/api/politics/districts/${id}` as const,
+    byState: (companyId: string, state: string) => `/api/politics/districts?company=${companyId}&state=${state}` as const,
+    byType: (companyId: string, type: string) => `/api/politics/districts?company=${companyId}&districtType=${type}` as const,
+  },
+  
+  // Voter Outreach
+  outreach: {
+    list: (companyId: string) => `/api/politics/outreach?company=${companyId}` as const,
+    byCampaign: (campaignId: string) => `/api/politics/outreach?campaign=${campaignId}` as const,
+    create: '/api/politics/outreach',
+    byId: (id: string) => `/api/politics/outreach/${id}` as const,
+    update: (id: string) => `/api/politics/outreach/${id}` as const,
+    delete: (id: string) => `/api/politics/outreach/${id}` as const,
+    byType: (companyId: string, type: string) => `/api/politics/outreach?company=${companyId}&outreachType=${type}` as const,
+  },
+  
+  // Summary endpoint for dashboard
+  summary: (companyId: string) => `/api/politics/summary?companyId=${companyId}` as const,
+} as const;
+
+/**
  * All endpoints consolidated
  */
 export const endpoints = {
@@ -490,6 +565,7 @@ export const endpoints = {
   ecommerce: ecommerceEndpoints,
   manufacturing: manufacturingEndpoints,
   consulting: consultingEndpoints,
+  politics: politicsEndpoints,
   admin: adminEndpoints,
 } as const;
 
@@ -526,5 +602,8 @@ export type EndpointPath = string;
  * 
  * // Industry-specific
  * await apiClient.get(endpoints.industries.healthcare.facilities);
+ * 
+ * // Politics-specific
+ * await apiClient.get(endpoints.politics.elections.list(companyId));
  * ```
  */

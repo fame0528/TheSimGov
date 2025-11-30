@@ -12,15 +12,8 @@
 
 export { useToast, type ToastHelpers } from './useToast';
 export { useModal, type ModalState } from './useModal';
-export {
-  usePagination,
-  type PaginationState,
-  type UsePaginationOptions,
-} from './usePagination';
-export {
-  useSort,
-  type SortState,
-  type SortDirection,
-  type UseSortOptions,
-} from './useSort';
+export { default as usePagination } from './usePagination';
+export type { PaginationState, UsePaginationOptions } from './usePagination';
+export { default as useSort } from './useSort';
+export type { SortState, SortDirection, UseSortOptions } from './useSort';
 export { useDebounce } from './useDebounce';

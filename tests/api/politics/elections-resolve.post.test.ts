@@ -5,6 +5,7 @@
  */
 
 import { describe, it, expect } from '@jest/globals';
+import { NextRequest } from 'next/server';
 import { POST } from '@/app/api/politics/elections/resolve/route';
 
 describe('POST /api/politics/elections/resolve', () => {
@@ -26,13 +27,13 @@ describe('POST /api/politics/elections/resolve', () => {
       },
     };
 
-    const req = new Request('http://localhost:3000/api/politics/elections/resolve', {
+    const req = new NextRequest('http://localhost:3000/api/politics/elections/resolve', {
       method: 'POST',
       body: JSON.stringify(body),
       headers: { 'Content-Type': 'application/json' },
-    });
+    } as any);
 
-    const res = await POST(req);
+    const res = await POST(req as any);
     const data = await res.json();
     expect(res.status).toBe(200);
     expect(data.success).toBe(true);
@@ -43,13 +44,13 @@ describe('POST /api/politics/elections/resolve', () => {
 
   it('returns 400 for invalid payload', async () => {
     const badBody = { bad: 'payload' };
-    const req = new Request('http://localhost:3000/api/politics/elections/resolve', {
+    const req = new NextRequest('http://localhost:3000/api/politics/elections/resolve', {
       method: 'POST',
       body: JSON.stringify(badBody),
       headers: { 'Content-Type': 'application/json' },
-    });
+    } as any);
 
-    const res = await POST(req);
+    const res = await POST(req as any);
     const data = await res.json();
     expect(res.status).toBe(400);
     expect(data.success).toBe(false);

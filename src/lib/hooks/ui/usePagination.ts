@@ -1,154 +1,38 @@
-/**
- * @fileoverview Pagination State Management Hook
- * @module lib/hooks/ui/usePagination
- * 
- * OVERVIEW:
- * Manages pagination state for tables and lists.
- * Calculates page numbers, handles navigation, and provides helpers.
- * 
- * @created 2025-11-20
- * @author ECHO v1.1.0
- */
+"use client";
 
-'use client';
+import { useMemo, useState } from 'react';
 
-import { useState, useMemo, useCallback } from 'react';
-
-export interface PaginationState {
-  /** Current page (1-indexed) */
-  currentPage: number;
-  /** Items per page */
-  pageSize: number;
-  /** Total number of items */
-  totalItems: number;
-  /** Total number of pages */
+export interface PaginationState<T = unknown> {
+  page: number;
   totalPages: number;
-  /** Go to specific page */
-  goToPage: (page: number) => void;
-  /** Go to next page */
-  nextPage: () => void;
-  /** Go to previous page */
-  prevPage: () => void;
-  /** Go to first page */
-  firstPage: () => void;
-  /** Go to last page */
-  lastPage: () => void;
-  /** Has next page */
-  hasNext: boolean;
-  /** Has previous page */
-  hasPrev: boolean;
-  /** Start index for current page (0-indexed) */
-  startIndex: number;
-  /** End index for current page (0-indexed) */
-  endIndex: number;
+  setPage: (page: number) => void;
+  paginatedData: T[];
 }
 
-export interface UsePaginationOptions {
-  /** Initial page (default: 1) */
+export interface UsePaginationOptions<T = unknown> {
+  data: T[];
   initialPage?: number;
-  /** Items per page (default: 10) */
   pageSize?: number;
-  /** Total number of items */
-  totalItems: number;
+  /** Optional override when total differs from client-side data length */
+  totalItems?: number;
 }
 
-/**
- * usePagination - Pagination state management
- * 
- * @example
- * ```tsx
- * const pagination = usePagination({
- *   totalItems: companies.length,
- *   pageSize: 10,
- * });
- * 
- * const paginatedData = companies.slice(
- *   pagination.startIndex,
- *   pagination.endIndex
- * );
- * 
- * return (
- *   <>
- *     <DataTable data={paginatedData} />
- *     <Button onClick={pagination.prevPage} disabled={!pagination.hasPrev}>
- *       Previous
- *     </Button>
- *     <Button onClick={pagination.nextPage} disabled={!pagination.hasNext}>
- *       Next
- *     </Button>
- *   </>
- * );
- * ```
- */
-export function usePagination({
+export default function usePagination<T = unknown>({
+  data,
   initialPage = 1,
   pageSize = 10,
   totalItems,
-}: UsePaginationOptions): PaginationState {
-  const [currentPage, setCurrentPage] = useState(initialPage);
+}: UsePaginationOptions<T>): PaginationState<T> {
+  const [page, setPage] = useState<number>(initialPage);
+  const effectiveTotal = totalItems ?? data.length;
+  const totalPages = Math.max(1, Math.ceil(effectiveTotal / pageSize));
 
-  const totalPages = useMemo(
-    () => Math.ceil(totalItems / pageSize),
-    [totalItems, pageSize]
-  );
+  const paginatedData = useMemo(() => {
+    if (!data || data.length === 0) return [] as T[];
+    const start = (page - 1) * pageSize;
+    const end = start + pageSize;
+    return data.slice(start, end);
+  }, [data, page, pageSize]);
 
-  const goToPage = useCallback(
-    (page: number) => {
-      const validPage = Math.max(1, Math.min(page, totalPages));
-      setCurrentPage(validPage);
-    },
-    [totalPages]
-  );
-
-  const nextPage = useCallback(() => {
-    goToPage(currentPage + 1);
-  }, [currentPage, goToPage]);
-
-  const prevPage = useCallback(() => {
-    goToPage(currentPage - 1);
-  }, [currentPage, goToPage]);
-
-  const firstPage = useCallback(() => {
-    setCurrentPage(1);
-  }, []);
-
-  const lastPage = useCallback(() => {
-    setCurrentPage(totalPages);
-  }, [totalPages]);
-
-  const hasNext = currentPage < totalPages;
-  const hasPrev = currentPage > 1;
-
-  const startIndex = (currentPage - 1) * pageSize;
-  const endIndex = Math.min(startIndex + pageSize, totalItems);
-
-  return {
-    currentPage,
-    pageSize,
-    totalItems,
-    totalPages,
-    goToPage,
-    nextPage,
-    prevPage,
-    firstPage,
-    lastPage,
-    hasNext,
-    hasPrev,
-    startIndex,
-    endIndex,
-  };
+  return { page, totalPages, setPage, paginatedData };
 }
-
-/**
- * IMPLEMENTATION NOTES:
- * 
- * 1. **Complete**: All pagination operations covered
- * 2. **Safe**: Bounds checking on page changes
- * 3. **Efficient**: Memoized calculations
- * 4. **Flexible**: Works with client-side or server-side pagination
- * 
- * PREVENTS:
- * - Duplicate pagination logic
- * - Off-by-one errors
- * - Inconsistent page calculations
- */

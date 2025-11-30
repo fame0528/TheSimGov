@@ -1,0 +1,77 @@
+"use client";
+
+import React, { useMemo } from "react";
+import { Tabs, Tab } from "@heroui/tabs";
+import { Card, CardHeader, CardBody } from "@heroui/card";
+import { Divider } from "@heroui/divider";
+import { Button } from "@heroui/button";
+import { Input } from "@heroui/input";
+import { Select, SelectItem } from "@heroui/select";
+import { useToast } from "@/lib/hooks/ui/useToast";
+import { usePolitics } from "@/lib/hooks/usePolitics";
+
+export default function PolicyTrackerPage() {
+  const toast = useToast();
+  const { bills, policies, isLoading, error, refresh, createBill, updateBill, voteBill } = usePolitics().usePolicy();
+
+  const header = useMemo(() => (
+    <div className="flex items-center justify-between">
+      <h1 className="text-xl font-semibold">Policy Tracker & Bill Management</h1>
+      <div className="flex items-center gap-2">
+        <Button variant="flat" onPress={() => refresh()}>Refresh</Button>
+        <Button color="primary" onPress={() => createBill()?.then(() => toast.success("Bill created")).catch((e: any) => toast.error(`Create failed: ${e?.message ?? "Unknown error"}`))}>New Bill</Button>
+      </div>
+    </div>
+  ), [refresh, createBill]);
+
+  return (
+    <div className="p-4 md:p-6">
+      <Card>
+        <CardHeader>{header}</CardHeader>
+        <Divider />
+        <CardBody>
+          <Tabs aria-label="Policy tabs">
+            <Tab key="wizard" title="Bill Wizard">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="rounded-lg border border-default-200 p-4 flex flex-col gap-4">
+                  <h2 className="font-semibold">Create Bill</h2>
+                  <Input label="Title" placeholder="Clean Energy Act" />
+                  <Select label="Category">
+                    <SelectItem key="Energy">Energy</SelectItem>
+                    <SelectItem key="Healthcare">Healthcare</SelectItem>
+                    <SelectItem key="Education">Education</SelectItem>
+                    <SelectItem key="Finance">Finance</SelectItem>
+                  </Select>
+                  <Button color="primary">Create</Button>
+                </div>
+                <div className="rounded-lg border border-default-200 p-4 flex flex-col gap-4">
+                  <h2 className="font-semibold">Effects Preview</h2>
+                  <p className="text-default-500">Policy effects simulation will render here.</p>
+                </div>
+              </div>
+            </Tab>
+            <Tab key="tracker" title="Tracker">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {(bills ?? []).map((b: any) => (
+                  <div key={b._id} className="rounded-lg border border-default-200 p-4 flex flex-col gap-3">
+                    <div className="flex items-center justify-between">
+                      <span className="font-semibold">{b.title}</span>
+                      <span className="text-default-500">{b.status}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button size="sm" onPress={() => voteBill(b._id, "YEA")}>YEA</Button>
+                      <Button size="sm" color="danger" onPress={() => voteBill(b._id, "NAY")}>NAY</Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Tab>
+            <Tab key="effects" title="Policy Effects">
+              <p className="text-default-500">Policy effects views across industries (Phase 6 later step).</p>
+            </Tab>
+          </Tabs>
+        </CardBody>
+      </Card>
+    </div>
+  );
+}
