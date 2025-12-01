@@ -24,9 +24,9 @@ This file is now kept minimal. All planned work is documented in:
 | Phase | FID | Description | Status |
 |-------|-----|-------------|--------|
 | 6 | FID-20251127-POLITICS | Politics Expansion | ✅ COMPLETE |
-| 7 | FID-20251127-CRIME | Crime/Underworld Domain | 📋 Next |
+| 7 | FID-20251127-CRIME | Crime/Underworld Domain | 🚧 IN_PROGRESS (Beta) |
 
-**Remaining:** 0 planned FIDs (Phase 7 awaiting approval)
+**Remaining:** 0 planned FIDs (Phase 7 in progress - Beta endpoints)
 
 ---
 

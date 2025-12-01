@@ -182,6 +182,17 @@ export default function GameDashboard() {
                 href: '/game/politics'
               },
               {
+                title: 'Crime (Alpha)',
+                description: 'Explore marketplace, routes, heat',
+                icon: (
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h18v4H3zM3 11h18v4H3zM3 19h18v2H3z" />
+                  </svg>
+                ),
+                color: 'amber',
+                href: '/game/crime'
+              },
+              {
                 title: 'Market Analysis',
                 description: 'Track trends & insights',
                 icon: (

@@ -50,7 +50,19 @@ export async function GET(req: NextRequest) {
       throw new ApiError('Unauthorized', 401);
     }
 
-    await connectDB();
+    try {
+      await connectDB();
+    } catch (dbErr: any) {
+      const message = dbErr?.message || '';
+      const code = dbErr?.code || '';
+      const hostname = dbErr?.hostname || '';
+      const isDnsSrv = message.includes('querySrv') || code === 'ESERVFAIL' || String(hostname).includes('mongodb.net');
+      if (isDnsSrv) {
+        console.error('DB connection DNS SRV error, serving fallback list:', dbErr);
+        return NextResponse.json({ data: [], total: 0, page: 1, limit: 20, pages: 0, meta: { warning: 'Database DNS SRV error; returning empty companies list (fallback).', code, hostname } }, { status: 200 });
+      }
+      throw dbErr;
+    }
 
     // Parse query parameters
     const { searchParams } = new URL(req.url);
@@ -141,7 +153,19 @@ export async function POST(req: NextRequest) {
       throw new ApiError('Unauthorized', 401);
     }
 
-    await connectDB();
+    try {
+      await connectDB();
+    } catch (dbErr: any) {
+      const message = dbErr?.message || '';
+      const code = dbErr?.code || '';
+      const hostname = dbErr?.hostname || '';
+      const isDnsSrv = message.includes('querySrv') || code === 'ESERVFAIL' || String(hostname).includes('mongodb.net');
+      if (isDnsSrv) {
+        console.error('DB connection DNS SRV error on POST, returning service unavailable:', dbErr);
+        return NextResponse.json({ error: 'Service temporarily unavailable due to database DNS error. Please retry later.' }, { status: 503 });
+      }
+      throw dbErr;
+    }
 
     // Parse and validate request body
     const body = await req.json();

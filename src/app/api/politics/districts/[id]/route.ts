@@ -5,12 +5,13 @@ import District from '@/lib/db/models/politics/District';
 import { updateDistrictSchema } from '@/lib/validations/politics';
 import { z } from 'zod';
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await auth();
     if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     await connectDB();
-    const district = await District.findOne({ _id: params.id, company: session.user.companyId }).lean();
+    const { id } = await params;
+    const district = await District.findOne({ _id: id, company: session.user.companyId }).lean();
     if (!district) return NextResponse.json({ error: 'District not found' }, { status: 404 });
     return NextResponse.json({ district });
   } catch (error) {
@@ -19,15 +20,16 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await auth();
     if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     await connectDB();
     const body = await request.json();
     const validatedData = updateDistrictSchema.parse(body);
+    const { id } = await params;
     const district = await District.findOneAndUpdate(
-      { _id: params.id, company: session.user.companyId },
+      { _id: id, company: session.user.companyId },
       { $set: validatedData },
       { new: true, runValidators: true }
     ).lean();
@@ -42,12 +44,13 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await auth();
     if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     await connectDB();
-    const district = await District.findOneAndDelete({ _id: params.id, company: session.user.companyId }).lean();
+    const { id } = await params;
+    const district = await District.findOneAndDelete({ _id: id, company: session.user.companyId }).lean();
     if (!district) return NextResponse.json({ error: 'District not found' }, { status: 404 });
     return NextResponse.json({ success: true, message: 'District deleted successfully' });
   } catch (error) {

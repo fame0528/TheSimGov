@@ -474,6 +474,28 @@ export const manufacturingEndpoints = {
 } as const;
 
 /**
+ * Crime Industry endpoints (BETA Phase)
+ * Covers production facilities, distribution routes, marketplace,
+ * money laundering channels, and heat level tracking
+ */
+export const crimeEndpoints = {
+  // Production Facilities (Labs, Farms, Warehouses)
+  facilities: '/api/crime/facilities',
+  
+  // Distribution Routes
+  routes: '/api/crime/routes',
+  
+  // Marketplace Listings
+  marketplace: '/api/crime/marketplace',
+  
+  // Money Laundering Channels
+  laundering: '/api/crime/laundering',
+  
+  // Heat Level Tracking
+  heat: '/api/crime/heat',
+} as const;
+
+/**
  * Politics Industry endpoints
  * Covers elections, campaigns, bills, donors, districts, and voter outreach
  */
@@ -565,6 +587,7 @@ export const endpoints = {
   ecommerce: ecommerceEndpoints,
   manufacturing: manufacturingEndpoints,
   consulting: consultingEndpoints,
+  crime: crimeEndpoints,
   politics: politicsEndpoints,
   admin: adminEndpoints,
 } as const;

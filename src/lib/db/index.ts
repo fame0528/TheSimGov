@@ -24,3 +24,9 @@ export { default as Bank } from './models/Bank';
 export { default as Loan } from './models/Loan';
 export { default as Investment } from './models/Investment';
 export { default as InvestmentPortfolio } from './models/InvestmentPortfolio';
+// Crime domain models (Beta persistence phase)
+export { default as ProductionFacility } from './models/crime/ProductionFacility';
+export { default as DistributionRoute } from './models/crime/DistributionRoute';
+export { default as MarketplaceListing } from './models/crime/MarketplaceListing';
+export { default as LaunderingChannel } from './models/crime/LaunderingChannel';
+export { default as HeatLevel } from './models/crime/HeatLevel';

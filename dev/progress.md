@@ -15,9 +15,29 @@ This file tracks features currently being implemented. Features move here from `
 
 ---
 
-## ✅ No Active Work
+## 🚧 Active Development
 
-All planned features through Phase 6 have been completed.
+### FID-20251127-CRIME: Crime Domain Beta Persistence
+**Status:** IN_PROGRESS (Beta Phase)  
+**Started:** 2025-12-01  
+**Phase:** Core Economic Loop Endpoints  
+**Estimated:** 60-70h (Alpha), 50-60h (Beta), 28-42h (Gamma)
+
+**Description:** Implementing persistent endpoints for Crime domain core economic loop (manufacturing, distribution, marketplace, laundering, heat)
+
+**Progress:**
+- ✅ Phase: Models created (5 core models: ProductionFacility, DistributionRoute, MarketplaceListing, LaunderingChannel, HeatLevel)
+- ✅ Phase: DTO layer created (crime.ts interfaces + crimeAdapters.ts mapping functions)
+- ✅ Phase: Facilities endpoint persisted (GET/POST with auth, adapter, DNS fallback)
+- ✅ Phase: Routes endpoint persisted (GET/POST with auth, adapter, DNS fallback)
+- ✅ Phase: Marketplace endpoint persisted (GET/POST with filters: substance/state/minPurity/maxPrice)
+- ✅ Phase: Laundering endpoint persisted (GET/POST with method filter)
+- ✅ Phase: Heat endpoint persisted (GET/POST upsert by scope+scopeId)
+- 🟡 Next: TypeScript verification, SWR hooks, seed data
+
+**Files Modified:** 7 (endpoints: 5, DTOs: 2)
+
+## ✅ Recently Completed
 
 See `completed.md` for:
 - FID-20251127-POLITICS (8,096 LOC) ✅
