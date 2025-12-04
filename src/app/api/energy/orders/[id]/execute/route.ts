@@ -12,10 +12,11 @@
  * @author ECHO v1.3.1
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { auth } from '@/auth';
 import { connectDB } from '@/lib/db';
 import { EnergyTradeOrder } from '@/lib/db/models';
+import { createSuccessResponse, createErrorResponse } from '@/lib/utils/apiResponse';
 
 /**
  * POST /api/energy/orders/[id]/execute
@@ -28,7 +29,7 @@ export async function POST(
   try {
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', 'UNAUTHORIZED', 401);
     }
 
     await connectDB();
@@ -39,43 +40,31 @@ export async function POST(
     const order = await EnergyTradeOrder.findById(id);
 
     if (!order) {
-      return NextResponse.json({ error: 'Order not found' }, { status: 404 });
+      return createErrorResponse('Order not found', 'NOT_FOUND', 404);
     }
 
     if (!['Pending', 'PartiallyFilled'].includes(order.status)) {
-      return NextResponse.json(
-        { error: `Cannot execute order with status: ${order.status}` },
-        { status: 400 }
-      );
+      return createErrorResponse(`Cannot execute order with status: ${order.status}`, 'BAD_REQUEST', 400);
     }
 
     if (!marketPrice || !fillVolume) {
-      return NextResponse.json(
-        { error: 'Market price and fill volume required' },
-        { status: 400 }
-      );
+      return createErrorResponse('Market price and fill volume required', 'BAD_REQUEST', 400);
     }
 
     // Validate order type execution conditions
     if (order.type === 'Limit' && order.side === 'Buy') {
       if (marketPrice > order.price) {
-        return NextResponse.json(
-          { error: `Market price ${marketPrice} exceeds limit price ${order.price}` },
-          { status: 400 }
-        );
+        return createErrorResponse(`Market price ${marketPrice} exceeds limit price ${order.price}`, 'BAD_REQUEST', 400);
       }
     } else if (order.type === 'Limit' && order.side === 'Sell') {
       if (marketPrice < order.price) {
-        return NextResponse.json(
-          { error: `Market price ${marketPrice} below limit price ${order.price}` },
-          { status: 400 }
-        );
+        return createErrorResponse(`Market price ${marketPrice} below limit price ${order.price}`, 'BAD_REQUEST', 400);
       }
     } else if (order.type === 'Market') {
       if (order.side === 'Buy' && marketPrice < order.price) {
-        return NextResponse.json({ error: 'Stop price not triggered' }, { status: 400 });
+        return createErrorResponse('Stop price not triggered', 'BAD_REQUEST', 400);
       } else if (order.side === 'Sell' && marketPrice > order.price) {
-        return NextResponse.json({ error: 'Stop price not triggered' }, { status: 400 });
+        return createErrorResponse('Stop price not triggered', 'BAD_REQUEST', 400);
       }
     }
 
@@ -84,10 +73,7 @@ export async function POST(
     const remainingVolume = order.quantityMWh - totalFilled;
 
     if (fillVolume > remainingVolume) {
-      return NextResponse.json(
-        { error: `Fill volume ${fillVolume} exceeds remaining ${remainingVolume}` },
-        { status: 400 }
-      );
+      return createErrorResponse(`Fill volume ${fillVolume} exceeds remaining ${remainingVolume}`, 'BAD_REQUEST', 400);
     }
 
     // Record fill using model method
@@ -95,7 +81,7 @@ export async function POST(
 
     const newTotalFilled = totalFilled + fillVolume;
 
-    return NextResponse.json({
+    return createSuccessResponse({
       message: 'Order executed',
       order,
       execution: {
@@ -109,9 +95,6 @@ export async function POST(
     });
   } catch (error) {
     console.error('POST /api/energy/orders/[id]/execute error:', error);
-    return NextResponse.json(
-      { error: 'Failed to execute order' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to execute order', 'INTERNAL_ERROR', 500);
   }
 }

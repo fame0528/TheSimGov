@@ -10,8 +10,9 @@
  * Part of: Opposition Research System (FID-20251125-001C Phase 5)
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { auth } from '@/auth';
+import { createSuccessResponse, createErrorResponse, ErrorCode } from '@/lib/utils/apiResponse';
 
 /**
  * GET handler - Retrieve research status
@@ -21,10 +22,7 @@ export async function GET(request: NextRequest) {
     // Authenticate request
     const session = await auth();
     if (!session || !session.user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     // Get query parameters
@@ -32,18 +30,12 @@ export async function GET(request: NextRequest) {
     const playerId = searchParams.get('playerId');
 
     if (!playerId) {
-      return NextResponse.json(
-        { error: 'Player ID required' },
-        { status: 400 }
-      );
+      return createErrorResponse('Player ID required', ErrorCode.BAD_REQUEST, 400);
     }
 
     // Verify session matches player ID
     if (session.user.id !== playerId) {
-      return NextResponse.json(
-        { error: 'Forbidden' },
-        { status: 403 }
-      );
+      return createErrorResponse('Forbidden', ErrorCode.FORBIDDEN, 403);
     }
 
     // TODO: Query database for research records
@@ -52,18 +44,15 @@ export async function GET(request: NextRequest) {
     // - Include completion times for active research
     
     // Mock response
-    return NextResponse.json({
+    return createSuccessResponse({
       activeResearch: [], // IN_PROGRESS records
       completedResearch: [], // COMPLETE records
       totalSpent: 0,
       totalFindings: 0,
-    }, { status: 200 });
+    });
 
   } catch (error) {
     console.error('Error retrieving research status:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return createErrorResponse('Internal server error', ErrorCode.INTERNAL_ERROR, 500);
   }
 }

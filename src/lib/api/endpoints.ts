@@ -474,25 +474,70 @@ export const manufacturingEndpoints = {
 } as const;
 
 /**
- * Crime Industry endpoints (BETA Phase)
- * Covers production facilities, distribution routes, marketplace,
- * money laundering channels, and heat level tracking
+ * Crime Industry endpoints (Phase 1 Alpha + Phase 2 Beta)
+ * Phase 1: Production, distribution, marketplace, laundering, heat
+ * Phase 2: Gangs, territories, turf wars, travel/state pricing
  */
 export const crimeEndpoints = {
-  // Production Facilities (Labs, Farms, Warehouses)
+  // Phase 1 (Alpha) - Economic Loop
   facilities: '/api/crime/facilities',
-  
-  // Distribution Routes
   routes: '/api/crime/routes',
-  
-  // Marketplace Listings
   marketplace: '/api/crime/marketplace',
-  
-  // Money Laundering Channels
   laundering: '/api/crime/laundering',
-  
-  // Heat Level Tracking
   heat: '/api/crime/heat',
+  
+  // Phase 2 (Beta) - MMO Social Layer
+  gangs: {
+    list: '/api/crime/gangs',
+    create: '/api/crime/gangs',
+    byId: (id: string) => `/api/crime/gangs/${id}` as const,
+    members: (id: string) => `/api/crime/gangs/${id}/members` as const,
+    addMember: (id: string) => `/api/crime/gangs/${id}/members` as const,
+    updateMember: (id: string) => `/api/crime/gangs/${id}/members` as const,
+    removeMember: (id: string, userId: string) => `/api/crime/gangs/${id}/members?userId=${userId}` as const,
+  },
+  
+  territories: {
+    list: '/api/crime/territories',
+    create: '/api/crime/territories',
+    claim: '/api/crime/territories',
+    byId: (id: string) => `/api/crime/territories/${id}` as const,
+    byState: (state: string) => `/api/crime/territories?state=${state}` as const,
+    byCity: (state: string, city: string) => `/api/crime/territories?state=${state}&city=${city}` as const,
+    byGang: (gangId: string) => `/api/crime/territories?controlledBy=${gangId}` as const,
+  },
+  
+  turfWars: {
+    list: '/api/crime/turf-wars',
+    create: '/api/crime/turf-wars',
+    byId: (id: string) => `/api/crime/turf-wars/${id}` as const,
+    resolve: (id: string) => `/api/crime/turf-wars/${id}` as const,
+    byTerritory: (territoryId: string) => `/api/crime/turf-wars?territoryId=${territoryId}` as const,
+    byGang: (gangId: string) => `/api/crime/turf-wars?gangId=${gangId}` as const,
+  },
+  
+  travel: {
+    pricing: (state: string, substance: string) => `/api/crime/travel/pricing?state=${state}&substance=${substance}` as const,
+    initiate: '/api/crime/travel',
+  },
+  
+  // Phase 3 (Gamma) - Integration Layer
+  legislation: {
+    list: '/api/crime/legislation',
+    lobby: '/api/crime/legislation/lobby',
+    bills: '/api/crime/legislation/bills',
+  },
+  blackMarket: {
+    list: '/api/crime/black-market',
+    create: '/api/crime/black-market',
+    byId: (id: string) => `/api/crime/black-market/${id}` as const,
+    update: (id: string) => `/api/crime/black-market/${id}` as const,
+    delete: (id: string) => `/api/crime/black-market/${id}` as const,
+    purchase: (id: string) => `/api/crime/black-market/${id}/purchase` as const,
+  },
+  conversion: {
+    convert: '/api/crime/conversion/convert',
+  },
 } as const;
 
 /**

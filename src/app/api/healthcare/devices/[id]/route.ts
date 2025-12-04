@@ -7,8 +7,9 @@
  * @author ECHO v1.3.0 Healthcare Implementation
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { auth } from '@/auth';
+import { createSuccessResponse, createErrorResponse, ErrorCode } from '@/lib/utils/apiResponse';
 import MedicalDevice from '@/lib/db/models/healthcare/MedicalDevice';
 import Company from '@/lib/db/models/Company';
 import {
@@ -83,7 +84,7 @@ export async function GET(
   try {
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     const { id } = await params;
@@ -94,13 +95,13 @@ export async function GET(
       .lean();
 
     if (!medicalDevice) {
-      return NextResponse.json({ error: 'Medical device company not found' }, { status: 404 });
+      return createErrorResponse('Medical device company not found', ErrorCode.NOT_FOUND, 404);
     }
 
     // Check ownership
     const company = await Company.findById(medicalDevice.company);
     if (!company || company.owner?.toString() !== session.user.id) {
-      return NextResponse.json({ error: 'Unauthorized - Medical device company not owned by user' }, { status: 403 });
+      return createErrorResponse('Unauthorized - Medical device company not owned by user', ErrorCode.FORBIDDEN, 403);
     }
 
     // Calculate comprehensive metrics
@@ -124,14 +125,15 @@ export async function GET(
 
     const totalPortfolioValue = portfolioMetrics.reduce((sum: number, product: any) => sum + (product.averageSellingPrice * product.annualUnits), 0);
 
-    const licenseValid = validateHealthcareLicenseFromAccreditations((medicalDevice as any).accreditations || []);
+    // Use qualityCertifications for device license validation (accreditations doesn't exist on MedicalDevice)
+    const licenseValid = validateHealthcareLicenseFromAccreditations(medicalDevice.qualityCertifications || []);
 
     const metricsValid = validateHealthcareMetrics({
       totalPortfolioValue,
       productCount: portfolioMetrics.length
     });
 
-    return NextResponse.json({
+    return createSuccessResponse({
       device: {
         ...medicalDevice,
         products: portfolioMetrics,
@@ -145,10 +147,7 @@ export async function GET(
 
   } catch (error) {
     console.error('Error fetching medical device company:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return createErrorResponse('Internal server error', ErrorCode.INTERNAL_ERROR, 500);
   }
 }
 
@@ -163,7 +162,7 @@ export async function PUT(
   try {
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     const { id } = await params;
@@ -174,12 +173,12 @@ export async function PUT(
     // Find and verify ownership
     const medicalDevice = await MedicalDevice.findById(id);
     if (!medicalDevice) {
-      return NextResponse.json({ error: 'Medical device company not found' }, { status: 404 });
+      return createErrorResponse('Medical device company not found', ErrorCode.NOT_FOUND, 404);
     }
 
     const company = await Company.findById(medicalDevice.company);
     if (!company || company.owner?.toString() !== session.user.id) {
-      return NextResponse.json({ error: 'Unauthorized - Medical device company not owned by user' }, { status: 403 });
+      return createErrorResponse('Unauthorized - Medical device company not owned by user', ErrorCode.FORBIDDEN, 403);
     }
 
     // Update medical device company
@@ -209,9 +208,9 @@ export async function PUT(
 
       medicalDevice.products = portfolioWithMetrics;
 
-      // Recalculate license validation
+      // Recalculate license validation using qualityCertifications
       if (validatedData.regulatory) {
-        const licenseValid = validateHealthcareLicenseFromAccreditations((medicalDevice as any).accreditations || []);
+        const licenseValid = validateHealthcareLicenseFromAccreditations(medicalDevice.qualityCertifications || []);
         // Note: Model doesn't have regulatory.licenseValid field, so we skip setting it
       }
 
@@ -222,17 +221,14 @@ export async function PUT(
       });
 
       if (!metricsValid.isValid) {
-        return NextResponse.json({
-          error: 'Updated medical device company metrics validation failed',
-          details: metricsValid.errors
-        }, { status: 400 });
+        return createErrorResponse('Updated medical device company metrics validation failed', ErrorCode.BAD_REQUEST, 400);
       }
     }
 
     await medicalDevice.save();
     await medicalDevice.populate('company', 'name industry');
 
-    return NextResponse.json({
+    return createSuccessResponse({
       device: medicalDevice,
       message: 'Medical device company updated successfully'
     });
@@ -240,15 +236,9 @@ export async function PUT(
   } catch (error) {
     console.error('Error updating medical device company:', error);
     if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: 'Invalid update data', details: error.errors },
-        { status: 400 }
-      );
+      return createErrorResponse('Invalid update data', ErrorCode.BAD_REQUEST, 400);
     }
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return createErrorResponse('Internal server error', ErrorCode.INTERNAL_ERROR, 500);
   }
 }
 
@@ -263,7 +253,7 @@ export async function DELETE(
   try {
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     const { id } = await params;
@@ -271,26 +261,23 @@ export async function DELETE(
     // Find and verify ownership
     const medicalDevice = await MedicalDevice.findById(id);
     if (!medicalDevice) {
-      return NextResponse.json({ error: 'Medical device company not found' }, { status: 404 });
+      return createErrorResponse('Medical device company not found', ErrorCode.NOT_FOUND, 404);
     }
 
     const company = await Company.findById(medicalDevice.company);
     if (!company || company.owner?.toString() !== session.user.id) {
-      return NextResponse.json({ error: 'Unauthorized - Medical device company not owned by user' }, { status: 403 });
+      return createErrorResponse('Unauthorized - Medical device company not owned by user', ErrorCode.FORBIDDEN, 403);
     }
 
     // Delete medical device company
     await MedicalDevice.findByIdAndDelete(id);
 
-    return NextResponse.json({
+    return createSuccessResponse({
       message: 'Medical device company deleted successfully'
     });
 
   } catch (error) {
     console.error('Error deleting medical device company:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return createErrorResponse('Internal server error', ErrorCode.INTERNAL_ERROR, 500);
   }
 }

@@ -9,11 +9,12 @@
  * thermal limits, and transmission loss calculations.
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { connectDB as dbConnect } from '@/lib/db';
 import { TransmissionLine } from '@/lib/db/models';
 import { auth } from '@/auth';
+import { createSuccessResponse, createErrorResponse, ErrorCode } from '@/lib/utils/apiResponse';
 
 // ============================================================================
 // VALIDATION SCHEMAS
@@ -67,7 +68,7 @@ export async function POST(
     // Authentication
     const session = await auth();
     if (!session?.user?.companyId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     // Parse request body
@@ -75,10 +76,7 @@ export async function POST(
     const validation = TransferPowerSchema.safeParse(body);
     
     if (!validation.success) {
-      return NextResponse.json(
-        { error: 'Invalid input', details: validation.error.flatten() },
-        { status: 400 }
-      );
+      return createErrorResponse('Invalid input', ErrorCode.BAD_REQUEST, 400);
     }
 
     const { transferPower, duration, priority, allowOverload } = validation.data;
@@ -93,10 +91,7 @@ export async function POST(
     });
 
     if (!line) {
-      return NextResponse.json(
-        { error: 'Transmission line not found or access denied' },
-        { status: 404 }
-      );
+      return createErrorResponse('Transmission line not found or access denied', ErrorCode.NOT_FOUND, 404);
     }
 
     // Get line parameters
@@ -111,19 +106,13 @@ export async function POST(
 
     // Check if power exceeds thermal limit
     if (absolutePower > thermalLimit && !allowOverload) {
-      return NextResponse.json(
-        { error: `Transfer power ${absolutePower} MW exceeds thermal limit ${thermalLimit.toFixed(2)} MW for ${priority} priority. Set allowOverload=true to override.` },
-        { status: 400 }
-      );
+      return createErrorResponse(`Transfer power ${absolutePower} MW exceeds thermal limit ${thermalLimit.toFixed(2)} MW for ${priority} priority. Set allowOverload=true to override.`, ErrorCode.BAD_REQUEST, 400);
     }
 
     // Check if power exceeds emergency limit
     const emergencyLimit = capacity * OVERLOAD_LIMIT_MULTIPLIER;
     if (absolutePower > emergencyLimit) {
-      return NextResponse.json(
-        { error: `Transfer power ${absolutePower} MW exceeds emergency limit ${emergencyLimit.toFixed(2)} MW (115% of capacity)` },
-        { status: 400 }
-      );
+      return createErrorResponse(`Transfer power ${absolutePower} MW exceeds emergency limit ${emergencyLimit.toFixed(2)} MW (115% of capacity)`, ErrorCode.BAD_REQUEST, 400);
     }
 
     // Determine if overload condition exists
@@ -175,7 +164,7 @@ export async function POST(
     // Log transfer action
     console.log(`[ENERGY] Transmission transfer: ${line.name} (${line._id}), Power: ${transferPower} MW, Duration: ${duration}h, Loss: ${powerLoss.toFixed(2)} MW (${(actualLossRate * 100).toFixed(2)}%)`);
 
-    return NextResponse.json({
+    return createSuccessResponse({
       success: true,
       transmissionLine: {
         id: line._id,
@@ -236,10 +225,7 @@ export async function POST(
 
   } catch (error) {
     console.error('[ENERGY] Transmission transfer error:', error);
-    return NextResponse.json(
-      { error: 'Failed to transfer power', details: error instanceof Error ? error.message : 'Unknown error' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to transfer power', ErrorCode.INTERNAL_ERROR, 500);
   }
 }
 

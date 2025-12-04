@@ -3,9 +3,8 @@
  * @description Aggregate polling trend for a player over a time window
  */
 
-import { NextResponse } from 'next/server';
 import { connectDB } from '@/lib/db';
-import { handleApiError, createErrorResponse } from '@/lib/utils/apiResponse';
+import { handleApiError, createSuccessResponse, createErrorResponse, ErrorCode } from '@/lib/utils/apiResponse';
 import { maybeValidateResponse } from '@/lib/utils/apiResponseSchemas';
 import { AggregatePollingQuerySchema, PollingAggregateResponseSchema } from '@/lib/validation/politics';
 import { aggregatePollingTrend } from '@/lib/utils/politics/polling';
@@ -29,18 +28,15 @@ export async function GET(request: Request) {
     const trend = await aggregatePollingTrend(playerId, windowHours);
 
     const payload = {
-      success: true as const,
-      data: {
-        aggregate: {
-          mean: trend.averageSupport,
-          volatility: trend.volatility,
-          trend: trend.trendDirection,
-        },
+      aggregate: {
+        mean: trend.averageSupport,
+        volatility: trend.volatility,
+        trend: trend.trendDirection,
       },
     };
 
-    maybeValidateResponse(PollingAggregateResponseSchema, payload, 'polling/aggregate');
-    return NextResponse.json(payload);
+    maybeValidateResponse(PollingAggregateResponseSchema, { success: true, data: payload }, 'polling/aggregate');
+    return createSuccessResponse(payload);
   } catch (error) {
     return handleApiError(error, 'Failed to aggregate polling trend');
   }

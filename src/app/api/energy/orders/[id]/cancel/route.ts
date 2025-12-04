@@ -8,11 +8,12 @@
  * Handles cancellation of open or pending trading orders with validation and audit trail.
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { connectDB as dbConnect } from '@/lib/db';
 import { EnergyTradeOrder as Order } from '@/lib/db/models';
 import { auth } from '@/auth';
+import { createSuccessResponse, createErrorResponse } from '@/lib/utils/apiResponse';
 
 // ============================================================================
 // VALIDATION SCHEMAS
@@ -39,7 +40,7 @@ export async function POST(
     // Authentication
     const session = await auth();
     if (!session?.user?.companyId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', 'UNAUTHORIZED', 401);
     }
 
     // Parse request body
@@ -47,10 +48,7 @@ export async function POST(
     const validation = CancelOrderSchema.safeParse(body);
     
     if (!validation.success) {
-      return NextResponse.json(
-        { error: 'Invalid input', details: validation.error.flatten() },
-        { status: 400 }
-      );
+      return createErrorResponse('Invalid input', 'BAD_REQUEST', 400);
     }
 
     const { reason } = validation.data;
@@ -65,25 +63,16 @@ export async function POST(
     });
 
     if (!order) {
-      return NextResponse.json(
-        { error: 'Order not found or access denied' },
-        { status: 404 }
-      );
+      return createErrorResponse('Order not found or access denied', 'NOT_FOUND', 404);
     }
 
     // Check if order can be cancelled
     if (order.status === 'Filled') {
-      return NextResponse.json(
-        { error: 'Cannot cancel filled order' },
-        { status: 400 }
-      );
+      return createErrorResponse('Cannot cancel filled order', 'BAD_REQUEST', 400);
     }
 
     if (order.status === 'Cancelled') {
-      return NextResponse.json(
-        { error: 'Order already cancelled' },
-        { status: 400 }
-      );
+      return createErrorResponse('Order already cancelled', 'BAD_REQUEST', 400);
     }
 
     // Store previous status for audit
@@ -92,9 +81,9 @@ export async function POST(
     // Update order status
     order.status = 'Cancelled';
     order.cancelledAt = new Date();
-    // Model does not include cancellationReason; store note if available
-    if (reason) {
-      (order as any).notes = reason;
+    // Store cancellation reason in comments field if available
+    if (reason && order.comments !== undefined) {
+      order.comments = `Cancelled: ${reason}`;
     }
 
     await order.save();
@@ -102,27 +91,23 @@ export async function POST(
     // Log cancellation
     console.log(`[ENERGY] Order cancelled: ${order._id}, Previous status: ${previousStatus}, Reason: ${reason || 'Not specified'}`);
 
-    return NextResponse.json({
-      success: true,
+    return createSuccessResponse({
       order: {
         id: order._id,
         orderType: order.type,
         side: order.side,
-        commodityType: (order as any).commodityType || (order as any).commodity || 'UNKNOWN',
+        product: order.product || 'UNKNOWN',
         quantity: order.quantityMWh || 0,
         previousStatus,
         newStatus: 'CANCELLED',
         cancelledAt: order.cancelledAt,
-        notes: (order as any).notes || (reason ? `Cancelled: ${reason}` : 'Cancelled')
+        reason: reason || 'User requested cancellation'
       }
     });
 
   } catch (error) {
     console.error('[ENERGY] Order cancellation error:', error);
-    return NextResponse.json(
-      { error: 'Failed to cancel order', details: error instanceof Error ? error.message : 'Unknown error' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to cancel order', 'INTERNAL_ERROR', 500);
   }
 }
 

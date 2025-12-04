@@ -212,7 +212,7 @@ export function ModelTrainingWizard({
                 <label className="block text-sm font-medium mb-2">Dataset Quality</label>
                 <Select
                   selectedKeys={[datasetQuality]}
-                  onSelectionChange={(keys) => setDatasetQuality(Array.from(keys)[0] as any)}
+                  onSelectionChange={(keys) => setDatasetQuality(String(Array.from(keys)[0]) as 'low' | 'medium' | 'high' | 'premium')}
                 >
                 <SelectItem key="low">Low ($1k - basic quality)</SelectItem>
                 <SelectItem key="medium">Medium ($5k - clean data)</SelectItem>
@@ -239,7 +239,7 @@ export function ModelTrainingWizard({
                 <label className="block text-sm font-medium mb-2">Architecture Type</label>
                 <Select
                   selectedKeys={[architecture]}
-                  onSelectionChange={(keys) => setArchitecture(Array.from(keys)[0] as any)}
+                  onSelectionChange={(keys) => setArchitecture(String(Array.from(keys)[0]) as 'Transformer' | 'CNN' | 'RNN' | 'Diffusion' | 'GAN')}
                 >
                 <SelectItem key="Transformer">Transformer (LLMs, NLP)</SelectItem>
                 <SelectItem key="CNN">CNN (Computer Vision)</SelectItem>
@@ -252,7 +252,7 @@ export function ModelTrainingWizard({
                 <label className="block text-sm font-medium mb-2">Model Size</label>
                 <Select
                   selectedKeys={[modelSize]}
-                  onSelectionChange={(keys) => setModelSize(Array.from(keys)[0] as any)}
+                  onSelectionChange={(keys) => setModelSize(String(Array.from(keys)[0]) as 'Small' | 'Medium' | 'Large')}
                 >
                 <SelectItem key="Small">Small (125M - 300M params)</SelectItem>
                 <SelectItem key="Medium">Medium (1B - 1.5B params)</SelectItem>
@@ -311,7 +311,7 @@ export function ModelTrainingWizard({
                 <label className="block text-sm font-medium mb-2">Scaling Policy</label>
                 <Select
                   selectedKeys={[scalingPolicy]}
-                  onSelectionChange={(keys) => setScalingPolicy(Array.from(keys)[0] as any)}
+                  onSelectionChange={(keys) => setScalingPolicy(String(Array.from(keys)[0]) as 'fixed' | 'auto')}
                 >
                 <SelectItem key="fixed">Fixed (constant replicas)</SelectItem>
                 <SelectItem key="auto">Auto (scale based on demand)</SelectItem>

@@ -7,8 +7,9 @@
  * @author ECHO v1.3.0 Healthcare Implementation
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { auth } from '@/auth';
+import { createSuccessResponse, createErrorResponse, ErrorCode } from '@/lib/utils/apiResponse';
 import { connectDB } from '@/lib/db/mongoose';
 import HealthcareInsurance from '@/lib/db/models/healthcare/HealthcareInsurance';
 import Company from '@/lib/db/models/Company';
@@ -129,7 +130,7 @@ export async function GET(request: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     // Get user's companies
@@ -183,7 +184,7 @@ export async function GET(request: NextRequest) {
     const averageClaimRatio = totalClaimsPaid / totalPremiumRevenue || 0;
     const averageStarRating = companiesWithMetrics.reduce((sum: number, c: any) => sum + (c.quality?.starRating || 0), 0) / totalCompanies || 0;
 
-    return NextResponse.json({
+    return createSuccessResponse({
       insurance: companiesWithMetrics,
       summary: {
         totalCompanies,
@@ -197,10 +198,7 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     console.error('Error fetching healthcare insurance companies:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return createErrorResponse('Internal server error', ErrorCode.INTERNAL_ERROR, 500);
   }
 }
 
@@ -212,7 +210,7 @@ export async function POST(request: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     const body = await request.json();
@@ -221,7 +219,7 @@ export async function POST(request: NextRequest) {
     // Verify company ownership
     const company = await Company.findById(validatedData.company);
     if (!company || company.owner?.toString() !== session.user.id) {
-      return NextResponse.json({ error: 'Unauthorized - Company not owned by user' }, { status: 403 });
+      return createErrorResponse('Unauthorized - Company not owned by user', ErrorCode.FORBIDDEN, 403);
     }
 
     // Calculate initial metrics using available functions
@@ -250,10 +248,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (!metricsValidation.isValid) {
-      return NextResponse.json({
-        error: 'Healthcare insurance company metrics validation failed',
-        details: metricsValidation.errors
-      }, { status: 400 });
+      return createErrorResponse('Healthcare insurance company metrics validation failed', ErrorCode.BAD_REQUEST, 400);
     }
 
     // Create healthcare insurance company
@@ -267,22 +262,16 @@ export async function POST(request: NextRequest) {
     await insuranceCompany.save();
     await insuranceCompany.populate('ownedBy', 'name industry');
 
-    return NextResponse.json({
+    return createSuccessResponse({
       insurance: insuranceCompany,
       message: 'Healthcare insurance company created successfully'
-    }, { status: 201 });
+    }, undefined, 201);
 
   } catch (error) {
     console.error('Error creating healthcare insurance company:', error);
     if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: 'Invalid healthcare insurance company data', details: error.errors },
-        { status: 400 }
-      );
+      return createErrorResponse('Invalid healthcare insurance company data', ErrorCode.BAD_REQUEST, 400);
     }
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return createErrorResponse('Internal server error', ErrorCode.INTERNAL_ERROR, 500);
   }
 }

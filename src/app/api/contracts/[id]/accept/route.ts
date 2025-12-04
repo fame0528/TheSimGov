@@ -14,6 +14,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { connectDB, Contract, Company } from '@/lib/db';
+import { createSuccessResponse, createErrorResponse } from '@/lib/utils/apiResponse';
 import { z } from 'zod';
 
 /**
@@ -42,7 +43,7 @@ export async function POST(
     // Authenticate
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', 'UNAUTHORIZED', 401);
     }
 
     // Parse request
@@ -50,10 +51,7 @@ export async function POST(
     const validation = acceptSchema.safeParse(body);
     
     if (!validation.success) {
-      return NextResponse.json(
-        { error: 'Invalid request', details: validation.error.errors },
-        { status: 400 }
-      );
+      return createErrorResponse('Invalid request', 'VALIDATION_ERROR', 400, validation.error.errors);
     }
 
     const { companyId } = validation.data;
@@ -63,26 +61,23 @@ export async function POST(
     // Get contract
     const contract = await Contract.findById(id);
     if (!contract) {
-      return NextResponse.json({ error: 'Contract not found' }, { status: 404 });
+      return createErrorResponse('Contract not found', 'CONTRACT_NOT_FOUND', 404);
     }
 
     // Verify contract is in bidding status
     if (contract.status !== 'bidding') {
-      return NextResponse.json(
-        { error: 'Contract is not in bidding status' },
-        { status: 400 }
-      );
+      return createErrorResponse('Contract is not in bidding status', 'INVALID_STATUS', 400);
     }
 
     // Get company
     const company = await Company.findById(companyId);
     if (!company) {
-      return NextResponse.json({ error: 'Company not found' }, { status: 404 });
+      return createErrorResponse('Company not found', 'COMPANY_NOT_FOUND', 404);
     }
 
     // Verify ownership
     if (company.userId.toString() !== session.user.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+      return createErrorResponse('Unauthorized', 'FORBIDDEN', 403);
     }
 
     // Set contract ownership and timeline
@@ -94,17 +89,14 @@ export async function POST(
     // Deadline is calculated in pre-save hook (startDate + durationDays)
     await contract.save();
 
-    return NextResponse.json({
+    return createSuccessResponse({
       contract,
       message: 'Contract accepted successfully',
-    }, { status: 200 });
+    });
 
   } catch (error: any) {
     console.error('Contract acceptance error:', error);
-    return NextResponse.json(
-      { error: 'Failed to accept contract', details: error.message },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to accept contract', 'INTERNAL_ERROR', 500, error.message);
   }
 }
 

@@ -9,11 +9,13 @@
  * and charging optimization based on grid conditions and electricity prices.
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { connectDB as dbConnect } from '@/lib/db';
 import { EnergyStorage as Storage } from '@/lib/db/models';
 import { auth } from '@/auth';
+import { createSuccessResponse, createErrorResponse, ErrorCode } from '@/lib/utils/apiResponse';
+import type { IEnergyStorage } from '@/lib/db/models/energy/EnergyStorage';
 
 // ============================================================================
 // VALIDATION SCHEMAS
@@ -72,7 +74,7 @@ export async function POST(
     // Authentication
     const session = await auth();
     if (!session?.user?.companyId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     // Parse request body
@@ -80,10 +82,7 @@ export async function POST(
     const validation = ChargeStorageSchema.safeParse(body);
     
     if (!validation.success) {
-      return NextResponse.json(
-        { error: 'Invalid input', details: validation.error.flatten() },
-        { status: 400 }
-      );
+      return createErrorResponse('Invalid input', ErrorCode.BAD_REQUEST, 400);
     }
 
     const { chargePower, duration, electricityPrice, chargingMode, targetSOC } = validation.data;
@@ -98,18 +97,13 @@ export async function POST(
     });
 
     if (!storage) {
-      return NextResponse.json(
-        { error: 'Storage system not found or access denied' },
-        { status: 404 }
-      );
+      return createErrorResponse('Storage system not found or access denied', ErrorCode.NOT_FOUND, 404);
     }
 
-    // Validate storage is not already charging (legacy flag not in model)
-    if ((storage as any).isCharging) {
-      return NextResponse.json(
-        { error: 'Storage system is already charging' },
-        { status: 400 }
-      );
+    // Validate storage is not already charging
+    // Note: isCharging is a runtime state, check status field instead
+    if (storage.status === 'Charging') {
+      return createErrorResponse('Storage system is already charging', ErrorCode.BAD_REQUEST, 400);
     }
 
     // Get storage parameters
@@ -121,10 +115,7 @@ export async function POST(
     // Validate charge power within limits
     const maxAllowedPower = maxPower * MAX_CHARGE_RATE[chargingMode];
     if (chargePower > maxAllowedPower) {
-      return NextResponse.json(
-        { error: `Charge power ${chargePower} MW exceeds maximum allowed ${maxAllowedPower.toFixed(2)} MW for ${chargingMode} mode` },
-        { status: 400 }
-      );
+      return createErrorResponse(`Charge power ${chargePower} MW exceeds maximum allowed ${maxAllowedPower.toFixed(2)} MW for ${chargingMode} mode`, ErrorCode.BAD_REQUEST, 400);
     }
 
     // Calculate charging efficiency and energy delivered
@@ -144,14 +135,7 @@ export async function POST(
       const energyNeeded = targetEnergyStored - currentEnergyStored;
       const adjustedDuration = energyNeeded / (chargePower * efficiency);
       
-      return NextResponse.json({
-        warning: 'Charging would exceed target SOC',
-        recommended: {
-          duration: adjustedDuration.toFixed(2) + ' hours',
-          energyInput: (chargePower * adjustedDuration).toFixed(2) + ' MWh',
-          finalSOC: targetSOC + '%'
-        }
-      }, { status: 400 });
+      return createErrorResponse(`Charging would exceed target SOC. Recommended duration: ${adjustedDuration.toFixed(2)} hours`, ErrorCode.BAD_REQUEST, 400);
     }
 
     // Calculate costs
@@ -163,7 +147,9 @@ export async function POST(
     const degradationPercent = BATTERY_DEGRADATION_RATE[chargingMode];
     const cycleDepth = (actualEnergyStored / capacity) * 100; // Percentage of full cycle
     const healthDegradation = degradationPercent * (cycleDepth / 100);
-    const newBatteryHealth = Math.max(0, ((storage as any).batteryHealth || 100) - healthDegradation);
+    // Use existing degradation field from model (0-100% capacity loss)
+    const currentDegradation = storage.degradation ?? 0;
+    const newBatteryHealth = Math.max(0, 100 - currentDegradation - healthDegradation);
 
     // Calculate charging timeline
     const startTime = new Date();
@@ -179,7 +165,7 @@ export async function POST(
     // Log charging action
     console.log(`[ENERGY] Storage charging: ${storage.name} (${storage._id}), Mode: ${chargingMode}, Power: ${chargePower} MW, Duration: ${actualDuration.toFixed(2)}h, SOC: ${currentSOC}% → ${newSOC.toFixed(2)}%`);
 
-    return NextResponse.json({
+    return createSuccessResponse({
       success: true,
       storage: {
         id: storage._id,
@@ -216,7 +202,7 @@ export async function POST(
         roundTripLoss: '$' + ((energyInput - actualEnergyStored) * pricePerMWh).toFixed(2)
       },
       battery: {
-        previousHealth: (((storage as any).batteryHealth || 100)) + '%',
+        previousHealth: (100 - currentDegradation).toFixed(2) + '%',
         newHealth: newBatteryHealth.toFixed(2) + '%',
         degradation: healthDegradation.toFixed(4) + '%',
         cycleDepth: cycleDepth.toFixed(2) + '%',
@@ -226,10 +212,7 @@ export async function POST(
 
   } catch (error) {
     console.error('[ENERGY] Storage charging error:', error);
-    return NextResponse.json(
-      { error: 'Failed to charge storage system', details: error instanceof Error ? error.message : 'Unknown error' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to charge storage system', ErrorCode.INTERNAL_ERROR, 500);
   }
 }
 

@@ -20,7 +20,8 @@
  * @author ECHO v1.3.0
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+import { createSuccessResponse, createErrorResponse } from '@/lib/utils/apiResponse';
 import { authenticateRequest, handleAPIError } from '@/lib/utils/api-helpers';
 import { connectDB } from '@/lib/db';
 import AIResearchProject from '@/lib/db/models/AIResearchProject';
@@ -92,18 +93,12 @@ export async function POST(request: NextRequest) {
 
     // 3. Validate required fields
     if (!projectId || computeBudgetUSD === undefined) {
-      return NextResponse.json(
-        { success: false, error: 'Missing required fields: projectId, computeBudgetUSD' },
-        { status: 400 }
-      );
+      return createErrorResponse('Missing required fields: projectId, computeBudgetUSD', 'VALIDATION_ERROR', 400);
     }
 
     // 4. Validate compute budget (must be positive)
     if (typeof computeBudgetUSD !== 'number' || computeBudgetUSD < 0) {
-      return NextResponse.json(
-        { success: false, error: 'computeBudgetUSD must be a non-negative number' },
-        { status: 422 }
-      );
+      return createErrorResponse('computeBudgetUSD must be a non-negative number', 'VALIDATION_ERROR', 422);
     }
 
     await connectDB();
@@ -112,44 +107,29 @@ export async function POST(request: NextRequest) {
     const company = await Company.findById(companyId);
 
     if (!company || !['Technology', 'AI'].includes(company.industry)) {
-      return NextResponse.json(
-        { success: false, error: 'No AI/Technology company found for this user.' },
-        { status: 403 }
-      );
+      return createErrorResponse('No AI/Technology company found for this user', 'FORBIDDEN', 403);
     }
 
     // 6. Load research project with ownership verification
     const project = await AIResearchProject.findById(projectId);
 
     if (!project) {
-      return NextResponse.json(
-        { success: false, error: 'Research project not found' },
-        { status: 404 }
-      );
+      return createErrorResponse('Research project not found', 'NOT_FOUND', 404);
     }
 
     // Verify project belongs to user's company
     if (project.company.toString() !== companyId) {
-      return NextResponse.json(
-        { success: false, error: 'Project does not belong to your company' },
-        { status: 403 }
-      );
+      return createErrorResponse('Project does not belong to your company', 'FORBIDDEN', 403);
     }
 
     // 7. Project must be InProgress
     if (project.status !== 'InProgress') {
-      return NextResponse.json(
-        { success: false, error: `Project status is ${project.status}, must be InProgress to attempt breakthroughs` },
-        { status: 422 }
-      );
+      return createErrorResponse(`Project status is ${project.status}, must be InProgress to attempt breakthroughs`, 'VALIDATION_ERROR', 422);
     }
 
     // 8. Load assigned researchers to calculate average skill
     if (!project.assignedResearchers || project.assignedResearchers.length === 0) {
-      return NextResponse.json(
-        { success: false, error: 'No researchers assigned to project - assign team before attempting breakthroughs' },
-        { status: 422 }
-      );
+      return createErrorResponse('No researchers assigned to project - assign team before attempting breakthroughs', 'VALIDATION_ERROR', 422);
     }
 
     const researchers = await Employee.find({
@@ -157,10 +137,7 @@ export async function POST(request: NextRequest) {
     }).select('skills');
 
     if (researchers.length === 0) {
-      return NextResponse.json(
-        { success: false, error: 'Assigned researchers not found' },
-        { status: 422 }
-      );
+      return createErrorResponse('Assigned researchers not found', 'VALIDATION_ERROR', 422);
     }
 
     // 9. Calculate average researcher skill (use technical skill for AI research)
@@ -188,7 +165,7 @@ export async function POST(request: NextRequest) {
 
     // 13. If no breakthrough, return failure with probability details
     if (!breakthroughOccurred) {
-      return NextResponse.json({
+      return createSuccessResponse({
         success: false,
         breakthrough: false,
         message: 'No breakthrough discovered this cycle',
@@ -229,7 +206,7 @@ export async function POST(request: NextRequest) {
     await project.save();
 
     // 18. Return success with breakthrough details
-    return NextResponse.json({
+    return createSuccessResponse({
       success: true,
       breakthrough: true,
       message: '🎉 Breakthrough discovered!',

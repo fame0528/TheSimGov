@@ -9,11 +9,12 @@
  * Enforces safety limits, tracks operational hours, and calculates generation based on wind conditions.
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { connectDB as dbConnect } from '@/lib/db';
 import { WindTurbine } from '@/lib/db/models';
 import { auth } from '@/auth';
+import { createSuccessResponse, createErrorResponse, ErrorCode } from '@/lib/utils/apiResponse';
 
 // ============================================================================
 // VALIDATION SCHEMAS
@@ -42,7 +43,7 @@ export async function POST(
     // Authentication
     const session = await auth();
     if (!session?.user?.companyId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     // Parse request body
@@ -50,10 +51,7 @@ export async function POST(
     const validation = OperateWindTurbineSchema.safeParse(body);
     
     if (!validation.success) {
-      return NextResponse.json(
-        { error: 'Invalid input', details: validation.error.flatten() },
-        { status: 400 }
-      );
+      return createErrorResponse('Invalid input', ErrorCode.VALIDATION_ERROR, 400, validation.error.flatten());
     }
 
     const { operation, windSpeed, reason } = validation.data;
@@ -68,10 +66,7 @@ export async function POST(
     });
 
     if (!turbine) {
-      return NextResponse.json(
-        { error: 'Wind turbine not found or access denied' },
-        { status: 404 }
-      );
+      return createErrorResponse('Wind turbine not found or access denied', ErrorCode.NOT_FOUND, 404);
     }
 
     // Wind speed validation for START operation
@@ -80,24 +75,20 @@ export async function POST(
       const cutOutSpeed = turbine.cutOutSpeed || 25.0; // Default 25 m/s
 
       if (windSpeed < cutInSpeed) {
-        return NextResponse.json(
-          {
-            error: 'Wind speed too low',
-            message: `Wind speed (${windSpeed} m/s) is below cut-in speed (${cutInSpeed} m/s)`,
-            canOperate: false
-          },
-          { status: 400 }
+        return createErrorResponse(
+          `Wind speed (${windSpeed} m/s) is below cut-in speed (${cutInSpeed} m/s)`,
+          ErrorCode.BAD_REQUEST,
+          400,
+          { canOperate: false }
         );
       }
 
       if (windSpeed > cutOutSpeed) {
-        return NextResponse.json(
-          {
-            error: 'Wind speed too high',
-            message: `Wind speed (${windSpeed} m/s) exceeds cut-out speed (${cutOutSpeed} m/s) - safety shutdown required`,
-            canOperate: false
-          },
-          { status: 400 }
+        return createErrorResponse(
+          `Wind speed (${windSpeed} m/s) exceeds cut-out speed (${cutOutSpeed} m/s) - safety shutdown required`,
+          ErrorCode.BAD_REQUEST,
+          400,
+          { canOperate: false }
         );
       }
     }
@@ -127,8 +118,7 @@ export async function POST(
     // Log operation
     console.log(`[ENERGY] Wind turbine ${operation}: ${turbine.name} (${turbine._id}), Wind: ${windSpeed} m/s, Generation: ${currentGeneration.toFixed(2)} MW`);
 
-    return NextResponse.json({
-      success: true,
+    return createSuccessResponse({
       turbine: {
         id: turbine._id,
         name: turbine.name,
@@ -155,9 +145,11 @@ export async function POST(
 
   } catch (error) {
     console.error('[ENERGY] Wind turbine operate error:', error);
-    return NextResponse.json(
-      { error: 'Failed to operate wind turbine', details: error instanceof Error ? error.message : 'Unknown error' },
-      { status: 500 }
+    return createErrorResponse(
+      'Failed to operate wind turbine',
+      ErrorCode.INTERNAL_ERROR,
+      500,
+      error instanceof Error ? error.message : 'Unknown error'
     );
   }
 }

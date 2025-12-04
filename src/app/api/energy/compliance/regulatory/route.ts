@@ -9,11 +9,12 @@
  * status, inspection schedules, violation tracking, and compliance deadlines.
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { connectDB as dbConnect } from '@/lib/db';
 import { OilWell, GasField, SolarFarm, WindTurbine, PowerPlant, EnergyStorage, TransmissionLine } from '@/lib/db/models';
 import { auth } from '@/auth';
+import { createSuccessResponse, createErrorResponse, ErrorCode } from '@/lib/utils/apiResponse';
 
 // ============================================================================
 // CONSTANTS - COMPLIANCE REQUIREMENTS
@@ -77,7 +78,7 @@ export async function GET(req: NextRequest) {
     // Authentication
     const session = await auth();
     if (!session?.user?.companyId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     // Parse query parameters
@@ -90,10 +91,7 @@ export async function GET(req: NextRequest) {
     const validation = ComplianceQuerySchema.safeParse(queryData);
     
     if (!validation.success) {
-      return NextResponse.json(
-        { error: 'Invalid query parameters', details: validation.error.flatten() },
-        { status: 400 }
-      );
+      return createErrorResponse('Invalid query parameters: ' + JSON.stringify(validation.error.flatten()), ErrorCode.BAD_REQUEST, 400);
     }
 
     const { status, assetType } = validation.data;
@@ -232,8 +230,7 @@ export async function GET(req: NextRequest) {
                             complianceData.summary.warnings > 10 ? 'NEEDS_ATTENTION' :
                             complianceData.summary.warnings > 0 ? 'MONITOR' : 'COMPLIANT';
 
-    return NextResponse.json({
-      success: true,
+    return createSuccessResponse({
       timestamp: new Date().toISOString(),
       summary: {
         ...complianceData.summary,
@@ -254,10 +251,7 @@ export async function GET(req: NextRequest) {
 
   } catch (error) {
     console.error('[ENERGY] Regulatory compliance error:', error);
-    return NextResponse.json(
-      { error: 'Failed to retrieve compliance data', details: error instanceof Error ? error.message : 'Unknown error' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to retrieve compliance data: ' + (error instanceof Error ? error.message : 'Unknown error'), ErrorCode.INTERNAL_ERROR, 500);
   }
 }
 

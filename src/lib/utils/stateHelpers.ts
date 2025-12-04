@@ -150,6 +150,20 @@ export function isValidStateAbbr(value: string): value is StateAbbreviation {
 }
 
 /**
+ * Lookup map for state abbreviation to full name
+ * Used for display purposes
+ * 
+ * @example
+ * ```ts
+ * console.log(STATE_NAMES['CA']); // 'California'
+ * console.log(STATE_NAMES['NY']); // 'New York'
+ * ```
+ */
+export const STATE_NAMES: Record<StateAbbreviation, string> = Object.fromEntries(
+  STATES.map(state => [state.abbreviation, state.name])
+) as Record<StateAbbreviation, string>;
+
+/**
  * Get states by specific criteria
  * Provides common filters for gameplay/UI
  * 

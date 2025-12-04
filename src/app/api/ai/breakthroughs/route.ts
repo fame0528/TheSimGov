@@ -10,13 +10,14 @@
  * @author ECHO v1.3.0
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { auth } from '@/auth';
 import { connectDB } from '@/lib/db';
 import Breakthrough from '@/lib/db/models/Breakthrough';
 import AIResearchProject from '@/lib/db/models/AIResearchProject';
 import Company from '@/lib/db/models/Company';
 import Employee from '@/lib/db/models/Employee';
+import { createSuccessResponse, createErrorResponse } from '@/lib/utils/apiResponse';
 import {
   calculateBreakthroughDiscoveryProbability,
   generateBreakthroughDetails,
@@ -44,7 +45,7 @@ export async function POST(request: NextRequest) {
     // Authentication check
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', 'UNAUTHORIZED', 401);
     }
 
     // Parse request body
@@ -53,12 +54,13 @@ export async function POST(request: NextRequest) {
 
     // Validation
     if (!projectId) {
-      return NextResponse.json({ error: 'Project ID required' }, { status: 400 });
+      return createErrorResponse('Project ID required', 'VALIDATION_ERROR', 400);
     }
     if (!computeBudgetUSD || computeBudgetUSD < 1000) {
-      return NextResponse.json(
-        { error: 'Compute budget must be at least $1,000' },
-        { status: 400 }
+      return createErrorResponse(
+        'Compute budget must be at least $1,000',
+        'VALIDATION_ERROR',
+        400
       );
     }
 
@@ -67,27 +69,26 @@ export async function POST(request: NextRequest) {
     // Load research project with company
     const project = await AIResearchProject.findById(projectId);
     if (!project) {
-      return NextResponse.json({ error: 'Research project not found' }, { status: 404 });
+      return createErrorResponse('Research project not found', 'NOT_FOUND', 404);
     }
 
     // Load company
     const company = await Company.findById(project.company);
     if (!company) {
-      return NextResponse.json({ error: 'Company not found' }, { status: 404 });}
+      return createErrorResponse('Company not found', 'NOT_FOUND', 404);
+    }
 
     // Ownership check
     if (company.userId !== session.user.id) {
-      return NextResponse.json(
-        { error: 'You do not own this company' },
-        { status: 403 }
-      );
+      return createErrorResponse('You do not own this company', 'FORBIDDEN', 403);
     }
 
     // Project status check
     if (project.status !== 'InProgress') {
-      return NextResponse.json(
-        { error: 'Project must be InProgress to attempt breakthroughs' },
-        { status: 400 }
+      return createErrorResponse(
+        'Project must be InProgress to attempt breakthroughs',
+        'VALIDATION_ERROR',
+        400
       );
     }
 
@@ -97,9 +98,10 @@ export async function POST(request: NextRequest) {
     });
 
     if (researchers.length === 0) {
-      return NextResponse.json(
-        { error: 'Project has no assigned researchers' },
-        { status: 400 }
+      return createErrorResponse(
+        'Project has no assigned researchers',
+        'VALIDATION_ERROR',
+        400
       );
     }
 
@@ -116,7 +118,7 @@ export async function POST(request: NextRequest) {
 
     // Check if breakthrough discovered
     if (roll > probability) {
-      return NextResponse.json({
+      return createSuccessResponse({
         success: false,
         breakthrough: null,
         probability,
@@ -161,7 +163,7 @@ export async function POST(request: NextRequest) {
     company.cash -= computeBudgetUSD;
     await company.save();
 
-    return NextResponse.json({
+    return createSuccessResponse({
       success: true,
       breakthrough,
       probability,
@@ -175,9 +177,10 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error('Breakthrough discovery error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error during breakthrough discovery' },
-      { status: 500 }
+    return createErrorResponse(
+      'Internal server error during breakthrough discovery',
+      'INTERNAL_ERROR',
+      500
     );
   }
 }
@@ -202,7 +205,7 @@ export async function GET(request: NextRequest) {
     // Authentication check
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', 'UNAUTHORIZED', 401);
     }
 
     const { searchParams } = new URL(request.url);
@@ -220,12 +223,12 @@ export async function GET(request: NextRequest) {
       // Verify project ownership
       const project = await AIResearchProject.findById(projectId);
       if (!project) {
-        return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+        return createErrorResponse('Project not found', 'NOT_FOUND', 404);
       }
       
       const company = await Company.findById(project.company);
       if (!company || company.userId !== session.user.id) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+        return createErrorResponse('Unauthorized', 'FORBIDDEN', 403);
       }
     } else if (companyId) {
       filter.companyId = companyId;
@@ -233,15 +236,16 @@ export async function GET(request: NextRequest) {
       // Verify company ownership
       const company = await Company.findById(companyId);
       if (!company) {
-        return NextResponse.json({ error: 'Company not found' }, { status: 404 });
+        return createErrorResponse('Company not found', 'NOT_FOUND', 404);
       }
       if (company.userId !== session.user.id) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+        return createErrorResponse('Unauthorized', 'FORBIDDEN', 403);
       }
     } else {
-      return NextResponse.json(
-        { error: 'Either companyId or projectId required' },
-        { status: 400 }
+      return createErrorResponse(
+        'Either companyId or projectId required',
+        'VALIDATION_ERROR',
+        400
       );
     }
 
@@ -256,7 +260,7 @@ export async function GET(request: NextRequest) {
       0
     );
 
-    return NextResponse.json({
+    return createSuccessResponse({
       breakthroughs,
       totalCount,
       patentableCount,
@@ -264,9 +268,10 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('List breakthroughs error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error listing breakthroughs' },
-      { status: 500 }
+    return createErrorResponse(
+      'Internal server error listing breakthroughs',
+      'INTERNAL_ERROR',
+      500
     );
   }
 }

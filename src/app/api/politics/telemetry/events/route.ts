@@ -7,9 +7,10 @@
  * Returns filtered raw telemetry events with pagination.
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { auth } from '@/auth';
 import { connectDB } from '@/lib/db';
+import { createSuccessResponse, createErrorResponse } from '@/lib/utils/apiResponse';
 import TelemetryEventModel from '@/lib/db/models/TelemetryEvent';
 import { telemetryEventsQuerySchema, parseEventTypes } from '@/lib/schemas/politicsPhase7Api';
 import { createComponentLogger } from '@/lib/utils/logger';
@@ -21,19 +22,19 @@ export async function GET(req: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', 'UNAUTHORIZED', 401);
     }
     await connectDB();
     const { searchParams } = new URL(req.url);
     const parsed = telemetryEventsQuerySchema.safeParse(Object.fromEntries(searchParams.entries()));
     if (!parsed.success) {
-      return NextResponse.json({ error: 'Invalid query', details: parsed.error.flatten() }, { status: 400 });
+      return createErrorResponse('Invalid query', 'VALIDATION_ERROR', 400, parsed.error.flatten());
     }
     const { playerId: overridePlayerId, types, sinceEpoch, limit, offset } = parsed.data;
     const playerId = overridePlayerId || session.user.id;
     const resolvedLimit = Math.min(limit ?? 100, MAX_LIMIT);
     if ((limit ?? 100) > MAX_LIMIT) {
-      return NextResponse.json({ error: 'Limit too high' }, { status: 429 });
+      return createErrorResponse('Limit too high', 'RATE_LIMIT', 429);
     }
     const resolvedOffset = offset ?? 0;
     const eventTypes = parseEventTypes(types);
@@ -49,7 +50,7 @@ export async function GET(req: NextRequest) {
       .skip(resolvedOffset)
       .lean();
 
-    return NextResponse.json({
+    return createSuccessResponse({
       events,
       pagination: {
         total,
@@ -57,9 +58,9 @@ export async function GET(req: NextRequest) {
         offset: resolvedOffset,
         hasMore: resolvedOffset + resolvedLimit < total,
       }
-    }, { status: 200 });
+    });
   } catch (err: any) {
     logger.error('Telemetry events fetch failed', { error: err });
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return createErrorResponse('Internal server error', 'INTERNAL_ERROR', 500);
   }
 }

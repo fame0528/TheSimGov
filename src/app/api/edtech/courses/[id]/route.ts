@@ -13,9 +13,10 @@
  * DELETE /api/edtech/courses/:id - Delete course
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { auth } from '@/auth';
 import { connectDB } from '@/lib/db';
+import { createSuccessResponse, createErrorResponse, ErrorCode } from '@/lib/utils/apiResponse';
 import EdTechCourse from '@/lib/db/models/edtech/EdTechCourse';
 
 /**
@@ -34,7 +35,7 @@ export async function GET(
   try {
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     await connectDB();
@@ -46,16 +47,13 @@ export async function GET(
       .lean();
 
     if (!course) {
-      return NextResponse.json({ error: 'Course not found' }, { status: 404 });
+      return createErrorResponse('Course not found', ErrorCode.NOT_FOUND, 404);
     }
 
-    return NextResponse.json(course);
+    return createSuccessResponse(course);
   } catch (error) {
     console.error('GET /api/edtech/courses/:id error:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch course' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to fetch course', ErrorCode.INTERNAL_ERROR, 500);
   }
 }
 
@@ -85,7 +83,7 @@ export async function PATCH(
   try {
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     await connectDB();
@@ -95,7 +93,7 @@ export async function PATCH(
 
     const course = await EdTechCourse.findById(id);
     if (!course) {
-      return NextResponse.json({ error: 'Course not found' }, { status: 404 });
+      return createErrorResponse('Course not found', ErrorCode.NOT_FOUND, 404);
     }
 
     // Update allowed fields
@@ -136,21 +134,15 @@ export async function PATCH(
 
     await course.save();
 
-    return NextResponse.json(course);
+    return createSuccessResponse(course);
   } catch (error) {
     console.error('PATCH /api/edtech/courses/:id error:', error);
     
     if ((error as { name?: string }).name === 'ValidationError') {
-      return NextResponse.json(
-        { error: 'Validation error', details: (error as { errors?: unknown }).errors },
-        { status: 400 }
-      );
+      return createErrorResponse('Validation error', ErrorCode.VALIDATION_ERROR, 400, (error as { errors?: unknown }).errors);
     }
 
-    return NextResponse.json(
-      { error: 'Failed to update course' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to update course', ErrorCode.INTERNAL_ERROR, 500);
   }
 }
 
@@ -170,7 +162,7 @@ export async function DELETE(
   try {
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     await connectDB();
@@ -179,19 +171,16 @@ export async function DELETE(
 
     const course = await EdTechCourse.findById(id);
     if (!course) {
-      return NextResponse.json({ error: 'Course not found' }, { status: 404 });
+      return createErrorResponse('Course not found', ErrorCode.NOT_FOUND, 404);
     }
 
     // Soft delete
     course.active = false;
     await course.save();
 
-    return NextResponse.json({ message: 'Course deleted successfully' });
+    return createSuccessResponse({ message: 'Course deleted successfully' });
   } catch (error) {
     console.error('DELETE /api/edtech/courses/:id error:', error);
-    return NextResponse.json(
-      { error: 'Failed to delete course' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to delete course', ErrorCode.INTERNAL_ERROR, 500);
   }
 }

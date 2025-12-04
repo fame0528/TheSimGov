@@ -41,7 +41,6 @@ export function useHeat(params?: { scope?: string; scopeId?: string; state?: str
       ? { scope: "City", scopeId: `${params.state}:${params.city}` }
       : {}
   ).toString();
-  const swr = useSWR(qs ? `/api/crime/heat?${qs}` : null, fetcher);
-  const { data, error, isLoading, mutate } = swr as any;
+  const { data, error, isLoading, mutate } = useSWR<{ data: unknown; meta?: unknown }>(qs ? `/api/crime/heat?${qs}` : null, fetcher);
   return { data: data?.data ?? null, error, isLoading, meta: data?.meta, mutate } as const;
 }

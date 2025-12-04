@@ -15,6 +15,15 @@ import { NextRequest, NextResponse } from 'next/server';
 import CompanyModel from '@/lib/db/models/Company';
 import EmployeeModel from '@/lib/db/models/Employee';
 import { GAME_TIME } from '@/lib/utils/constants';
+import type { Types } from 'mongoose';
+
+/** Payroll result for a single company */
+interface PayrollResult {
+  companyId: Types.ObjectId;
+  payroll: number;
+  payrollSuccess: boolean;
+  employees: number;
+}
 
 /**
  * POST /api/payroll
@@ -25,7 +34,7 @@ export async function POST(req: NextRequest) {
     // Find all companies
     const companies = await CompanyModel.find({});
     let totalPayroll = 0;
-    let payrollResults: any[] = [];
+    const payrollResults: PayrollResult[] = [];
 
     for (const company of companies) {
       // Find all active employees for this company
@@ -40,9 +49,11 @@ export async function POST(req: NextRequest) {
       } else {
         payrollSuccess = false;
       }
-      // Push payroll history entry
-      (company as any).payrollHistory = (company as any).payrollHistory || [];
-      (company as any).payrollHistory.push({
+      // Push payroll history entry - payrollHistory is defined on CompanyDocument
+      if (!company.payrollHistory) {
+        company.payrollHistory = [];
+      }
+      company.payrollHistory.push({
         date: new Date(),
         amount: Math.round(weeklyPayroll),
         success: payrollSuccess,

@@ -5,10 +5,15 @@
  * @created 2025-11-23
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { auth } from '@/auth';
 import { connectDB, Loan, Company } from '@/lib/db';
+import { createSuccessResponse, createErrorResponse } from '@/lib/utils/apiResponse';
 import { z } from 'zod';
+
+// Loan status values for proper typing
+type LoanStatus = 'Active' | 'PaidOff' | 'Defaulted' | 'Late';
+const validLoanStatuses: LoanStatus[] = ['Active', 'PaidOff', 'Defaulted', 'Late'];
 
 // Validation schema for loan queries
 const loanQuerySchema = z.object({
@@ -27,30 +32,24 @@ export async function GET(request: NextRequest) {
     // Authenticate user
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: 'Authentication required' },
-        { status: 401 }
-      );
+      return createErrorResponse('Authentication required', 'UNAUTHORIZED', 401);
     }
 
     // Parse query parameters
     const { searchParams } = new URL(request.url);
+    const statusParam = searchParams.get('status');
     const queryData = {
       companyId: searchParams.get('companyId') || undefined,
-      status: searchParams.get('status') as any || undefined,
+      status: statusParam && validLoanStatuses.includes(statusParam as LoanStatus) 
+        ? (statusParam as LoanStatus) 
+        : undefined,
       limit: parseInt(searchParams.get('limit') || '50'),
       offset: parseInt(searchParams.get('offset') || '0')
     };
 
     const validationResult = loanQuerySchema.safeParse(queryData);
     if (!validationResult.success) {
-      return NextResponse.json(
-        {
-          error: 'Invalid query parameters',
-          details: validationResult.error.issues
-        },
-        { status: 400 }
-      );
+      return createErrorResponse('Invalid query parameters', 'VALIDATION_ERROR', 400, validationResult.error.issues);
     }
 
     const { companyId, status, limit, offset } = validationResult.data;
@@ -69,10 +68,7 @@ export async function GET(request: NextRequest) {
       });
 
       if (!company) {
-        return NextResponse.json(
-          { error: 'Company not found or access denied' },
-          { status: 404 }
-        );
+        return createErrorResponse('Company not found or access denied', 'NOT_FOUND', 404);
       }
 
       query.companyId = companyId;
@@ -120,7 +116,7 @@ export async function GET(request: NextRequest) {
       updatedAt: loan.updatedAt
     }));
 
-    return NextResponse.json({
+    return createSuccessResponse({
       loans: loanData,
       pagination: {
         total: totalLoans,
@@ -132,9 +128,6 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     console.error('Loans API error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return createErrorResponse('Internal server error', 'INTERNAL_ERROR', 500);
   }
 }

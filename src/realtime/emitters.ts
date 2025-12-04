@@ -221,7 +221,11 @@ export function broadcastRankChange(
 // ---------------------------
 
 export function broadcastSystemEvent(payload: AnySystemPayload, options?: EmitOptions) {
-  return emitSystem({ ...payload, timestamp: payload.timestamp || Date.now() } as AnySystemPayload, options);
+  const fullPayload: AnySystemPayload = {
+    ...payload,
+    timestamp: payload.timestamp || Date.now(),
+  };
+  return emitSystem(fullPayload, options);
 }
 
 /**

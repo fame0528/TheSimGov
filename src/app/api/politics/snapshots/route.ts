@@ -14,9 +14,9 @@
  */
 
 import { z } from 'zod';
-import { NextResponse } from 'next/server';
 import type { InfluenceSnapshot } from '@/lib/utils/politics/offlineProtection';
 import {
+  createSuccessResponse,
   createErrorResponse,
   handleApiError,
 } from '@/lib/utils/apiResponse';
@@ -76,7 +76,15 @@ export async function GET(request: Request) {
       meta: { page, pageSize, total: filtered.length },
     };
     maybeValidateResponse(SnapshotsResponseSchema, payload, 'snapshots');
-    return NextResponse.json(payload);
+    return createSuccessResponse(
+      {
+        page,
+        pageSize,
+        total: filtered.length,
+        snapshots: items,
+      },
+      { page, pageSize, total: filtered.length }
+    );
   } catch (error) {
     return handleApiError(error, 'Failed to fetch snapshots');
   }

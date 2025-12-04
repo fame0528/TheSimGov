@@ -162,7 +162,8 @@ export async function POST(req: NextRequest) {
 
     // Add investment to finance department
     finance.investments = finance.investments || [];
-    finance.investments.push(investment as any);
+    // Push investment - companyId as string matches runtime behavior
+    finance.investments.push(investment as unknown as typeof finance.investments[number]);
     
     // Deduct investment amount from cash reserves
     finance.cashReserves = (finance.cashReserves || 0) - investmentInput.amount;

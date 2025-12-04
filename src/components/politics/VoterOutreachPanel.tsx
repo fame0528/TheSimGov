@@ -292,7 +292,7 @@ function OutreachDetail({ operation, onClose, onRefresh }: OutreachDetailProps) 
               <TableColumn>STATUS</TableColumn>
             </TableHeader>
             <TableBody>
-              {(ui.volunteers as any[]).map((vol: any, idx: number) => (
+              {(ui.volunteers ?? []).map((vol, idx) => (
                 <TableRow key={vol.volunteerId || idx}>
                   <TableCell>{vol.volunteerId}</TableCell>
                   <TableCell>{vol.assignedContacts}</TableCell>
@@ -324,7 +324,7 @@ function OutreachDetail({ operation, onClose, onRefresh }: OutreachDetailProps) 
           <div>
             <h3 className="text-lg font-semibold mb-3">Talking Points</h3>
             <ul className="list-disc list-inside space-y-1">
-              {(ui.talkingPoints as any[]).map((point: any, idx: number) => (
+              {(ui.talkingPoints ?? []).map((point, idx) => (
                 <li key={idx} className="text-default-700">
                   {point}
                 </li>

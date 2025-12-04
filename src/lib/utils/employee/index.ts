@@ -33,7 +33,15 @@ export {
   getQualityColor,
   getAttendanceColor,
   getCounterOfferColor,
+  // HeroUI scheme functions for Badge/Chip components
+  getPerformanceRatingScheme,
+  getMoraleScheme,
+  getRetentionRiskScheme,
+  getStatusScheme,
 } from './colors';
+
+// Export HeroUI color type
+export type { HeroUIColor } from './colors';
 
 // Export helper functions
 export {

@@ -5,9 +5,10 @@
  * @created 2025-11-23
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { auth } from '@/auth';
 import { connectDB, Bank, Company } from '@/lib/db';
+import { createSuccessResponse, createErrorResponse } from '@/lib/utils/apiResponse';
 import { z } from 'zod';
 
 // Validation schema for player bank creation
@@ -29,10 +30,7 @@ export async function POST(request: NextRequest) {
     // Authenticate user
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: 'Authentication required' },
-        { status: 401 }
-      );
+      return createErrorResponse('Authentication required', 'UNAUTHORIZED', 401);
     }
 
     // Parse and validate request body
@@ -40,13 +38,7 @@ export async function POST(request: NextRequest) {
     const validationResult = playerBankSchema.safeParse(body);
 
     if (!validationResult.success) {
-      return NextResponse.json(
-        {
-          error: 'Validation failed',
-          details: validationResult.error.issues
-        },
-        { status: 400 }
-      );
+      return createErrorResponse('Validation failed', 'VALIDATION_ERROR', 400, validationResult.error.issues);
     }
 
     const {
@@ -68,10 +60,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (existingBank) {
-      return NextResponse.json(
-        { error: 'You already own a bank' },
-        { status: 400 }
-      );
+      return createErrorResponse('You already own a bank', 'ALREADY_EXISTS', 400);
     }
 
     // Check if bank name is unique
@@ -80,10 +69,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (nameExists) {
-      return NextResponse.json(
-        { error: 'Bank name already exists' },
-        { status: 400 }
-      );
+      return createErrorResponse('Bank name already exists', 'NAME_CONFLICT', 400);
     }
 
     // Check if user has a company with enough capital to fund the bank
@@ -91,14 +77,10 @@ export async function POST(request: NextRequest) {
     const totalCompanyCash = userCompanies.reduce((sum, company) => sum + company.cash, 0);
 
     if (totalCompanyCash < initialCapital) {
-      return NextResponse.json(
-        {
-          error: 'Insufficient funds across all companies',
-          required: initialCapital,
-          available: totalCompanyCash
-        },
-        { status: 400 }
-      );
+      return createErrorResponse('Insufficient funds across all companies', 'INSUFFICIENT_FUNDS', 400, {
+        required: initialCapital,
+        available: totalCompanyCash
+      });
     }
 
     // Find the company with the most cash to fund the bank
@@ -131,8 +113,7 @@ export async function POST(request: NextRequest) {
 
     await playerBank.save();
 
-    return NextResponse.json({
-      success: true,
+    return createSuccessResponse({
       bank: {
         id: playerBank._id,
         name: playerBank.name,
@@ -156,9 +137,6 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Player bank creation error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return createErrorResponse('Internal server error', 'INTERNAL_ERROR', 500);
   }
 }

@@ -40,8 +40,9 @@
  * @implementation Phase 6 API Routes Batch 2
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { auth } from '@/auth';
+import { createSuccessResponse, createErrorResponse, ErrorCode } from '@/lib/utils/apiResponse';
 import { connectDB } from '@/lib/db';
 import Company from '@/lib/db/models/Company';
 import AGIMilestone from '@/lib/db/models/AI/AGIMilestone';
@@ -74,7 +75,7 @@ export async function PATCH(
     // Authentication - verify user session
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     await connectDB();
@@ -82,7 +83,7 @@ export async function PATCH(
     // Get user's company
     const company = await Company.findOne({ userId: session.user.id });
     if (!company) {
-      return NextResponse.json({ error: 'Company not found' }, { status: 404 });
+      return createErrorResponse('Company not found', ErrorCode.NOT_FOUND, 404);
     }
 
     // Parse request body
@@ -103,30 +104,23 @@ export async function PATCH(
     });
 
     if (!milestone) {
-      return NextResponse.json(
-        { error: 'Milestone not found or not owned by company' },
-        { status: 404 }
-      );
+      return createErrorResponse('Milestone not found or not owned by company', ErrorCode.NOT_FOUND, 404);
     }
 
     // Validate milestone can be updated (not already achieved)
     if (milestone.status === 'Achieved') {
-      return NextResponse.json(
-        {
-          error: 'Cannot update achieved milestone',
-          details: 'Milestone already completed - create new milestone for continued research',
-        },
-        { status: 400 }
+      return createErrorResponse(
+        'Cannot update achieved milestone',
+        ErrorCode.BAD_REQUEST,
+        400,
+        { details: 'Milestone already completed - create new milestone for continued research' }
       );
     }
 
     // Update research investment (additive)
     if (researchPointsInvested !== undefined) {
       if (typeof researchPointsInvested !== 'number' || researchPointsInvested < 0) {
-        return NextResponse.json(
-          { error: 'researchPointsInvested must be a non-negative number' },
-          { status: 400 }
-        );
+        return createErrorResponse('researchPointsInvested must be a non-negative number', ErrorCode.VALIDATION_ERROR, 400);
       }
       milestone.researchPointsInvested += researchPointsInvested;
     }
@@ -134,10 +128,7 @@ export async function PATCH(
     // Update compute budget (additive)
     if (computeBudgetSpent !== undefined) {
       if (typeof computeBudgetSpent !== 'number' || computeBudgetSpent < 0) {
-        return NextResponse.json(
-          { error: 'computeBudgetSpent must be a non-negative number' },
-          { status: 400 }
-        );
+        return createErrorResponse('computeBudgetSpent must be a non-negative number', ErrorCode.VALIDATION_ERROR, 400);
       }
       milestone.computeBudgetSpent += computeBudgetSpent;
     }
@@ -145,10 +136,7 @@ export async function PATCH(
     // Update months in progress (absolute value, not additive)
     if (monthsInProgress !== undefined) {
       if (typeof monthsInProgress !== 'number' || monthsInProgress < 0) {
-        return NextResponse.json(
-          { error: 'monthsInProgress must be a non-negative number' },
-          { status: 400 }
-        );
+        return createErrorResponse('monthsInProgress must be a non-negative number', ErrorCode.VALIDATION_ERROR, 400);
       }
       milestone.monthsInProgress = monthsInProgress;
     }
@@ -180,19 +168,17 @@ export async function PATCH(
     // Save updated milestone
     await milestone.save();
 
-    return NextResponse.json({
-      success: true,
+    return createSuccessResponse({
       milestone,
       message: 'Milestone updated successfully',
     });
   } catch (error) {
     console.error('Error updating AGI milestone:', error);
-    return NextResponse.json(
-      {
-        error: 'Failed to update milestone',
-        details: error instanceof Error ? error.message : 'Unknown error',
-      },
-      { status: 500 }
+    return createErrorResponse(
+      'Failed to update milestone',
+      ErrorCode.INTERNAL_ERROR,
+      500,
+      { details: error instanceof Error ? error.message : 'Unknown error' }
     );
   }
 }

@@ -105,7 +105,7 @@ export function ConfirmDialog({
             {cancelText}
           </Button>
           <Button
-            color={confirmColorScheme as any}
+            color={confirmColorScheme as 'default' | 'primary' | 'secondary' | 'success' | 'warning' | 'danger'}
             onPress={handleConfirm}
             className="ml-3"
             isLoading={isLoading}

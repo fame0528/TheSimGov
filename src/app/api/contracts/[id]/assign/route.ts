@@ -14,6 +14,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { connectDB, Contract, Company, Employee } from '@/lib/db';
+import { createSuccessResponse, createErrorResponse } from '@/lib/utils/apiResponse';
 import { z } from 'zod';
 
 /**
@@ -44,7 +45,7 @@ export async function POST(
     // Authenticate
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', 'UNAUTHORIZED', 401);
     }
 
     // Parse request
@@ -52,10 +53,7 @@ export async function POST(
     const validation = assignSchema.safeParse(body);
     
     if (!validation.success) {
-      return NextResponse.json(
-        { error: 'Invalid request', details: validation.error.errors },
-        { status: 400 }
-      );
+      return createErrorResponse('Invalid request', 'VALIDATION_ERROR', 400, validation.error.errors);
     }
 
     const { companyId, employeeIds } = validation.data;
@@ -65,34 +63,28 @@ export async function POST(
     // Get contract
     const contract = await Contract.findById(id);
     if (!contract) {
-      return NextResponse.json({ error: 'Contract not found' }, { status: 404 });
+      return createErrorResponse('Contract not found', 'CONTRACT_NOT_FOUND', 404);
     }
 
     // Verify contract is active
     if (contract.status !== 'active') {
-      return NextResponse.json(
-        { error: 'Contract is not in active status' },
-        { status: 400 }
-      );
+      return createErrorResponse('Contract is not in active status', 'INVALID_STATUS', 400);
     }
 
     // Get company
     const company = await Company.findById(companyId);
     if (!company) {
-      return NextResponse.json({ error: 'Company not found' }, { status: 404 });
+      return createErrorResponse('Company not found', 'COMPANY_NOT_FOUND', 404);
     }
 
     // Verify ownership
     if (company.userId.toString() !== session.user.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+      return createErrorResponse('Unauthorized', 'FORBIDDEN', 403);
     }
 
     // Verify contract belongs to company
     if (contract.companyId?.toString() !== companyId) {
-      return NextResponse.json(
-        { error: 'Contract does not belong to this company' },
-        { status: 403 }
-      );
+      return createErrorResponse('Contract does not belong to this company', 'FORBIDDEN', 403);
     }
 
     // Get employees
@@ -104,10 +96,7 @@ export async function POST(
 
     // Verify all employees found and available
     if (employees.length !== employeeIds.length) {
-      return NextResponse.json(
-        { error: 'Some employees not found or not available' },
-        { status: 400 }
-      );
+      return createErrorResponse('Some employees not found or not available', 'VALIDATION_ERROR', 400);
     }
 
     // Check if employees are already assigned to other contracts
@@ -118,19 +107,18 @@ export async function POST(
     }).select('title assignedEmployees');
 
     if (busyEmployees.length > 0) {
-      return NextResponse.json(
-        { 
-          error: 'Some employees are already assigned to other contracts',
-          busyContracts: busyEmployees.map(c => c.title),
-        },
-        { status: 400 }
+      return createErrorResponse(
+        'Some employees are already assigned to other contracts',
+        'VALIDATION_ERROR',
+        400,
+        { busyContracts: busyEmployees.map(c => c.title) }
       );
     }
 
     // Assign employees using contract method
     await contract.assignEmployees(employeeIds);
 
-    return NextResponse.json({
+    return createSuccessResponse({
       contract,
       employees: employees.map(e => ({
         id: e._id,
@@ -138,14 +126,11 @@ export async function POST(
         role: e.role,
       })),
       message: `${employees.length} employee(s) assigned successfully`,
-    }, { status: 200 });
+    });
 
   } catch (error: any) {
     console.error('Employee assignment error:', error);
-    return NextResponse.json(
-      { error: 'Failed to assign employees', details: error.message },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to assign employees', 'INTERNAL_ERROR', 500, error.message);
   }
 }
 

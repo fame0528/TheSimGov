@@ -24,9 +24,10 @@
  * @legacy-source old projects/politics/app/api/ai/marketplace/listings/route.ts
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { authenticateRequest, handleAPIError } from '@/lib/utils/api-helpers';
 import { connectDB } from '@/lib/db/mongoose';
+import { createSuccessResponse, createErrorResponse, ErrorCode } from '@/lib/utils/apiResponse';
 import Company from '@/lib/db/models/Company';
 import ComputeListing from '@/lib/db/models/ComputeListing';
 import DataCenter from '@/lib/db/models/DataCenter';
@@ -124,7 +125,7 @@ export async function GET(request: NextRequest) {
       totalPages: Math.ceil(total / limit)
     };
 
-    return NextResponse.json({ listings: filteredListings, pagination, marketStats }, { status: 200 });
+    return createSuccessResponse({ listings: filteredListings, pagination, marketStats });
   } catch (error) {
     return handleAPIError('[GET /api/ai/marketplace/compute/listings]', error, 'Failed to retrieve marketplace listings');
   }
@@ -194,7 +195,7 @@ export async function POST(request: NextRequest) {
 
     // Validate required fields
     if (!companyId || !datacenterId || !gpuType || !gpuCount || !pricePerGPUHour || !slaTier || !totalGPUHours) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 422 });
+      return createErrorResponse('Missing required fields', ErrorCode.VALIDATION_ERROR, 422);
     }
 
     // Connect to database
@@ -204,13 +205,13 @@ export async function POST(request: NextRequest) {
     const companyQuery = { _id: companyId, owner: userId };
     const company = await Company.findOne(companyQuery);
     if (!company) {
-      return NextResponse.json({ error: 'Company not found or access denied' }, { status: 404 });
+      return createErrorResponse('Company not found or access denied', ErrorCode.NOT_FOUND, 404);
     }
 
     // Verify datacenter ownership
     const datacenter = await DataCenter.findOne({ _id: datacenterId, company: companyId });
     if (!datacenter) {
-      return NextResponse.json({ error: 'Datacenter not found or not owned by company' }, { status: 404 });
+      return createErrorResponse('Datacenter not found or not owned by company', ErrorCode.NOT_FOUND, 404);
     }
 
     // Get pricing recommendation via utility
@@ -266,7 +267,7 @@ export async function POST(request: NextRequest) {
       averageRating: 0
     });
 
-    return NextResponse.json({ success: true, listing, pricingRecommendation: pricingRec, pricingWarning }, { status: 201 });
+    return createSuccessResponse({ listing, pricingRecommendation: pricingRec, pricingWarning }, undefined, 201);
   } catch (error) {
     return handleAPIError('[POST /api/ai/marketplace/compute/listings]', error, 'Failed to create marketplace listing');
   }

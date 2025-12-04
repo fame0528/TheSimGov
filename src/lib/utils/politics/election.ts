@@ -67,7 +67,7 @@ export async function calculateWinProbability(
     .limit(5)
     .lean();
   const avgPolling = recentPolls.length
-    ? recentPolls.reduce((sum: number, p: any) => sum + p.finalSupportPercent, 0) /
+    ? recentPolls.reduce((sum: number, p) => sum + (p.finalSupportPercent ?? 0), 0) /
       recentPolls.length
     : 50;
 
@@ -227,8 +227,8 @@ export async function generateElectionSummary(
     .lean();
   const pollingTrend =
     recentPolls.length >= 2
-      ? (recentPolls[0] as any).finalSupportPercent >
-        (recentPolls[recentPolls.length - 1] as any).finalSupportPercent
+      ? (recentPolls[0].finalSupportPercent ?? 0) >
+        (recentPolls[recentPolls.length - 1].finalSupportPercent ?? 0)
         ? 'UPWARD'
         : 'DOWNWARD'
       : 'STABLE';

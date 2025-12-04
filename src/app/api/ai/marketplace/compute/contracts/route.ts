@@ -24,8 +24,9 @@
  * @legacy-source old projects/politics/app/api/ai/marketplace/contracts/route.ts
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { authenticateRequest, handleAPIError } from '@/lib/utils/api-helpers';
+import { createSuccessResponse, createErrorResponse, ErrorCode } from '@/lib/utils/apiResponse';
 import { connectDB } from '@/lib/db/mongoose';
 import Company from '@/lib/db/models/Company';
 import ComputeListing from '@/lib/db/models/ComputeListing';
@@ -73,7 +74,7 @@ export async function POST(request: NextRequest) {
 
     // Validate required fields
     if (!buyerCompanyId || !listingId || !gpuCount || !durationHours) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 422 });
+      return createErrorResponse('Missing required fields', ErrorCode.VALIDATION_ERROR, 422);
     }
 
     // Connect to database
@@ -83,26 +84,26 @@ export async function POST(request: NextRequest) {
     const buyerQuery = { _id: buyerCompanyId, owner: userId };
     const buyer = await Company.findOne(buyerQuery);
     if (!buyer) {
-      return NextResponse.json({ error: 'Buyer company not found or access denied' }, { status: 404 });
+      return createErrorResponse('Buyer company not found or access denied', ErrorCode.NOT_FOUND, 404);
     }
 
     // Load listing with seller
     const listing = await ComputeListing.findById(listingId).populate('seller');
     if (!listing) {
-      return NextResponse.json({ error: 'Listing not found' }, { status: 404 });
+      return createErrorResponse('Listing not found', ErrorCode.NOT_FOUND, 404);
     }
 
     // Validate listing is active
     if (listing.status !== 'Active') {
-      return NextResponse.json({ error: 'Listing is not active' }, { status: 422 });
+      return createErrorResponse('Listing is not active', ErrorCode.VALIDATION_ERROR, 422);
     }
 
     // Validate duration constraints
     if (durationHours < listing.minimumDuration) {
-      return NextResponse.json({ error: `Duration must be at least ${listing.minimumDuration} hours` }, { status: 422 });
+      return createErrorResponse(`Duration must be at least ${listing.minimumDuration} hours`, ErrorCode.VALIDATION_ERROR, 422);
     }
     if (listing.maximumDuration && durationHours > listing.maximumDuration) {
-      return NextResponse.json({ error: `Duration cannot exceed ${listing.maximumDuration} hours` }, { status: 422 });
+      return createErrorResponse(`Duration cannot exceed ${listing.maximumDuration} hours`, ErrorCode.VALIDATION_ERROR, 422);
     }
 
     // Calculate total GPU hours and cost
@@ -111,16 +112,12 @@ export async function POST(request: NextRequest) {
 
     // Check if listing has sufficient capacity
     if (!listing.canAcceptContract(totalGPUHours)) {
-      return NextResponse.json({ error: 'Insufficient capacity available in listing' }, { status: 422 });
+      return createErrorResponse('Insufficient capacity available in listing', ErrorCode.VALIDATION_ERROR, 422);
     }
 
     // Check if buyer has sufficient funds
     if (buyer.cash < totalCost) {
-      return NextResponse.json({ 
-        error: 'Insufficient funds', 
-        required: totalCost, 
-        available: buyer.cash 
-      }, { status: 422 });
+      return createErrorResponse('Insufficient funds', ErrorCode.VALIDATION_ERROR, 422, { required: totalCost, available: buyer.cash });
     }
 
     // Deduct payment from buyer (held in escrow)
@@ -162,13 +159,12 @@ export async function POST(request: NextRequest) {
       refundIssued: 0
     });
 
-    return NextResponse.json({ 
-      success: true, 
+    return createSuccessResponse({ 
       message: 'Contract purchased successfully', 
       contract, 
       buyerRemainingCash: buyer.cash,
       listingRemainingCapacity: listing.getRemainingCapacity()
-    }, { status: 201 });
+    }, undefined, 201);
   } catch (error) {
     return handleAPIError('[POST /api/ai/marketplace/compute/contracts]', error, 'Failed to purchase compute contract');
   }
@@ -227,7 +223,7 @@ export async function GET(request: NextRequest) {
 
     // Validate required parameters
     if (!companyId) {
-      return NextResponse.json({ error: 'companyId is required' }, { status: 422 });
+      return createErrorResponse('companyId is required', ErrorCode.VALIDATION_ERROR, 422);
     }
 
     // Connect to database
@@ -237,7 +233,7 @@ export async function GET(request: NextRequest) {
     const companyQuery = { _id: companyId, owner: userId };
     const company = await Company.findOne(companyQuery);
     if (!company) {
-      return NextResponse.json({ error: 'Company not found or access denied' }, { status: 404 });
+      return createErrorResponse('Company not found or access denied', ErrorCode.NOT_FOUND, 404);
     }
 
     // RECOMMENDATION MODE
@@ -249,7 +245,7 @@ export async function GET(request: NextRequest) {
 
       // Validate recommendation parameters
       if (!gpuType || !minGPUHours) {
-        return NextResponse.json({ error: 'gpuType and minGPUHours required for recommendations' }, { status: 422 });
+        return createErrorResponse('gpuType and minGPUHours required for recommendations', ErrorCode.VALIDATION_ERROR, 422);
       }
 
       // Load all active listings
@@ -287,10 +283,10 @@ export async function GET(request: NextRequest) {
       );
 
       // Return recommendations
-      return NextResponse.json({ 
+      return createSuccessResponse({ 
         recommendations, 
         query: { companyId, gpuType, minGPUHours, preferredSLA, maxResults } 
-      }, { status: 200 });
+      });
     }
 
     // STANDARD MODE - List contracts
@@ -327,7 +323,7 @@ export async function GET(request: NextRequest) {
         .reduce((sum: number, c: any) => sum + c.paymentReleased, 0)
     };
 
-    return NextResponse.json({ contracts, summary }, { status: 200 });
+    return createSuccessResponse({ contracts, summary });
   } catch (error) {
     return handleAPIError('[GET /api/ai/marketplace/compute/contracts]', error, 'Failed to retrieve contracts or recommendations');
   }

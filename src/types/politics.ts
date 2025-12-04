@@ -197,9 +197,10 @@ export enum PoliticalLean {
 // ============================================================================
 
 /**
- * Candidate information in an election
+ * Candidate information in an election (player-only)
  */
 export interface ElectionCandidate {
+  playerId: string;
   candidateId: string;
   candidateName: string;
   party: PoliticalParty;
@@ -217,7 +218,8 @@ export interface ElectionCandidate {
 export interface ElectionResults {
   totalVotes: number;
   turnoutRate: number;
-  winner: string;
+  winnerId: string;
+  winnerName: string;
   winnerParty: PoliticalParty;
   margin: number;
   marginPercentage: number;

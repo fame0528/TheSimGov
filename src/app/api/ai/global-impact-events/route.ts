@@ -24,9 +24,10 @@
  * @legacy-source old projects/politics/app/api/ai/global-impact-events/route.ts
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { Types } from 'mongoose';
 import { authenticateRequest, handleAPIError } from '@/lib/utils/api-helpers';
+import { createSuccessResponse, createErrorResponse, ErrorCode } from '@/lib/utils/apiResponse';
 import { connectDB } from '@/lib/db/mongoose';
 import GlobalImpactEvent, { IGlobalImpactEvent } from '@/lib/db/models/GlobalImpactEvent';
 import {
@@ -90,13 +91,13 @@ export async function GET(request: NextRequest) {
 
     const total = await GlobalImpactEvent.countDocuments(query);
 
-    return NextResponse.json({
+    return createSuccessResponse({
       events,
       total,
       hasMore: offset + events.length < total,
       limit,
       offset,
-    }, { status: 200 });
+    });
   } catch (error) {
     return handleAPIError('[GET /api/ai/global-impact-events]', error, 'Failed to fetch global impact events');
   }
@@ -157,18 +158,18 @@ export async function POST(request: NextRequest) {
 
     // Validate required fields
     if (!companyId || !eventType || !title || !description || !affectedIndustries) {
-      return NextResponse.json({
-        error: 'Missing required fields: companyId, eventType, title, description, affectedIndustries'
-      }, { status: 422 });
+      return createErrorResponse(
+        'Missing required fields: companyId, eventType, title, description, affectedIndustries',
+        ErrorCode.VALIDATION_ERROR,
+        422
+      );
     }
 
     // Fetch company data
     const Company = (await import('@/lib/db/models/Company')).default;
     const company = await Company.findById(companyId);
     if (!company) {
-      return NextResponse.json({
-        error: 'Company not found'
-      }, { status: 404 });
+      return createErrorResponse('Company not found', ErrorCode.NOT_FOUND, 404);
     }
 
     // Connect to database
@@ -217,12 +218,12 @@ export async function POST(request: NextRequest) {
 
     await event.save();
 
-    return NextResponse.json({
+    return createSuccessResponse({
       event,
       severity,
       consequences,
       mitigationStrategies,
-    }, { status: 201 });
+    }, undefined, 201);
   } catch (error) {
     return handleAPIError('[POST /api/ai/global-impact-events]', error, 'Failed to create global impact event');
   }
@@ -266,9 +267,11 @@ export async function PUT(request: NextRequest) {
     const { eventId, updates } = body;
 
     if (!eventId || !updates) {
-      return NextResponse.json({
-        error: 'Missing required fields: eventId, updates'
-      }, { status: 422 });
+      return createErrorResponse(
+        'Missing required fields: eventId, updates',
+        ErrorCode.VALIDATION_ERROR,
+        422
+      );
     }
 
     // Connect to database
@@ -277,7 +280,7 @@ export async function PUT(request: NextRequest) {
     // Fetch event
     const event = await GlobalImpactEvent.findById(eventId);
     if (!event) {
-      return NextResponse.json({ error: 'Event not found' }, { status: 404 });
+      return createErrorResponse('Event not found', ErrorCode.NOT_FOUND, 404);
     }
 
     // Apply valid updates (only update fields that exist in the schema)
@@ -293,7 +296,7 @@ export async function PUT(request: NextRequest) {
 
     await event.save();
 
-    return NextResponse.json({
+    return createSuccessResponse({
       message: 'Event updated successfully',
       event: {
         id: event._id,
@@ -343,7 +346,7 @@ export async function DELETE(request: NextRequest) {
     const { eventId } = body;
 
     if (!eventId) {
-      return NextResponse.json({ error: 'Missing required field: eventId' }, { status: 422 });
+      return createErrorResponse('Missing required field: eventId', ErrorCode.VALIDATION_ERROR, 422);
     }
 
     // Connect to database
@@ -352,13 +355,13 @@ export async function DELETE(request: NextRequest) {
     // Fetch event
     const event = await GlobalImpactEvent.findById(eventId);
     if (!event) {
-      return NextResponse.json({ error: 'Event not found' }, { status: 404 });
+      return createErrorResponse('Event not found', ErrorCode.NOT_FOUND, 404);
     }
 
     // Delete event
     await GlobalImpactEvent.findByIdAndDelete(eventId);
 
-    return NextResponse.json({
+    return createSuccessResponse({
       message: 'Global impact event deleted successfully',
       deletedEvent: {
         id: event._id,

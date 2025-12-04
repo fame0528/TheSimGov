@@ -1,29 +1,30 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { auth } from '@/auth';
 import { connectDB } from '@/lib/db';
 import District from '@/lib/db/models/politics/District';
 import { updateDistrictSchema } from '@/lib/validations/politics';
 import { z } from 'zod';
+import { createSuccessResponse, createErrorResponse } from '@/lib/utils/apiResponse';
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await auth();
-    if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!session?.user) return createErrorResponse('Unauthorized', 'UNAUTHORIZED', 401);
     await connectDB();
     const { id } = await params;
     const district = await District.findOne({ _id: id, company: session.user.companyId }).lean();
-    if (!district) return NextResponse.json({ error: 'District not found' }, { status: 404 });
-    return NextResponse.json({ district });
+    if (!district) return createErrorResponse('District not found', 'NOT_FOUND', 404);
+    return createSuccessResponse({ district });
   } catch (error) {
     console.error('[District GET] Error:', error);
-    return NextResponse.json({ error: 'Failed to fetch district' }, { status: 500 });
+    return createErrorResponse('Failed to fetch district', 'INTERNAL_ERROR', 500);
   }
 }
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await auth();
-    if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!session?.user) return createErrorResponse('Unauthorized', 'UNAUTHORIZED', 401);
     await connectDB();
     const body = await request.json();
     const validatedData = updateDistrictSchema.parse(body);
@@ -33,28 +34,28 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       { $set: validatedData },
       { new: true, runValidators: true }
     ).lean();
-    if (!district) return NextResponse.json({ error: 'District not found' }, { status: 404 });
-    return NextResponse.json({ district });
+    if (!district) return createErrorResponse('District not found', 'NOT_FOUND', 404);
+    return createSuccessResponse({ district });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: 'Invalid district data', details: error.errors }, { status: 400 });
+      return createErrorResponse('Invalid district data', 'VALIDATION_ERROR', 400, error.errors);
     }
     console.error('[District PATCH] Error:', error);
-    return NextResponse.json({ error: 'Failed to update district' }, { status: 500 });
+    return createErrorResponse('Failed to update district', 'INTERNAL_ERROR', 500);
   }
 }
 
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await auth();
-    if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!session?.user) return createErrorResponse('Unauthorized', 'UNAUTHORIZED', 401);
     await connectDB();
     const { id } = await params;
     const district = await District.findOneAndDelete({ _id: id, company: session.user.companyId }).lean();
-    if (!district) return NextResponse.json({ error: 'District not found' }, { status: 404 });
-    return NextResponse.json({ success: true, message: 'District deleted successfully' });
+    if (!district) return createErrorResponse('District not found', 'NOT_FOUND', 404);
+    return createSuccessResponse({ message: 'District deleted successfully' });
   } catch (error) {
     console.error('[District DELETE] Error:', error);
-    return NextResponse.json({ error: 'Failed to delete district' }, { status: 500 });
+    return createErrorResponse('Failed to delete district', 'INTERNAL_ERROR', 500);
   }
 }

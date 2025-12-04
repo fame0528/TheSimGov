@@ -52,7 +52,7 @@ const registerSchema = z.object({
     .string()
     .length(2, 'State must be 2-letter abbreviation')
     .toUpperCase()
-    .refine((val) => STATE_ABBREVIATIONS.includes(val as any), {
+    .refine((val) => (STATE_ABBREVIATIONS as readonly string[]).includes(val), {
       message: 'Invalid state abbreviation',
     }),
   // Required demographics

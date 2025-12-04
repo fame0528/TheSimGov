@@ -315,7 +315,7 @@ export function DebateSection({
                   </div>
                   
                   <Chip
-                    color={getPersuasionColor(statement.persuasionScore) as any}
+                    color={getPersuasionColor(statement.persuasionScore)}
                     size="sm"
                     variant="flat"
                   >

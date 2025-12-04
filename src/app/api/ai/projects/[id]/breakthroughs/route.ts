@@ -10,8 +10,9 @@
  * @author ECHO v1.3.0
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { auth } from '@/auth';
+import { createSuccessResponse, createErrorResponse, ErrorCode } from '@/lib/utils/apiResponse';
 import { connectDB } from '@/lib/db';
 import Breakthrough from '@/lib/db/models/Breakthrough';
 import AIResearchProject from '@/lib/db/models/AIResearchProject';
@@ -43,7 +44,7 @@ export async function POST(
     // Authentication check
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     // Parse request body
@@ -58,10 +59,7 @@ export async function POST(
 
     // Validation
     if (!name || !area) {
-      return NextResponse.json(
-        { error: 'Name and area required' },
-        { status: 400 }
-      );
+      return createErrorResponse('Name and area required', ErrorCode.VALIDATION_ERROR, 400);
     }
 
     if (
@@ -69,10 +67,7 @@ export async function POST(
       performanceGainPercent < 0 ||
       performanceGainPercent > 100
     ) {
-      return NextResponse.json(
-        { error: 'Performance gain must be 0-100%' },
-        { status: 400 }
-      );
+      return createErrorResponse('Performance gain must be 0-100%', ErrorCode.VALIDATION_ERROR, 400);
     }
 
     if (
@@ -80,10 +75,7 @@ export async function POST(
       efficiencyGainPercent < 0 ||
       efficiencyGainPercent > 100
     ) {
-      return NextResponse.json(
-        { error: 'Efficiency gain must be 0-100%' },
-        { status: 400 }
-      );
+      return createErrorResponse('Efficiency gain must be 0-100%', ErrorCode.VALIDATION_ERROR, 400);
     }
 
     const validAreas: BreakthroughArea[] = [
@@ -96,10 +88,7 @@ export async function POST(
     ];
 
     if (!validAreas.includes(area)) {
-      return NextResponse.json(
-        { error: `Invalid area. Must be one of: ${validAreas.join(', ')}` },
-        { status: 400 }
-      );
+      return createErrorResponse(`Invalid area. Must be one of: ${validAreas.join(', ')}`, ErrorCode.VALIDATION_ERROR, 400);
     }
 
     await connectDB();
@@ -110,21 +99,18 @@ export async function POST(
     // Load research project
     const project = await AIResearchProject.findById(projectId);
     if (!project) {
-      return NextResponse.json({ error: 'Research project not found' }, { status: 404 });
+      return createErrorResponse('Research project not found', ErrorCode.NOT_FOUND, 404);
     }
 
     // Load company
     const company = await Company.findById(project.company);
     if (!company) {
-      return NextResponse.json({ error: 'Company not found' }, { status: 404 });
+      return createErrorResponse('Company not found', ErrorCode.NOT_FOUND, 404);
     }
 
     // Ownership check
     if (company.userId !== session.user.id) {
-      return NextResponse.json(
-        { error: 'You do not own this company' },
-        { status: 403 }
-      );
+      return createErrorResponse('You do not own this company', ErrorCode.FORBIDDEN, 403);
     }
 
     // Calculate novelty score
@@ -160,7 +146,7 @@ export async function POST(
       publicationReady: true,
     });
 
-    return NextResponse.json({
+    return createSuccessResponse({
       breakthrough,
       message: `Breakthrough "${name}" recorded successfully.`,
       noveltyScore,
@@ -172,10 +158,7 @@ export async function POST(
     });
   } catch (error) {
     console.error('Manual breakthrough entry error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error recording breakthrough' },
-      { status: 500 }
-    );
+    return createErrorResponse('Internal server error recording breakthrough', ErrorCode.INTERNAL_ERROR, 500);
   }
 }
 

@@ -3,12 +3,12 @@
  * @description Get or initialize the player's campaign phase state
  */
 
-import { NextResponse } from 'next/server';
 import { connectDB } from '@/lib/db';
-import { handleApiError, createErrorResponse } from '@/lib/utils/apiResponse';
+import { handleApiError, createSuccessResponse, createErrorResponse, ErrorCode } from '@/lib/utils/apiResponse';
 import { maybeValidateResponse } from '@/lib/utils/apiResponseSchemas';
 import { GetCampaignStateQuerySchema, CampaignStateResponseSchema } from '@/lib/validation/politics';
 import CampaignPhaseState from '@/lib/db/models/politics/CampaignPhaseState';
+import type { ICampaignPhaseStateDocument } from '@/lib/db/models/politics/CampaignPhaseState';
 import { initializeCampaign } from '@/lib/utils/politics/campaignPhase';
 
 export async function GET(request: Request) {
@@ -27,9 +27,9 @@ export async function GET(request: Request) {
     let state = await CampaignPhaseState.findOne({ playerId }).sort({ cycleSequence: -1 }).exec();
     if (!state) {
       // Initialize first cycle deterministically
-      const created = await initializeCampaign(playerId, 1);
+      const created = await initializeCampaign(playerId, 1) as unknown as ICampaignPhaseStateDocument;
       // Reload via model to keep consistent projection
-      state = await CampaignPhaseState.findById((created as any).id);
+      state = await CampaignPhaseState.findById(created._id);
     }
 
     if (!state) {
@@ -37,14 +37,11 @@ export async function GET(request: Request) {
     }
 
     const payload = {
-      success: true as const,
-      data: {
-        state: state.toJSON(),
-      },
+      state: state.toJSON(),
     };
 
-    maybeValidateResponse(CampaignStateResponseSchema, payload, 'campaign/state');
-    return NextResponse.json(payload);
+    maybeValidateResponse(CampaignStateResponseSchema, { success: true, data: payload }, 'campaign/state');
+    return createSuccessResponse(payload);
   } catch (error) {
     return handleApiError(error, 'Failed to fetch campaign state');
   }

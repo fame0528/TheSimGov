@@ -23,9 +23,10 @@
  * @legacy-source old projects/politics/app/api/ai/global-competition-analysis/route.ts
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { Types } from 'mongoose';
 import { authenticateRequest, handleAPIError } from '@/lib/utils/api-helpers';
+import { createSuccessResponse, createErrorResponse, ErrorCode } from '@/lib/utils/apiResponse';
 import { connectDB } from '@/lib/db/mongoose';
 import GlobalCompetition from '@/lib/db/models/GlobalCompetition';
 import {
@@ -82,7 +83,7 @@ export async function GET(request: NextRequest) {
       .sort({ lastUpdated: -1 });
 
     if (!competitionAnalysis) {
-      return NextResponse.json({ error: 'No global competition analysis available' }, { status: 404 });
+      return createErrorResponse('No global competition analysis available', ErrorCode.NOT_FOUND, 404);
     }
 
     // Analyze country capabilities
@@ -129,7 +130,7 @@ export async function GET(request: NextRequest) {
       response.strategicRecommendations = recommendations;
     }
 
-    return NextResponse.json(response, { status: 200 });
+    return createSuccessResponse(response);
   } catch (error) {
     return handleAPIError('[GET /api/ai/global-competition-analysis]', error, 'Failed to fetch global competition analysis');
   }
@@ -233,14 +234,14 @@ export async function POST(request: NextRequest) {
       await analysis.save();
     }
 
-    return NextResponse.json({
+    return createSuccessResponse({
       analysis,
       countryCapabilities,
       bilateralRelations,
       globalTensionIndex,
       tradeWars,
       strategicRecommendations,
-    }, { status: 200 });
+    });
   } catch (error) {
     return handleAPIError('[POST /api/ai/global-competition-analysis]', error, 'Failed to calculate global competition analysis');
   }
@@ -284,7 +285,7 @@ export async function PUT(request: NextRequest) {
     const { updates, focusCountry } = body;
 
     if (!updates) {
-      return NextResponse.json({ error: 'Missing required field: updates' }, { status: 422 });
+      return createErrorResponse('Missing required field: updates', ErrorCode.VALIDATION_ERROR, 422);
     }
 
     // Connect to database
@@ -293,7 +294,7 @@ export async function PUT(request: NextRequest) {
     // Find latest analysis
     const analysis = await GlobalCompetition.findOne().sort({ lastUpdated: -1 });
     if (!analysis) {
-      return NextResponse.json({ error: 'No global competition analysis found to update' }, { status: 404 });
+      return createErrorResponse('No global competition analysis found to update', ErrorCode.NOT_FOUND, 404);
     }
 
     // Apply updates
@@ -323,11 +324,11 @@ export async function PUT(request: NextRequest) {
 
     const updatedFields = Object.keys(updates);
 
-    return NextResponse.json({
+    return createSuccessResponse({
       analysis,
       updatedFields,
       recalculatedMetrics,
-    }, { status: 200 });
+    });
   } catch (error) {
     return handleAPIError('[PUT /api/ai/global-competition-analysis]', error, 'Failed to update global competition analysis');
   }

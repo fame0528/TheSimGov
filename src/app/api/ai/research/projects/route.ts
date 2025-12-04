@@ -11,11 +11,12 @@
  * @author ECHO v1.3.0
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { connectDB } from '@/lib/db';
 import AIResearchProject from '@/lib/db/models/AIResearchProject';
 import Department from '@/lib/db/models/Department';
 import Employee from '@/lib/db/models/Employee';
+import { createSuccessResponse, createErrorResponse } from '@/lib/utils/apiResponse';
 import { CreateResearchProjectSchema, type CreateResearchProject } from '@/lib/validations/ai';
 import { authenticateRequest, authorizeCompany, validateRequestBody, handleAPIError } from '@/lib/utils/api-helpers';
 import { IndustryType } from '@/lib/types';
@@ -72,7 +73,7 @@ export async function GET(req: NextRequest) {
       .sort({ progress: -1 })
       .populate('assignedResearchers');
 
-    return NextResponse.json(projects, { status: 200 });
+    return createSuccessResponse(projects);
   } catch (error) {
     return handleAPIError('[GET /api/ai/research/projects]', error, 'Failed to retrieve research projects');
   }
@@ -124,9 +125,10 @@ export async function POST(req: NextRequest) {
 
     // Verify company ownership
     if (projectData!.companyId !== companyId) {
-      return NextResponse.json(
-        { error: 'Cannot create research project for another company' },
-        { status: 403 }
+      return createErrorResponse(
+        'Cannot create research project for another company',
+        'FORBIDDEN',
+        403
       );
     }
 
@@ -149,35 +151,25 @@ export async function POST(req: NextRequest) {
     });
 
     if (researchers.length !== researcherIds.length) {
-      return NextResponse.json(
-        {
-          error: 'Invalid researchers',
-          message: 'One or more researcher IDs are invalid or do not belong to your company',
-          requested: researcherIds.length,
-          found: researchers.length,
-        },
-        { status: 400 }
+      return createErrorResponse(
+        `Invalid researchers: ${researcherIds.length} requested, ${researchers.length} found`,
+        'VALIDATION_ERROR',
+        400
       );
     }
 
     // Get R&D department
     const rd = await Department.findOne({ companyId, type: 'rd' });
     if (!rd) {
-      return NextResponse.json(
-        { error: 'R&D department not found' },
-        { status: 404 }
-      );
+      return createErrorResponse('R&D department not found', 'NOT_FOUND', 404);
     }
 
     // Check R&D budget
     if (!rd.canAfford(projectData!.budgetAllocated)) {
-      return NextResponse.json(
-        {
-          error: 'Insufficient R&D budget',
-          available: rd.budget,
-          required: projectData!.budgetAllocated,
-        },
-        { status: 400 }
+      return createErrorResponse(
+        `Insufficient R&D budget: ${rd.budget} available, ${projectData!.budgetAllocated} required`,
+        'VALIDATION_ERROR',
+        400
       );
     }
 
@@ -206,13 +198,14 @@ export async function POST(req: NextRequest) {
     rd.budget -= projectData!.budgetAllocated;
     await rd.save();
 
-    return NextResponse.json(
+    return createSuccessResponse(
       {
         project,
         message: `Research project '${project.name}' created successfully`,
         remainingRDBudget: rd.budget,
       },
-      { status: 201 }
+      undefined,
+      201
     );
   } catch (error) {
     return handleAPIError('[POST /api/ai/research/projects]', error, 'Failed to create research project');

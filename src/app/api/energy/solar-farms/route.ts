@@ -10,8 +10,9 @@
  * @author ECHO v1.3.1
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { auth } from '@/auth';
+import { createSuccessResponse, createErrorResponse, ErrorCode } from '@/lib/utils/apiResponse';
 
 import { connectDB } from '@/lib/db';
 import { SolarFarm } from '@/lib/db/models';
@@ -24,7 +25,7 @@ export async function GET(request: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     await connectDB();
@@ -48,7 +49,7 @@ export async function GET(request: NextRequest) {
       .sort({ createdAt: -1 })
       .lean();
 
-    return NextResponse.json({
+    return createSuccessResponse({
       farms,
       pagination: {
         page,
@@ -59,10 +60,7 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('GET /api/energy/solar-farms error:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch solar farms' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to fetch solar farms', ErrorCode.INTERNAL_ERROR, 500);
   }
 }
 
@@ -74,7 +72,7 @@ export async function POST(request: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     await connectDB();
@@ -89,16 +87,10 @@ export async function POST(request: NextRequest) {
 
     await farm.save();
 
-    return NextResponse.json(
-      { message: 'Solar farm created', farm },
-      { status: 201 }
-    );
+    return createSuccessResponse({ message: 'Solar farm created', farm }, undefined, 201);
   } catch (error) {
     console.error('POST /api/energy/solar-farms error:', error);
-    return NextResponse.json(
-      { error: 'Failed to create solar farm' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to create solar farm', ErrorCode.INTERNAL_ERROR, 500);
   }
 }
 

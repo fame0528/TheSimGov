@@ -437,7 +437,7 @@ export default function HospitalOperations({ companyId }: HospitalOperationsProp
               <Select
                 label="Hospital Type"
                 selectedKeys={[formData.hospitalType]}
-                onChange={(e) => setFormData({ ...formData, hospitalType: e.target.value as any })}
+                onChange={(e) => setFormData({ ...formData, hospitalType: e.target.value as typeof formData.hospitalType })}
                 isRequired
               >
                 <SelectItem key="general">General Hospital</SelectItem>

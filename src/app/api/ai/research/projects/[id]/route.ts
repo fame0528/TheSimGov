@@ -11,7 +11,8 @@
  * @author ECHO v1.3.0
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+import { createSuccessResponse, createErrorResponse } from '@/lib/utils/apiResponse';
 import { connectDB } from '@/lib/db';
 import AIResearchProject from '@/lib/db/models/AIResearchProject';
 import Employee from '@/lib/db/models/Employee';
@@ -67,21 +68,15 @@ export async function GET(
       .populate('patents');
 
     if (!project) {
-      return NextResponse.json(
-        { error: 'Research project not found' },
-        { status: 404 }
-      );
+      return createErrorResponse('Research project not found', 'NOT_FOUND', 404);
     }
 
     // Verify company ownership
     if (project.company.toString() !== companyId) {
-      return NextResponse.json(
-        { error: 'Cannot access another company\'s research project' },
-        { status: 403 }
-      );
+      return createErrorResponse('Cannot access another company\'s research project', 'FORBIDDEN', 403);
     }
 
-    return NextResponse.json(project, { status: 200 });
+    return createSuccessResponse(project);
   } catch (error) {
     return handleAPIError('[GET /api/ai/research/projects/[id]]', error, 'Failed to retrieve research project');
   }
@@ -154,18 +149,12 @@ export async function PATCH(
     const project = await AIResearchProject.findById(projectId).populate('assignedResearchers');
 
     if (!project) {
-      return NextResponse.json(
-        { error: 'Research project not found' },
-        { status: 404 }
-      );
+      return createErrorResponse('Research project not found', 'NOT_FOUND', 404);
     }
 
     // Verify company ownership
     if (project.company.toString() !== companyId) {
-      return NextResponse.json(
-        { error: 'Cannot modify another company\'s research project' },
-        { status: 403 }
-      );
+      return createErrorResponse('Cannot modify another company\'s research project', 'FORBIDDEN', 403);
     }
 
     // Parse action type
@@ -176,10 +165,7 @@ export async function PATCH(
     if (action === 'progress') {
       // Check if project can be progressed
       if (project.status !== 'InProgress') {
-        return NextResponse.json(
-          { error: 'Project is not in progress', status: project.status },
-          { status: 400 }
-        );
+        return createErrorResponse(`Project is not in progress (status: ${project.status})`, 'VALIDATION_ERROR', 400);
       }
 
       // Validate progress input
@@ -191,13 +177,7 @@ export async function PATCH(
       });
 
       if (!result.success) {
-        return NextResponse.json(
-          {
-            error: 'Invalid research progress data',
-            details: result.error.errors,
-          },
-          { status: 400 }
-        );
+        return createErrorResponse('Invalid research progress data', 'VALIDATION_ERROR', 400);
       }
 
       const { increment, costIncurred, researcherSkills } = result.data;
@@ -214,32 +194,22 @@ export async function PATCH(
       // Advance progress (uses calculatePerformanceGain utility - NO embedded logic!)
       await project.advanceProgress(increment, costIncurred, skills);
 
-      return NextResponse.json(
-        {
-          project,
-          message: `Research advanced ${increment}% (cost: $${costIncurred.toLocaleString()})`,
-          progress: project.progress,
-          budgetSpent: project.budgetSpent,
-          budgetRemaining: project.budgetAllocated - project.budgetSpent,
-          performanceGain: project.performanceGain,
-          status: project.status, // May auto-transition to 'Completed'
-        },
-        { status: 200 }
-      );
+      return createSuccessResponse({
+        project,
+        message: `Research advanced ${increment}% (cost: $${costIncurred.toLocaleString()})`,
+        progress: project.progress,
+        budgetSpent: project.budgetSpent,
+        budgetRemaining: project.budgetAllocated - project.budgetSpent,
+        performanceGain: project.performanceGain,
+        status: project.status, // May auto-transition to 'Completed'
+      });
     }
 
     // ACTION 2: Cancel Project
     if (action === 'cancel') {
       // Check if project can be cancelled
       if (project.status !== 'InProgress') {
-        return NextResponse.json(
-          {
-            error: 'Project is not in progress',
-            status: project.status,
-            message: 'Only in-progress projects can be cancelled',
-          },
-          { status: 400 }
-        );
+        return createErrorResponse('Only in-progress projects can be cancelled', 'VALIDATION_ERROR', 400);
       }
 
       // Validate cancellation input
@@ -249,13 +219,7 @@ export async function PATCH(
       });
 
       if (!result.success) {
-        return NextResponse.json(
-          {
-            error: 'Invalid cancellation data',
-            details: result.error.errors,
-          },
-          { status: 400 }
-        );
+        return createErrorResponse('Invalid cancellation data', 'VALIDATION_ERROR', 400);
       }
 
       const { reason } = result.data;
@@ -267,23 +231,17 @@ export async function PATCH(
       // NOTE: This would integrate with R&D department if RP tracking exists
       const rpPenalty = Math.round(project.budgetAllocated * 0.001); // 0.1% of budget as RP
 
-      return NextResponse.json(
-        {
-          project,
-          message: `Research project '${project.name}' cancelled`,
-          reason: reason || 'No reason provided',
-          rpPenalty,
-          budgetWasted: project.budgetSpent,
-        },
-        { status: 200 }
-      );
+      return createSuccessResponse({
+        project,
+        message: `Research project '${project.name}' cancelled`,
+        reason: reason || 'No reason provided',
+        rpPenalty,
+        budgetWasted: project.budgetSpent,
+      });
     }
 
     // Invalid action
-    return NextResponse.json(
-      { error: 'Invalid action. Must be "progress" or "cancel"' },
-      { status: 400 }
-    );
+    return createErrorResponse('Invalid action. Must be "progress" or "cancel"', 'VALIDATION_ERROR', 400);
   } catch (error) {
     return handleAPIError('[PATCH /api/ai/research/projects/[id]]', error, 'Failed to update research project');
   }
@@ -335,40 +293,25 @@ export async function DELETE(
     const project = await AIResearchProject.findById(projectId);
 
     if (!project) {
-      return NextResponse.json(
-        { error: 'Research project not found' },
-        { status: 404 }
-      );
+      return createErrorResponse('Research project not found', 'NOT_FOUND', 404);
     }
 
     // Verify company ownership
     if (project.company.toString() !== companyId) {
-      return NextResponse.json(
-        { error: 'Cannot delete another company\'s research project' },
-        { status: 403 }
-      );
+      return createErrorResponse('Cannot delete another company\'s research project', 'FORBIDDEN', 403);
     }
 
     // Prevent deletion of in-progress projects
     if (project.status === 'InProgress') {
-      return NextResponse.json(
-        {
-          error: 'Cannot delete in-progress project',
-          message: 'Cancel the project before deletion',
-        },
-        { status: 400 }
-      );
+      return createErrorResponse('Cannot delete in-progress project. Cancel the project before deletion.', 'VALIDATION_ERROR', 400);
     }
 
     await project.deleteOne();
 
-    return NextResponse.json(
-      {
-        message: `Research project '${project.name}' deleted successfully`,
-        projectId,
-      },
-      { status: 200 }
-    );
+    return createSuccessResponse({
+      message: `Research project '${project.name}' deleted successfully`,
+      projectId,
+    });
   } catch (error) {
     return handleAPIError('[DELETE /api/ai/research/projects/[id]]', error, 'Failed to delete research project');
   }

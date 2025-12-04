@@ -22,8 +22,9 @@
  * @author ECHO v1.3.1 - Phase 3.1 Energy Action Endpoints
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { auth } from '@/auth';
+import { createSuccessResponse, createErrorResponse, ErrorCode } from '@/lib/utils/apiResponse';
 import { connectDB } from '@/lib/db';
 import { OilWell } from '@/lib/db/models';
 
@@ -61,7 +62,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     // 1. Authentication check
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     // 2. Connect to database
@@ -72,20 +73,17 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const well = await OilWell.findById(id);
     
     if (!well) {
-      return NextResponse.json({ error: 'Oil well not found' }, { status: 404 });
+      return createErrorResponse('Oil well not found', ErrorCode.NOT_FOUND, 404);
     }
 
     // 4. Verify ownership
     if (well.company.toString() !== session.user.companyId) {
-      return NextResponse.json({ error: 'Unauthorized access to well' }, { status: 403 });
+      return createErrorResponse('Unauthorized access to well', ErrorCode.FORBIDDEN, 403);
     }
 
     // 5. Validate operational status (cannot maintain abandoned or depleted wells)
     if (well.status === 'Abandoned' || well.status === 'Depleted') {
-      return NextResponse.json(
-        { error: `Cannot maintain well with status: ${well.status}` },
-        { status: 400 }
-      );
+      return createErrorResponse(`Cannot maintain well with status: ${well.status}`, ErrorCode.BAD_REQUEST, 400);
     }
 
     // 6. Calculate maintenance costs
@@ -118,7 +116,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     nextMaintenanceDate.setDate(nextMaintenanceDate.getDate() + 90);
 
     // 10. Return maintenance results
-    return NextResponse.json({
+    return createSuccessResponse({
       success: true,
       message: 'Maintenance completed successfully',
       cost: totalCost,
@@ -141,9 +139,6 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
   } catch (error) {
     // Generic error handling
     console.error('POST /api/energy/oil-wells/[id]/maintain error:', error);
-    return NextResponse.json(
-      { error: 'Failed to process maintenance operation' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to process maintenance operation', ErrorCode.INTERNAL_ERROR, 500);
   }
 }

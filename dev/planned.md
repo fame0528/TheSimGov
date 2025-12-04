@@ -1,7 +1,8 @@
 # 📋 Planned Features
 
-**Last Updated:** 2025-11-29  
-**Single Source of Truth:** [MASTER_PLAN.md](./MASTER_PLAN.md)
+**Last Updated:** 2025-12-05  
+**Single Source of Truth:** [MASTER_PLAN.md](./MASTER_PLAN.md)  
+**Session Status:** ✅ Properly closed - all work current
 
 ---
 
@@ -17,37 +18,68 @@ This file is now kept minimal. All planned work is documented in:
 ## 📊 Current Planned Work
 
 ### ✅ Recently Completed (moved to completed.md)
-- **Phase 1-6** - Political System, AI, Employee Foundation, Energy, Software, E-Commerce, EdTech, Media, Manufacturing, Consulting, **Politics Expansion (8,096 LOC)** ✅
+- **FID-20251203-002** - Political System Expansion (100% complete) ✅
+- **FID-20251204-AUDIT** - Game Production Readiness Audit ✅
+- **FID-20251205-001** - Manufacturing/Consulting/Crime Dashboard Wiring ✅
+- **FID-20251205-002** - Healthcare/Media/Banking Dashboard Wiring ✅
+- **FID-20251205-003** - ECHO Compliance Phase 2A (Type Safety) ✅
 
 ### Queued for Implementation (See [MASTER_PLAN.md](./MASTER_PLAN.md))
 
 | Phase | FID | Description | Status |
 |-------|-----|-------------|--------|
 | 6 | FID-20251127-POLITICS | Politics Expansion | ✅ COMPLETE |
-| 7 | FID-20251127-CRIME | Crime/Underworld Domain | 🚧 IN_PROGRESS (Beta) |
+| 7 | FID-20251127-CRIME | Crime/Underworld Domain | ✅ COMPLETE |
+| 8 | FID-20251201-001 | Crime P1 Backlog | ✅ COMPLETE |
+| 9 | FID-20251201-002 | ECHO Compliance Phase 1 | ✅ COMPLETE |
+| 10 | FID-20251203-001 | Player Profile Page | ✅ COMPLETE |
+| 11 | FID-20251203-002 | Political System Expansion | ✅ COMPLETE |
+| 12 | FID-20251204-AUDIT | Game Production Readiness Audit | ✅ COMPLETE |
+| 13 | FID-20251205-003 | ECHO Compliance Phase 2A | ✅ COMPLETE |
+| -- | **Next Session** | Select from candidates below | **PLANNED** |
 
-**Remaining:** 0 planned FIDs (Phase 7 in progress - Beta endpoints)
+---
+
+## 📋 Candidate FIDs for Next Session
+
+### FID-20251205-004 — ECHO Compliance Phase 2B (Energy Domain)
+**Status:** PLANNED **Priority:** P2 **Complexity:** 4 **Estimated:** 3-4h
+
+**Description:** Remove ~75 `as any` type assertions from Energy domain API routes. Requires updating Mongoose model interfaces to include missing fields.
+
+**Acceptance:**
+- All `as any` removed from Energy API routes
+- Energy model interfaces updated with proper field types
+- TypeScript: 0 errors
+- Tests remain green
+
+**Targets:**
+- `src/app/api/energy/forecasting/demand/route.ts`
+- `src/app/api/energy/forecasting/generation/route.ts`
+- `src/app/api/energy/analytics/generation/route.ts`
+- `src/app/api/energy/analytics/performance/route.ts`
+- `src/app/api/energy/reserves/route.ts`
+- `src/app/api/energy/subsidies/route.ts`
+- `src/app/api/energy/storage/[id]/charge/route.ts`
+- `src/app/api/energy/storage/[id]/discharge/route.ts`
+- `src/app/api/energy/compliance/emissions/route.ts`
+- Energy model interface updates
 
 ---
 
 ## 📁 FID Reference
 
-Active Feature ID specifications in `dev/fids/` (1 remaining):
+Active Feature ID specifications in `dev/fids/`:
 
 ```
 dev/fids/
-├── FID-20251127-CRIME.md        ← Crime domain (Phase 7) - NEXT
-└── archives/                     ← Completed FIDs archived
-    ├── FID-20251125-001C.md     ← Political System ✅
-    ├── FID-20251127-EMPLOYEES.md ← Employee Foundation ✅
-    ├── FID-20251127-ENERGY.md   ← Energy Industry ✅
-    ├── FID-20251127-SOFTWARE.md ← Software Industry ✅
-    ├── FID-20251127-ECOMMERCE.md ← E-Commerce Industry ✅
-    ├── FID-20251127-EDTECH.md   ← EdTech Industry ✅
-    ├── FID-20251127-MEDIA.md    ← Media Industry ✅
-    ├── FID-20251127-MANUFACTURING.md ← Manufacturing Industry ✅
-    ├── FID-20251127-CONSULTING.md    ← Consulting Industry ✅
-    └── FID-20251127-POLITICS.md      ← Politics Expansion ✅ (8,096 LOC)
+├── FID-20251203-002.md          ← Political System Expansion ✅ COMPLETE
+├── FID-20251203-001.md          ← Player Profile Page ✅ COMPLETE
+├── FID-20251202-001.md          ← Main Page Fixes ✅ COMPLETE
+├── FID-20251201-002.md          ← ECHO Compliance Phase 1 ✅ COMPLETE
+├── FID-20251201-001.md          ← Crime P1 Backlog ✅ COMPLETE
+├── FID-20251127-CRIME.md        ← Crime Domain ✅ COMPLETE
+└── archives/                     ← Older completed FIDs
 ```
 
 ---
@@ -56,10 +88,10 @@ dev/fids/
 
 | Metric | Value |
 |--------|-------|
-| **FIDs Complete** | 11/13 (85%) |
-| **Next Phase** | Phase 6 - Politics |
+| **FIDs Complete** | 15/15 (100%) |
 | **TypeScript** | 0 errors ✅ |
-| **ECHO** | v1.3.3 (FLAWLESS Release) |
+| **ECHO** | v1.4.0 (OPTIMIZED Release) |
+| **Session** | Properly closed |
 
 ---
 
@@ -73,5 +105,5 @@ This keeps planned.md clean and prevents stale content accumulation.
 
 ---
 
-*Auto-maintained by ECHO v1.3.3 with GUARDIAN PROTOCOL v2.1 + FLAWLESS IMPLEMENTATION PROTOCOL*
+*Auto-maintained by ECHO v1.4.0 with GUARDIAN PROTOCOL v2.1*
 

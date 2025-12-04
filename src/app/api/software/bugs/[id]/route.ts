@@ -6,10 +6,11 @@
  * @author ECHO v1.3.1
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { auth } from '@/auth';
 import { connectDB } from '@/lib/db';
 import { Bug } from '@/lib/db/models';
+import { createSuccessResponse, createErrorResponse, ErrorCode } from '@/lib/utils/apiResponse';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -19,7 +20,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     const { id } = await params;
@@ -31,13 +32,13 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       .lean();
       
     if (!bug) {
-      return NextResponse.json({ error: 'Bug not found' }, { status: 404 });
+      return createErrorResponse('Bug not found', ErrorCode.NOT_FOUND, 404);
     }
 
-    return NextResponse.json({ bug });
+    return createSuccessResponse({ bug });
   } catch (error) {
     console.error('GET /api/software/bugs/[id] error:', error);
-    return NextResponse.json({ error: 'Failed to fetch bug' }, { status: 500 });
+    return createErrorResponse('Failed to fetch bug', ErrorCode.INTERNAL_ERROR, 500);
   }
 }
 
@@ -45,7 +46,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
   try {
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     const { id } = await params;
@@ -70,13 +71,13 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     );
 
     if (!bug) {
-      return NextResponse.json({ error: 'Bug not found' }, { status: 404 });
+      return createErrorResponse('Bug not found', ErrorCode.NOT_FOUND, 404);
     }
 
-    return NextResponse.json({ message: 'Bug updated', bug });
+    return createSuccessResponse({ message: 'Bug updated', bug });
   } catch (error) {
     console.error('PATCH /api/software/bugs/[id] error:', error);
-    return NextResponse.json({ error: 'Failed to update bug' }, { status: 500 });
+    return createErrorResponse('Failed to update bug', ErrorCode.INTERNAL_ERROR, 500);
   }
 }
 
@@ -84,7 +85,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     const { id } = await params;
@@ -92,12 +93,12 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
 
     const bug = await Bug.findByIdAndDelete(id);
     if (!bug) {
-      return NextResponse.json({ error: 'Bug not found' }, { status: 404 });
+      return createErrorResponse('Bug not found', ErrorCode.NOT_FOUND, 404);
     }
 
-    return NextResponse.json({ message: 'Bug deleted' });
+    return createSuccessResponse({ message: 'Bug deleted' });
   } catch (error) {
     console.error('DELETE /api/software/bugs/[id] error:', error);
-    return NextResponse.json({ error: 'Failed to delete bug' }, { status: 500 });
+    return createErrorResponse('Failed to delete bug', ErrorCode.INTERNAL_ERROR, 500);
   }
 }

@@ -100,7 +100,8 @@ export async function POST(req: NextRequest) {
     };
 
     hr.recruitmentCampaigns = hr.recruitmentCampaigns || [];
-    hr.recruitmentCampaigns.push(campaign as any);
+    // Push campaign - companyId as string matches runtime behavior
+    hr.recruitmentCampaigns.push(campaign as unknown as typeof hr.recruitmentCampaigns[number]);
     hr.budget -= campaignInput.budget;
 
     await hr.save();

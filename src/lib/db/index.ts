@@ -24,9 +24,14 @@ export { default as Bank } from './models/Bank';
 export { default as Loan } from './models/Loan';
 export { default as Investment } from './models/Investment';
 export { default as InvestmentPortfolio } from './models/InvestmentPortfolio';
-// Crime domain models (Beta persistence phase)
+// Crime domain models (Phase 1 Alpha + Phase 2 Beta)
 export { default as ProductionFacility } from './models/crime/ProductionFacility';
 export { default as DistributionRoute } from './models/crime/DistributionRoute';
 export { default as MarketplaceListing } from './models/crime/MarketplaceListing';
 export { default as LaunderingChannel } from './models/crime/LaunderingChannel';
 export { default as HeatLevel } from './models/crime/HeatLevel';
+export { default as Gang } from './models/crime/Gang';
+export { default as Territory } from './models/crime/Territory';
+export { default as TurfWar } from './models/crime/TurfWar';
+export { default as LegislationStatus } from './models/crime/LegislationStatus';
+export { default as BlackMarketItem } from './models/crime/BlackMarketItem';

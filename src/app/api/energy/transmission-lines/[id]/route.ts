@@ -6,10 +6,11 @@
  * @author ECHO v1.3.1
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { auth } from '@/auth';
 import { connectDB } from '@/lib/db';
 import { TransmissionLine } from '@/lib/db/models';
+import { createSuccessResponse, createErrorResponse, ErrorCode } from '@/lib/utils/apiResponse';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -19,7 +20,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     const { id } = await params;
@@ -27,16 +28,13 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     const line = await TransmissionLine.findById(id).lean();
     if (!line) {
-      return NextResponse.json({ error: 'Transmission line not found' }, { status: 404 });
+      return createErrorResponse('Transmission line not found', ErrorCode.NOT_FOUND, 404);
     }
 
-    return NextResponse.json({ line });
+    return createSuccessResponse({ line });
   } catch (error) {
     console.error('GET /api/energy/transmission-lines/[id] error:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch transmission line' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to fetch transmission line', ErrorCode.INTERNAL_ERROR, 500);
   }
 }
 
@@ -44,7 +42,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
   try {
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     const { id } = await params;
@@ -59,16 +57,13 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     );
 
     if (!line) {
-      return NextResponse.json({ error: 'Transmission line not found' }, { status: 404 });
+      return createErrorResponse('Transmission line not found', ErrorCode.NOT_FOUND, 404);
     }
 
-    return NextResponse.json({ message: 'Transmission line updated', line });
+    return createSuccessResponse({ message: 'Transmission line updated', line });
   } catch (error) {
     console.error('PATCH /api/energy/transmission-lines/[id] error:', error);
-    return NextResponse.json(
-      { error: 'Failed to update transmission line' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to update transmission line', ErrorCode.INTERNAL_ERROR, 500);
   }
 }
 
@@ -76,7 +71,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     const { id } = await params;
@@ -84,15 +79,12 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
 
     const line = await TransmissionLine.findByIdAndDelete(id);
     if (!line) {
-      return NextResponse.json({ error: 'Transmission line not found' }, { status: 404 });
+      return createErrorResponse('Transmission line not found', ErrorCode.NOT_FOUND, 404);
     }
 
-    return NextResponse.json({ message: 'Transmission line deleted' });
+    return createSuccessResponse({ message: 'Transmission line deleted' });
   } catch (error) {
     console.error('DELETE /api/energy/transmission-lines/[id] error:', error);
-    return NextResponse.json(
-      { error: 'Failed to delete transmission line' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to delete transmission line', ErrorCode.INTERNAL_ERROR, 500);
   }
 }

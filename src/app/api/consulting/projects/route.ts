@@ -12,9 +12,10 @@
  * POST /api/consulting/projects - Create a new consulting project
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { auth } from '@/auth';
 import { connectDB } from '@/lib/db';
+import { createSuccessResponse, createErrorResponse } from '@/lib/utils/apiResponse';
 import ConsultingProject from '@/lib/db/models/consulting/ConsultingProject';
 import { 
   createConsultingProjectSchema, 
@@ -44,10 +45,7 @@ export async function GET(request: NextRequest) {
     // Authenticate
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return createErrorResponse('Unauthorized', 'UNAUTHORIZED', 401);
     }
     const companyId = session.user.companyId;
 
@@ -72,13 +70,11 @@ export async function GET(request: NextRequest) {
 
     const validatedQuery = consultingQuerySchema.safeParse(queryParams);
     if (!validatedQuery.success) {
-      return NextResponse.json(
-        { 
-          success: false, 
-          error: 'Invalid query parameters',
-          details: validatedQuery.error.flatten().fieldErrors,
-        },
-        { status: 400 }
+      return createErrorResponse(
+        'Invalid query parameters',
+        'VALIDATION_ERROR',
+        400,
+        validatedQuery.error.flatten().fieldErrors
       );
     }
 
@@ -208,28 +204,29 @@ export async function GET(request: NextRequest) {
     }
 
     // Build response
-    return NextResponse.json({
-      success: true,
-      data: projects,
-      pagination: {
-        page: query.page,
-        limit: query.limit,
-        total,
-        totalPages: Math.ceil(total / query.limit),
+    return createSuccessResponse(
+      {
+        data: projects,
+        ...(metrics && { metrics }),
+        ...(recommendations && { recommendations }),
       },
-      ...(metrics && { metrics }),
-      ...(recommendations && { recommendations }),
-    });
+      {
+        pagination: {
+          page: query.page,
+          limit: query.limit,
+          total,
+          totalPages: Math.ceil(total / query.limit),
+        },
+      }
+    );
 
   } catch (error) {
     console.error('[API] GET /api/consulting/projects error:', error);
-    return NextResponse.json(
-      { 
-        success: false, 
-        error: 'Failed to fetch consulting projects',
-        details: error instanceof Error ? error.message : 'Unknown error',
-      },
-      { status: 500 }
+    return createErrorResponse(
+      'Failed to fetch consulting projects',
+      'INTERNAL_ERROR',
+      500,
+      error instanceof Error ? error.message : 'Unknown error'
     );
   }
 }
@@ -247,10 +244,7 @@ export async function POST(request: NextRequest) {
     // Authenticate
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return createErrorResponse('Unauthorized', 'UNAUTHORIZED', 401);
     }
     const companyId = session.user.companyId;
 
@@ -260,13 +254,11 @@ export async function POST(request: NextRequest) {
     // Validate input
     const validatedData = createConsultingProjectSchema.safeParse(body);
     if (!validatedData.success) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Validation failed',
-          details: validatedData.error.flatten().fieldErrors,
-        },
-        { status: 400 }
+      return createErrorResponse(
+        'Validation failed',
+        'VALIDATION_ERROR',
+        400,
+        validatedData.error.flatten().fieldErrors
       );
     }
 
@@ -282,13 +274,13 @@ export async function POST(request: NextRequest) {
     const project = new ConsultingProject(projectData);
     await project.save();
 
-    return NextResponse.json(
+    return createSuccessResponse(
       {
-        success: true,
         data: project.toObject(),
         message: 'Consulting project created successfully',
       },
-      { status: 201 }
+      undefined,
+      201
     );
 
   } catch (error) {
@@ -296,22 +288,18 @@ export async function POST(request: NextRequest) {
     
     // Handle duplicate key errors
     if ((error as { code?: number }).code === 11000) {
-      return NextResponse.json(
-        { 
-          success: false, 
-          error: 'A project with this name already exists',
-        },
-        { status: 409 }
+      return createErrorResponse(
+        'A project with this name already exists',
+        'DUPLICATE_ERROR',
+        409
       );
     }
 
-    return NextResponse.json(
-      { 
-        success: false, 
-        error: 'Failed to create consulting project',
-        details: error instanceof Error ? error.message : 'Unknown error',
-      },
-      { status: 500 }
+    return createErrorResponse(
+      'Failed to create consulting project',
+      'INTERNAL_ERROR',
+      500,
+      error instanceof Error ? error.message : 'Unknown error'
     );
   }
 }

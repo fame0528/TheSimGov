@@ -11,7 +11,7 @@
  * @author ECHO v1.3.0
  */
 
-import { ScandalRecord, CampaignPhaseState } from '@/lib/types/politics';
+import { ScandalRecord, CampaignPhaseState, ScandalStatus } from '@/lib/types/politics';
 import ScandalRecordModel from '@/lib/db/models/politics/ScandalRecord';
 import { fnv1a32 } from '@/lib/utils/deterministicHash';
 
@@ -79,7 +79,7 @@ export async function generateScandal(
     category,
     severity,
     description: description,
-    status: 'DISCOVERED' as any,
+    status: ScandalStatus.DISCOVERED,
     discoveredEpoch: now,
     reputationHitPercent,
     recoveryRatePerHourPercent,
@@ -226,7 +226,7 @@ export async function processMitigation(
 
   // Add mitigation action
   const now = Date.now() / 1000;
-  (scandal.mitigationActions as any[]).push(action);
+  scandal.mitigationActions.push(action);
 
   // Increase recovery rate
   const newRecoveryRate = Math.min(
@@ -257,7 +257,7 @@ export async function containScandal(
   }
 
   // Mark as contained
-  (scandal as any).status = 'CONTAINED';
+  scandal.status = ScandalStatus.CONTAINED;
   scandal.containedEpoch = Date.now() / 1000;
   await scandal.save();
 
@@ -284,7 +284,7 @@ export async function resolveScandal(
     return false;
   }
 
-  (scandal as any).status = 'RESOLVED';
+  scandal.status = ScandalStatus.RESOLVED;
   scandal.resolvedEpoch = Date.now() / 1000;
   await scandal.save();
 
@@ -348,7 +348,7 @@ export async function checkAutoResolve(scandalId: string): Promise<boolean> {
 
   // Auto-resolve if impact < 1%
   if (currentImpact < 1) {
-    (scandal as any).status = 'RESOLVED';
+    scandal.status = ScandalStatus.RESOLVED;
     scandal.resolvedEpoch = Date.now() / 1000;
     await scandal.save();
     return true;

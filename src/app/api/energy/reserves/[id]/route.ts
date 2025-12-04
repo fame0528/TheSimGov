@@ -11,10 +11,13 @@
  * @author ECHO v1.3.1
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { auth } from '@/auth';
 import { connectDB } from '@/lib/db';
 import { OilWell, GasField } from '@/lib/db/models';
+import { createSuccessResponse, createErrorResponse, ErrorCode } from '@/lib/utils/apiResponse';
+import type { IOilWell } from '@/lib/db/models/energy/OilWell';
+import type { IGasField } from '@/lib/db/models/energy/GasField';
 
 /**
  * GET /api/energy/reserves/[id]
@@ -27,7 +30,7 @@ export async function GET(
   try {
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     await connectDB();
@@ -43,10 +46,11 @@ export async function GET(
     }
 
     if (!asset) {
-      return NextResponse.json({ error: 'Asset not found' }, { status: 404 });
+      return createErrorResponse('Asset not found', ErrorCode.NOT_FOUND, 404);
     }
 
-    const totalReserve = (asset as any).reserveEstimate ?? 0;
+    // reserveEstimate exists on both OilWell and GasField models
+    const totalReserve = asset.reserveEstimate ?? 0;
 
     // SEC Classifications
     const proved = totalReserve * 0.5;    // P90
@@ -58,7 +62,7 @@ export async function GET(
     const provedYears = annualProduction > 0 ? proved / annualProduction : 0;
     const totalYears = annualProduction > 0 ? totalReserve / annualProduction : 0;
 
-    return NextResponse.json({
+    return createSuccessResponse({
       asset: {
         id: asset._id,
         name: asset.name,
@@ -85,10 +89,7 @@ export async function GET(
     });
   } catch (error) {
     console.error('GET /api/energy/reserves/[id] error:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch reserve details' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to fetch reserve details', ErrorCode.INTERNAL_ERROR, 500);
   }
 }
 
@@ -103,7 +104,7 @@ export async function PATCH(
   try {
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     await connectDB();
@@ -112,10 +113,7 @@ export async function PATCH(
     const { newEstimate } = body;
 
     if (!newEstimate || newEstimate <= 0) {
-      return NextResponse.json(
-        { error: 'Valid positive reserve estimate required' },
-        { status: 400 }
-      );
+      return createErrorResponse('Valid positive reserve estimate required', ErrorCode.BAD_REQUEST, 400);
     }
 
     // Try oil well first
@@ -136,10 +134,10 @@ export async function PATCH(
     }
 
     if (!asset) {
-      return NextResponse.json({ error: 'Asset not found' }, { status: 404 });
+      return createErrorResponse('Asset not found', ErrorCode.NOT_FOUND, 404);
     }
 
-    return NextResponse.json({
+    return createSuccessResponse({
       message: 'Reserve estimate updated',
       asset,
       assetType,
@@ -147,10 +145,7 @@ export async function PATCH(
     });
   } catch (error) {
     console.error('PATCH /api/energy/reserves/[id] error:', error);
-    return NextResponse.json(
-      { error: 'Failed to update reserves' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to update reserves', ErrorCode.INTERNAL_ERROR, 500);
   }
 }
 
@@ -165,7 +160,7 @@ export async function DELETE(
   try {
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     await connectDB();
@@ -189,19 +184,16 @@ export async function DELETE(
     }
 
     if (!asset) {
-      return NextResponse.json({ error: 'Asset not found' }, { status: 404 });
+      return createErrorResponse('Asset not found', ErrorCode.NOT_FOUND, 404);
     }
 
-    return NextResponse.json({
+    return createSuccessResponse({
       message: 'Reserves reclassified to zero',
       asset,
       assetType,
     });
   } catch (error) {
     console.error('DELETE /api/energy/reserves/[id] error:', error);
-    return NextResponse.json(
-      { error: 'Failed to reclassify reserves' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to reclassify reserves', ErrorCode.INTERNAL_ERROR, 500);
   }
 }

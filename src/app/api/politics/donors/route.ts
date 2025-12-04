@@ -4,12 +4,13 @@
  * @created 2025-11-29
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { auth } from '@/auth';
 import { connectDB } from '@/lib/db';
 import Donor from '@/lib/db/models/politics/Donor';
 import { createDonorSchema, donorQuerySchema } from '@/lib/validations/politics';
 import { z } from 'zod';
+import { createSuccessResponse, createErrorResponse } from '@/lib/utils/apiResponse';
 
 /**
  * GET /api/politics/donors
@@ -19,7 +20,7 @@ export async function GET(request: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', 'UNAUTHORIZED', 401);
     }
 
     await connectDB();
@@ -65,7 +66,7 @@ export async function GET(request: NextRequest) {
 
     const total = await Donor.countDocuments(filter);
 
-    return NextResponse.json({
+    return createSuccessResponse({
       donors,
       pagination: {
         total,
@@ -77,10 +78,10 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: 'Invalid query parameters', details: error.errors }, { status: 400 });
+      return createErrorResponse('Invalid query parameters', 'VALIDATION_ERROR', 400, error.errors);
     }
     console.error('[Donors GET] Error:', error);
-    return NextResponse.json({ error: 'Failed to fetch donors' }, { status: 500 });
+    return createErrorResponse('Failed to fetch donors', 'INTERNAL_ERROR', 500);
   }
 }
 
@@ -92,7 +93,7 @@ export async function POST(request: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', 'UNAUTHORIZED', 401);
     }
 
     await connectDB();
@@ -105,13 +106,13 @@ export async function POST(request: NextRequest) {
       company: session.user.companyId,
     });
 
-    return NextResponse.json({ donor }, { status: 201 });
+    return createSuccessResponse({ donor }, undefined, 201);
 
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: 'Invalid donor data', details: error.errors }, { status: 400 });
+      return createErrorResponse('Invalid donor data', 'VALIDATION_ERROR', 400);
     }
     console.error('[Donors POST] Error:', error);
-    return NextResponse.json({ error: 'Failed to create donor' }, { status: 500 });
+    return createErrorResponse('Failed to create donor', 'INTERNAL_ERROR', 500);
   }
 }

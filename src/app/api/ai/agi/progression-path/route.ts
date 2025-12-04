@@ -33,9 +33,10 @@
  * @implementation Phase 5 API Routes Batch 1
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { auth } from '@/auth';
 import { connectDB } from '@/lib/db';
+import { createSuccessResponse, createErrorResponse, ErrorCode } from '@/lib/utils/apiResponse';
 import Company from '@/lib/db/models/Company';
 import AGIMilestone from '@/lib/db/models/AI/AGIMilestone';
 import { calculateMilestoneProgressionPath } from '@/lib/utils/ai';
@@ -69,7 +70,7 @@ export async function GET(req: NextRequest) {
     // Authentication - verify user session
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     await connectDB();
@@ -77,7 +78,7 @@ export async function GET(req: NextRequest) {
     // Get user's company
     const company = await Company.findOne({ userId: session.user.id });
     if (!company) {
-      return NextResponse.json({ error: 'Company not found' }, { status: 404 });
+      return createErrorResponse('Company not found', ErrorCode.NOT_FOUND, 404);
     }
 
     // Parse query parameters
@@ -86,10 +87,7 @@ export async function GET(req: NextRequest) {
 
     // Validate stance
     if (!Object.values(AlignmentStance).includes(stance)) {
-      return NextResponse.json(
-        { error: `Invalid alignment stance: ${stance}` },
-        { status: 400 }
-      );
+      return createErrorResponse(`Invalid alignment stance: ${stance}`, ErrorCode.VALIDATION_ERROR, 400);
     }
 
     // Get achieved milestones to calculate current capability/alignment
@@ -193,8 +191,7 @@ export async function GET(req: NextRequest) {
       availableRP: availableResearchPoints
     });
 
-    return NextResponse.json({
-      success: true,
+    return createSuccessResponse({
       progressionPath,
       currentState: {
         capability: currentCapability,
@@ -205,12 +202,11 @@ export async function GET(req: NextRequest) {
     });
   } catch (error) {
     console.error('Error calculating progression path:', error);
-    return NextResponse.json(
-      {
-        error: 'Failed to calculate progression path',
-        details: error instanceof Error ? error.message : 'Unknown error',
-      },
-      { status: 500 }
+    return createErrorResponse(
+      'Failed to calculate progression path',
+      ErrorCode.INTERNAL_ERROR,
+      500,
+      { details: error instanceof Error ? error.message : 'Unknown error' }
     );
   }
 }

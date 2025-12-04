@@ -267,7 +267,7 @@ export function CourseManagement({ companyId }: CourseManagementProps) {
     {
       header: 'Difficulty',
       accessor: (row) => (
-        <Badge color={getDifficultyColor(row.difficulty as any)}>
+        <Badge color={getDifficultyColor(row.difficulty as 'Beginner' | 'Intermediate' | 'Advanced' | 'Expert')}>
           {row.difficulty}
         </Badge>
       ),
@@ -433,13 +433,16 @@ export function CourseManagement({ companyId }: CourseManagementProps) {
               <ResponsiveContainer width="100%" height={300}>
                 <PieChart>
                   <Pie
-                    data={categoryBreakdown as any}
+                    data={categoryBreakdown as unknown as Array<Record<string, unknown>>}
                     dataKey="revenue"
                     nameKey="category"
                     cx="50%"
                     cy="50%"
                     outerRadius={80}
-                    label={(entry: any) => `${entry.category}: $${entry.revenue.toLocaleString()}`}
+                    label={(props) => {
+                      const { category, revenue } = props as unknown as { category: string; revenue: number };
+                      return `${category}: $${revenue.toLocaleString()}`;
+                    }}
                   >
                     {categoryBreakdown.map((_, index) => (
                       <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
@@ -539,7 +542,7 @@ export function CourseManagement({ companyId }: CourseManagementProps) {
                 label="Pricing Model"
                 selectedKeys={[formData.pricingModel]}
                 onSelectionChange={(keys) =>
-                  setFormData({ ...formData, pricingModel: Array.from(keys)[0] as any })
+                  setFormData({ ...formData, pricingModel: String(Array.from(keys)[0]) })
                 }
                 isRequired
               >

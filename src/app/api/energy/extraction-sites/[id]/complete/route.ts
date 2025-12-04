@@ -12,10 +12,11 @@
  * @author ECHO v1.3.1
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { auth } from '@/auth';
 import { connectDB } from '@/lib/db';
 import { OilWell, GasField } from '@/lib/db/models';
+import { createSuccessResponse, createErrorResponse, ErrorCode } from '@/lib/utils/apiResponse';
 
 /**
  * POST /api/energy/extraction-sites/[id]/complete
@@ -28,7 +29,7 @@ export async function POST(
   try {
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     await connectDB();
@@ -46,17 +47,11 @@ export async function POST(
     }
 
     if (!asset) {
-      return NextResponse.json(
-        { error: 'Extraction site asset not found' },
-        { status: 404 }
-      );
+      return createErrorResponse('Extraction site asset not found', ErrorCode.NOT_FOUND, 404);
     }
 
     if (asset.status === 'Active') {
-      return NextResponse.json(
-        { error: 'Site already active' },
-        { status: 400 }
-      );
+      return createErrorResponse('Site already active', ErrorCode.BAD_REQUEST, 400);
     }
 
     // Update to active status
@@ -81,7 +76,7 @@ export async function POST(
     const dailyCost = asset.currentProduction * extractionCost;
     const netDaily = dailyRevenue - dailyCost;
 
-    return NextResponse.json({
+    return createSuccessResponse({
       message: 'Extraction site activated',
       asset,
       metrics: {
@@ -97,9 +92,6 @@ export async function POST(
     });
   } catch (error) {
     console.error('POST /api/energy/extraction-sites/[id]/complete error:', error);
-    return NextResponse.json(
-      { error: 'Failed to complete site activation' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to complete site activation', ErrorCode.INTERNAL_ERROR, 500);
   }
 }

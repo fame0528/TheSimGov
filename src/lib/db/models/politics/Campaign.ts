@@ -85,6 +85,7 @@ export interface CampaignPoll {
 export interface ICampaign extends Document {
   // Core
   company: Types.ObjectId;
+  playerId: string;
   playerName: string;
   party: PoliticalParty;
   office: PoliticalOffice;
@@ -225,13 +226,17 @@ const CampaignSchema = new Schema<ICampaign>(
       required: [true, 'Company reference is required'],
       index: true,
     },
+    playerId: {
+      type: String,
+      required: [true, 'Player ID is required'],
+      index: true,
+    },
     playerName: {
       type: String,
       required: [true, 'Player name is required'],
       trim: true,
       minlength: [2, 'Player name must be at least 2 characters'],
       maxlength: [100, 'Player name cannot exceed 100 characters'],
-      index: true,
     },
     party: {
       type: String,

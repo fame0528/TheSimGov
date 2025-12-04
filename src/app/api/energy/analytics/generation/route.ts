@@ -9,11 +9,13 @@
  * production volumes, capacity factors, fuel mix, and performance trends.
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { connectDB as dbConnect } from '@/lib/db';
 import { OilWell, GasField, SolarFarm, WindTurbine, PowerPlant } from '@/lib/db/models';
 import { auth } from '@/auth';
+import { createSuccessResponse, createErrorResponse, ErrorCode } from '@/lib/utils/apiResponse';
+import type { OilWellLean, GasFieldLean, SolarFarmLean, WindTurbineLean, PowerPlantLean } from '@/lib/types/energy-lean';
 
 // ============================================================================
 // VALIDATION SCHEMAS
@@ -34,7 +36,7 @@ export async function GET(req: NextRequest) {
     // Authentication
     const session = await auth();
     if (!session?.user?.companyId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     // Parse query parameters
@@ -48,10 +50,7 @@ export async function GET(req: NextRequest) {
     const validation = AnalyticsQuerySchema.safeParse(queryData);
     
     if (!validation.success) {
-      return NextResponse.json(
-        { error: 'Invalid query parameters', details: validation.error.flatten() },
-        { status: 400 }
-      );
+      return createErrorResponse('Invalid query parameters: ' + JSON.stringify(validation.error.flatten()), ErrorCode.BAD_REQUEST, 400);
     }
 
     const { startDate, endDate, groupBy } = validation.data;
@@ -63,49 +62,49 @@ export async function GET(req: NextRequest) {
     const filter = { company: session.user.companyId };
     
     const [oilWells, gasFields, solarFarms, windTurbines, powerPlants] = await Promise.all([
-      OilWell.find(filter).lean(),
-      GasField.find(filter).lean(),
-      SolarFarm.find(filter).lean(),
-      WindTurbine.find(filter).lean(),
-      PowerPlant.find(filter).lean()
+      OilWell.find(filter).lean<OilWellLean[]>(),
+      GasField.find(filter).lean<GasFieldLean[]>(),
+      SolarFarm.find(filter).lean<SolarFarmLean[]>(),
+      WindTurbine.find(filter).lean<WindTurbineLean[]>(),
+      PowerPlant.find(filter).lean<PowerPlantLean[]>()
     ]);
 
-    // Calculate oil production
-    const oilProduction = oilWells.reduce((sum, well) => sum + (((well as any).dailyProduction ?? 0)), 0);
+    // Calculate oil production (OilWell uses currentProduction, not dailyProduction)
+    const oilProduction = oilWells.reduce((sum, well) => sum + (well.currentProduction ?? 0), 0);
     const oilCount = oilWells.length;
-      const oilCapacity = oilWells.reduce((sum, well) => sum + (((well as any).productionRate ?? (well as any).currentOutput) ?? 0), 0);
+    const oilCapacity = oilWells.reduce((sum, well) => sum + (well.peakProduction ?? well.currentProduction ?? 0), 0);
 
-    // Calculate gas production
-    const gasProduction = gasFields.reduce((sum, field) => sum + (((field as any).dailyProduction ?? 0)), 0);
+    // Calculate gas production (GasField uses currentProduction, not dailyProduction)
+    const gasProduction = gasFields.reduce((sum, field) => sum + (field.currentProduction ?? 0), 0);
     const gasCount = gasFields.length;
-      const gasCapacity = gasFields.reduce((sum, field) => sum + ((((field as any).productionRate ?? (field as any).currentOutput) ?? 0)), 0);
+    const gasCapacity = gasFields.reduce((sum, field) => sum + (field.peakProduction ?? field.currentProduction ?? 0), 0);
 
-    // Calculate solar generation
-    const solarGeneration = solarFarms.reduce((sum, farm) => sum + (((farm as any).currentOutput ?? 0)), 0);
+    // Calculate solar generation (SolarFarm uses installedCapacity and currentOutput)
+    const solarGeneration = solarFarms.reduce((sum, farm) => sum + (farm.currentOutput ?? 0), 0);
     const solarCount = solarFarms.length;
-      const solarCapacity = solarFarms.reduce((sum, farm) => sum + ((((farm as any).nameplateCapacity ?? (farm as any).ratedCapacity) ?? 0)), 0);
-      const solarAvgCF = solarFarms.reduce((sum, farm) => {
-        const cap = (((farm as any).nameplateCapacity ?? (farm as any).ratedCapacity) ?? 0);
-        const out = (((farm as any).currentOutput ?? 0));
-        const cf = cap > 0 ? (out / cap) * 100 : 0;
-        return sum + cf;
-      }, 0) / Math.max(solarCount, 1);
+    const solarCapacity = solarFarms.reduce((sum, farm) => sum + (farm.installedCapacity ?? 0), 0);
+    const solarAvgCF = solarFarms.reduce((sum, farm) => {
+      const cap = farm.installedCapacity ?? 0;
+      const out = farm.currentOutput ?? 0;
+      const cf = cap > 0 ? (out / cap) * 100 : 0;
+      return sum + cf;
+    }, 0) / Math.max(solarCount, 1);
 
-    // Calculate wind generation
-    const windGeneration = windTurbines.reduce((sum, turbine) => sum + (((turbine as any).currentOutput ?? 0)), 0);
+    // Calculate wind generation (WindTurbine uses ratedCapacity and currentOutput)
+    const windGeneration = windTurbines.reduce((sum, turbine) => sum + (turbine.currentOutput ?? 0), 0);
     const windCount = windTurbines.length;
-      const windCapacity = windTurbines.reduce((sum, turbine) => sum + ((((turbine as any).ratedCapacity ?? (turbine as any).nameplateCapacity) ?? 0)), 0);
-      const windAvgCF = windTurbines.reduce((sum, turbine) => {
-        const cap = (((turbine as any).ratedCapacity ?? (turbine as any).nameplateCapacity) ?? 0);
-        const out = (((turbine as any).currentOutput ?? 0));
-        const cf = cap > 0 ? (out / cap) * 100 : 0;
-        return sum + cf;
-      }, 0) / Math.max(windCount, 1);
+    const windCapacity = windTurbines.reduce((sum, turbine) => sum + (turbine.ratedCapacity ?? 0), 0);
+    const windAvgCF = windTurbines.reduce((sum, turbine) => {
+      const cap = turbine.ratedCapacity ?? 0;
+      const out = turbine.currentOutput ?? 0;
+      const cf = cap > 0 ? (out / cap) * 100 : 0;
+      return sum + cf;
+    }, 0) / Math.max(windCount, 1);
 
-    // Calculate power plant generation
-    const plantGeneration = powerPlants.reduce((sum, plant) => sum + (((plant as any).currentOutput ?? 0)), 0);
+    // Calculate power plant generation (PowerPlant uses nameplateCapacity and currentOutput)
+    const plantGeneration = powerPlants.reduce((sum, plant) => sum + (plant.currentOutput ?? 0), 0);
     const plantCount = powerPlants.length;
-      const plantCapacity = powerPlants.reduce((sum, plant) => sum + (((plant as any).nameplateCapacity ?? 0)), 0);
+    const plantCapacity = powerPlants.reduce((sum, plant) => sum + (plant.nameplateCapacity ?? 0), 0);
     const plantAvgCF = powerPlants.reduce((sum, plant) => sum + (plant.capacityFactor || 60), 0) / Math.max(plantCount, 1);
 
     // Total electricity generation
@@ -143,8 +142,7 @@ export async function GET(req: NextRequest) {
       ? (totalElectricityGeneration / (totalElectricityCapacity * 8760)) * 100 
       : 0;
 
-    return NextResponse.json({
-      success: true,
+    return createSuccessResponse({
       period: {
         startDate: startDate || 'All time',
         endDate: endDate || 'Present',
@@ -203,10 +201,7 @@ export async function GET(req: NextRequest) {
 
   } catch (error) {
     console.error('[ENERGY] Generation analytics error:', error);
-    return NextResponse.json(
-      { error: 'Failed to retrieve generation analytics', details: error instanceof Error ? error.message : 'Unknown error' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to retrieve generation analytics: ' + (error instanceof Error ? error.message : 'Unknown error'), ErrorCode.INTERNAL_ERROR, 500);
   }
 }
 

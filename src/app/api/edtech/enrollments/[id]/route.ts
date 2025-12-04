@@ -14,9 +14,10 @@
  * DELETE /api/edtech/enrollments/:id - Delete enrollment
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { auth } from '@/auth';
 import { connectDB } from '@/lib/db';
+import { createSuccessResponse, createErrorResponse, ErrorCode } from '@/lib/utils/apiResponse';
 import StudentEnrollment from '@/lib/db/models/edtech/StudentEnrollment';
 
 /**
@@ -35,7 +36,7 @@ export async function GET(
   try {
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     await connectDB();
@@ -49,16 +50,13 @@ export async function GET(
       .lean();
 
     if (!enrollment) {
-      return NextResponse.json({ error: 'Enrollment not found' }, { status: 404 });
+      return createErrorResponse('Enrollment not found', ErrorCode.NOT_FOUND, 404);
     }
 
-    return NextResponse.json(enrollment);
+    return createSuccessResponse(enrollment);
   } catch (error) {
     console.error('GET /api/edtech/enrollments/:id error:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch enrollment' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to fetch enrollment', ErrorCode.INTERNAL_ERROR, 500);
   }
 }
 
@@ -90,7 +88,7 @@ export async function PATCH(
   try {
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     await connectDB();
@@ -100,7 +98,7 @@ export async function PATCH(
 
     const enrollment = await StudentEnrollment.findById(id);
     if (!enrollment) {
-      return NextResponse.json({ error: 'Enrollment not found' }, { status: 404 });
+      return createErrorResponse('Enrollment not found', ErrorCode.NOT_FOUND, 404);
     }
 
     // Update allowed fields
@@ -140,21 +138,15 @@ export async function PATCH(
 
     await enrollment.save();
 
-    return NextResponse.json(enrollment);
+    return createSuccessResponse(enrollment);
   } catch (error) {
     console.error('PATCH /api/edtech/enrollments/:id error:', error);
     
     if ((error as { name?: string }).name === 'ValidationError') {
-      return NextResponse.json(
-        { error: 'Validation error', details: (error as { errors?: unknown }).errors },
-        { status: 400 }
-      );
+      return createErrorResponse('Validation error', ErrorCode.VALIDATION_ERROR, 400, (error as { errors?: unknown }).errors);
     }
 
-    return NextResponse.json(
-      { error: 'Failed to update enrollment' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to update enrollment', ErrorCode.INTERNAL_ERROR, 500);
   }
 }
 
@@ -174,7 +166,7 @@ export async function DELETE(
   try {
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     await connectDB();
@@ -183,15 +175,12 @@ export async function DELETE(
 
     const enrollment = await StudentEnrollment.findByIdAndDelete(id);
     if (!enrollment) {
-      return NextResponse.json({ error: 'Enrollment not found' }, { status: 404 });
+      return createErrorResponse('Enrollment not found', ErrorCode.NOT_FOUND, 404);
     }
 
-    return NextResponse.json({ message: 'Enrollment deleted successfully' });
+    return createSuccessResponse({ message: 'Enrollment deleted successfully' });
   } catch (error) {
     console.error('DELETE /api/edtech/enrollments/:id error:', error);
-    return NextResponse.json(
-      { error: 'Failed to delete enrollment' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to delete enrollment', ErrorCode.INTERNAL_ERROR, 500);
   }
 }

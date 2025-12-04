@@ -21,8 +21,9 @@
  * @author ECHO v1.3.1 - Phase 3.1 Energy Action Endpoints
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { auth } from '@/auth';
+import { createSuccessResponse, createErrorResponse, ErrorCode } from '@/lib/utils/apiResponse';
 import { connectDB } from '@/lib/db';
 import { SolarFarm } from '@/lib/db/models';
 import { z } from 'zod';
@@ -61,7 +62,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     // 1. Authentication check
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     // 2. Parse and validate request body
@@ -76,20 +77,17 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const farm = await SolarFarm.findById(id);
     
     if (!farm) {
-      return NextResponse.json({ error: 'Solar farm not found' }, { status: 404 });
+      return createErrorResponse('Solar farm not found', ErrorCode.NOT_FOUND, 404);
     }
 
     // 5. Verify ownership
     if (farm.company.toString() !== session.user.companyId) {
-      return NextResponse.json({ error: 'Unauthorized access to farm' }, { status: 403 });
+      return createErrorResponse('Unauthorized access to farm', ErrorCode.FORBIDDEN, 403);
     }
 
     // 6. Validate operational status
     if (farm.status !== 'Operational') {
-      return NextResponse.json(
-        { error: `Cannot generate from farm with status: ${farm.status}` },
-        { status: 400 }
-      );
+      return createErrorResponse(`Cannot generate from farm with status: ${farm.status}`, ErrorCode.BAD_REQUEST, 400);
     }
 
     // 7. Calculate production output
@@ -136,7 +134,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     await farm.save();
 
     // 11. Return generation results
-    return NextResponse.json({
+    return createSuccessResponse({
       success: true,
       production: Math.round(production * 100) / 100,
       revenue: Math.round(netRevenue * 100) / 100,
@@ -167,17 +165,11 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
   } catch (error) {
     // Zod validation errors
     if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: 'Validation failed', details: error.errors },
-        { status: 400 }
-      );
+      return createErrorResponse('Validation failed', ErrorCode.VALIDATION_ERROR, 400, error.errors);
     }
 
     // Generic error handling
     console.error('POST /api/energy/solar-farms/[id]/generate error:', error);
-    return NextResponse.json(
-      { error: 'Failed to process generation operation' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to process generation operation', ErrorCode.INTERNAL_ERROR, 500);
   }
 }

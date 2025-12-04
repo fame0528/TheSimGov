@@ -86,26 +86,26 @@ export default function EmployeeDetailPage() {
   /**
    * Get retention risk color
    */
-  const getRetentionColor = (risk: string) => {
+  const getRetentionColor = (risk: string): 'danger' | 'warning' | 'default' | 'primary' | 'success' => {
     switch (risk) {
-      case 'critical': return 'red';
-      case 'high': return 'orange';
-      case 'moderate': return 'yellow';
-      case 'low': return 'blue';
-      case 'minimal': return 'green';
-      default: return 'gray';
+      case 'critical': return 'danger';
+      case 'high': return 'warning';
+      case 'moderate': return 'warning';
+      case 'low': return 'primary';
+      case 'minimal': return 'success';
+      default: return 'default';
     }
   };
 
   /**
    * Get morale color
    */
-  const getMoraleColor = (morale: number) => {
-    if (morale >= 85) return 'green';
-    if (morale >= 70) return 'blue';
-    if (morale >= 50) return 'yellow';
-    if (morale >= 30) return 'orange';
-    return 'red';
+  const getMoraleColor = (morale: number): 'success' | 'primary' | 'warning' | 'danger' | 'default' => {
+    if (morale >= 85) return 'success';
+    if (morale >= 70) return 'primary';
+    if (morale >= 50) return 'warning';
+    if (morale >= 30) return 'warning';
+    return 'danger';
   };
 
   if (isLoading) {
@@ -152,7 +152,7 @@ export default function EmployeeDetailPage() {
               >
                 {employee.status.toUpperCase()}
               </Chip>
-              <Chip color={retentionColor as any} size="lg">
+              <Chip color={retentionColor} size="lg">
                 {employee.retentionRisk?.toUpperCase() || 'UNKNOWN'} RISK
               </Chip>
             </div>
@@ -183,7 +183,7 @@ export default function EmployeeDetailPage() {
                 </span>
                 <span className="text-sm text-default-600">/ 100</span>
               </div>
-              <Progress value={employee.morale} color={moraleColor as any} size="lg" />
+              <Progress value={employee.morale} color={moraleColor} size="lg" />
               {employee.morale < 50 && (
                 <Alert color="warning" className="mt-2">
                   Low morale increases quit risk

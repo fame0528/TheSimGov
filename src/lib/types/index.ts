@@ -103,3 +103,105 @@ export type {
   PortraitCatalogStats
 } from './portraits';
 export { AVATAR_CONSTRAINTS } from './portraits';
+
+// Player Profile System
+export type {
+  StockPortfolio,
+  StockHolding,
+  UnionMembership,
+  CEOPosition,
+  PlayerBusiness,
+  OwnedCompany,
+  LobbyAffiliation,
+  PlayerPolitics,
+  ElectoralHistoryEntry,
+  ElectoralHistory,
+  PlayerIdentity,
+  PlayerProfile,
+  PlayerProfileResponse
+} from './player';
+export {
+  WealthClass,
+  SocialPosition,
+  EconomicPosition,
+  PlayerParty,
+  ElectionResult,
+  ElectoralOffice,
+  formatPlayerCurrency,
+  formatPlayerPercent,
+  getWealthClass,
+  getPartyColor,
+  getPositionColor
+} from './player';
+
+// Demographics System
+export type {
+  IssuePosition,
+  IssueProfile,
+  DemographicGroupKey,
+  DemographicGroup,
+  StateDemographics,
+  DemographicShare,
+  VoterProfile,
+  DemographicAppeal,
+  SpecialEffect,
+  DemographicPollResult,
+  StatePollingSummary,
+  PollComparison,
+  DemographicFilter,
+  AppealCalculationInput,
+  IssueAlignmentResult,
+} from './demographics';
+export {
+  DemographicRace,
+  DemographicClass,
+  DemographicGender,
+  DemographicAge,
+  DemographicEducation,
+  DemographicArea,
+  PoliticalIssue,
+  PositionLabel,
+  ALL_DEMOGRAPHIC_KEYS,
+  ALL_POLITICAL_ISSUES,
+  getPositionLabel,
+  getPositionLabelText,
+  getDemographicLabel,
+  isDemographicGroupKey,
+  isPoliticalIssue,
+  DEMOGRAPHICS_SCHEMA_VERSION,
+} from './demographics';
+
+// Actions System
+export type {
+  ActionCost,
+  PollingEffect,
+  DemographicEffect,
+  IssueEffect,
+  ReputationEffect,
+  FundraisingEffect,
+  ActionEffects,
+  ActionDefinition,
+  PlayerAction,
+  ActionResult,
+  ActionQueue,
+} from './actions';
+export {
+  ActionCategory,
+  ActionType,
+  ActionScope,
+  ActionResultStatus,
+  ActionIntensity,
+  INTENSITY_COST_MULTIPLIERS,
+  INTENSITY_EFFECT_MULTIPLIERS,
+  ACTION_BASE_COSTS,
+  CATEGORY_ACTIONS,
+  DEFAULT_ACTION_POINTS_PER_DAY,
+  ACTION_POINTS_RESET_HOUR,
+  ACTION_COOLDOWNS,
+  getActionCategory,
+  ACTION_DISPLAY_NAMES,
+  CATEGORY_DISPLAY_NAMES,
+  CATEGORY_ICONS,
+  isValidActionType,
+  calculateFinalCost,
+} from './actions';

@@ -7,8 +7,9 @@
  * @author ECHO v1.3.0 Healthcare Implementation
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { auth } from '@/auth';
+import { createSuccessResponse, createErrorResponse, ErrorCode } from '@/lib/utils/apiResponse';
 import ResearchProject from '@/lib/db/models/healthcare/ResearchProject';
 import Company from '@/lib/db/models/Company';
 import {
@@ -138,7 +139,7 @@ export async function GET(
   try {
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     const { id } = await params;
@@ -149,19 +150,19 @@ export async function GET(
       .lean();
 
     if (!researchProject) {
-      return NextResponse.json({ error: 'Research project not found' }, { status: 404 });
+      return createErrorResponse('Research project not found', ErrorCode.NOT_FOUND, 404);
     }
 
     // Check ownership
     const company = await Company.findById(researchProject.ownedBy);
     if (!company || company.owner?.toString() !== session.user.id) {
-      return NextResponse.json({ error: 'Unauthorized - Research project not owned by user' }, { status: 403 });
+      return createErrorResponse('Unauthorized - Research project not owned by user', ErrorCode.FORBIDDEN, 403);
     }
 
     // Calculate comprehensive metrics
     const trialTimeline = calculateTrialTimeline(
       researchProject.phase,
-      (researchProject as any).enrollment?.targetEnrollment || 100
+      researchProject.participants?.targetCount || 100
     );
 
     const researchRisk = calculateResearchRisk(
@@ -202,7 +203,7 @@ export async function GET(
       researchProject.timeline?.startDate
     );
 
-    return NextResponse.json({
+    return createSuccessResponse({
       research: {
         ...researchProject,
         metrics: {
@@ -219,10 +220,7 @@ export async function GET(
 
   } catch (error) {
     console.error('Error fetching research project:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return createErrorResponse('Internal server error', ErrorCode.INTERNAL_ERROR, 500);
   }
 }
 
@@ -237,7 +235,7 @@ export async function PUT(
   try {
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     const { id } = await params;
@@ -248,12 +246,12 @@ export async function PUT(
     // Find and verify ownership
     const researchProject = await ResearchProject.findById(id);
     if (!researchProject) {
-      return NextResponse.json({ error: 'Research project not found' }, { status: 404 });
+      return createErrorResponse('Research project not found', ErrorCode.NOT_FOUND, 404);
     }
 
     const company = await Company.findById(researchProject.ownedBy);
     if (!company || company.owner?.toString() !== session.user.id) {
-      return NextResponse.json({ error: 'Unauthorized - Research project not owned by user' }, { status: 403 });
+      return createErrorResponse('Unauthorized - Research project not owned by user', ErrorCode.FORBIDDEN, 403);
     }
 
     // Update research project
@@ -290,17 +288,14 @@ export async function PUT(
       });
 
       if (!metricsValidation.isValid) {
-        return NextResponse.json({
-          error: 'Updated research project metrics validation failed',
-          details: metricsValidation.errors
-        }, { status: 400 });
+        return createErrorResponse('Updated research project metrics validation failed', ErrorCode.BAD_REQUEST, 400);
       }
     }
 
     await researchProject.save();
     await researchProject.populate('ownedBy', 'name industry');
 
-    return NextResponse.json({
+    return createSuccessResponse({
       research: researchProject,
       message: 'Research project updated successfully'
     });
@@ -308,15 +303,9 @@ export async function PUT(
   } catch (error) {
     console.error('Error updating research project:', error);
     if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: 'Invalid update data', details: error.errors },
-        { status: 400 }
-      );
+      return createErrorResponse('Invalid update data', ErrorCode.BAD_REQUEST, 400);
     }
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return createErrorResponse('Internal server error', ErrorCode.INTERNAL_ERROR, 500);
   }
 }
 
@@ -331,7 +320,7 @@ export async function DELETE(
   try {
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     const { id } = await params;
@@ -339,26 +328,23 @@ export async function DELETE(
     // Find and verify ownership
     const researchProject = await ResearchProject.findById(id);
     if (!researchProject) {
-      return NextResponse.json({ error: 'Research project not found' }, { status: 404 });
+      return createErrorResponse('Research project not found', ErrorCode.NOT_FOUND, 404);
     }
 
     const company = await Company.findById(researchProject.ownedBy);
     if (!company || company.owner?.toString() !== session.user.id) {
-      return NextResponse.json({ error: 'Unauthorized - Research project not owned by user' }, { status: 403 });
+      return createErrorResponse('Unauthorized - Research project not owned by user', ErrorCode.FORBIDDEN, 403);
     }
 
     // Delete research project
     await ResearchProject.findByIdAndDelete(id);
 
-    return NextResponse.json({
+    return createSuccessResponse({
       message: 'Research project deleted successfully'
     });
 
   } catch (error) {
     console.error('Error deleting research project:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return createErrorResponse('Internal server error', ErrorCode.INTERNAL_ERROR, 500);
   }
 }

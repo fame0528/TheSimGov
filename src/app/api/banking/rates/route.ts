@@ -5,8 +5,9 @@
  * @created 2025-11-23
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { connectDB, Bank } from '@/lib/db';
+import { createSuccessResponse, createErrorResponse } from '@/lib/utils/apiResponse';
 import { LoanType } from '@/lib/types/enums';
 
 /**
@@ -77,7 +78,7 @@ export async function GET(request: NextRequest) {
       conditionDescription = 'Balanced market conditions';
     }
 
-    return NextResponse.json({
+    return createSuccessResponse({
       marketRates,
       marketConditions: {
         condition: marketCondition,
@@ -93,9 +94,6 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     console.error('Rates API error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return createErrorResponse('Internal server error', 'INTERNAL_ERROR', 500);
   }
 }

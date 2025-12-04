@@ -14,6 +14,7 @@
 
 'use client';
 
+import { useState, useCallback } from 'react';
 import { useAPI, type UseAPIOptions } from '@/lib/hooks/useAPI';
 import { crimeEndpoints } from '@/lib/api/endpoints';
 import type {
@@ -23,11 +24,14 @@ import type {
   LaunderingChannelDTO,
   HeatLevelDTO,
   ResponseEnvelope,
+  LegislationBillDTO,
+  ConversionResultDTO,
 } from '@/lib/dto/crime';
 import type {
   FacilityType,
   StateCode,
   SubstanceName,
+  LegislationStatusDTO,
 } from '@/lib/types/crime';
 
 /**
@@ -69,6 +73,25 @@ export interface LaunderingFilters {
 export interface HeatQuery {
   scope: 'Global' | 'State' | 'City' | 'User' | 'Gang';
   scopeId: string;
+}
+
+/**
+ * Filter interface for legislation status queries
+ */
+export interface LegislationFilters {
+  substance?: SubstanceName;
+  jurisdiction?: StateCode;
+  jurisdictionId?: string;
+}
+
+/**
+ * Filter interface for legislation bills queries
+ */
+export interface LegislationBillsFilters {
+  substance?: SubstanceName;
+  jurisdiction?: StateCode;
+  jurisdictionId?: string;
+  onlyLinked?: boolean;
 }
 
 /**
@@ -344,6 +367,177 @@ export function useCrimeHeatByScope(
 ) {
   const query = scopeId ? { scope, scopeId } : null;
   return useCrimeHeat(query, options);
+}
+
+// ============================================================
+// PHASE 3 (Gamma) - Integration Layer Hooks
+// ============================================================
+
+/**
+ * Fetch LegislationStatus records (substance legality status by jurisdiction)
+ * 
+ * @param companyId - Company ID (required for authorization context)
+ * @param filters - Optional filters (substance, jurisdiction, jurisdictionId)
+ * @param options - SWR options
+ * @returns ResponseEnvelope containing LegislationStatusDTO[]
+ * 
+ * @example
+ * ```typescript
+ * // All legislation statuses
+ * const { data } = useCrimeLegislation(companyId);
+ * 
+ * // Filter by substance
+ * const { data: cannabisLaws } = useCrimeLegislation(companyId, { substance: 'Cannabis' });
+ * 
+ * // Filter by jurisdiction
+ * const { data: caLaws } = useCrimeLegislation(companyId, { jurisdiction: 'CA' });
+ * ```
+ */
+export function useCrimeLegislation(
+  companyId: string | null,
+  filters?: LegislationFilters,
+  options?: UseAPIOptions
+) {
+  const params = new URLSearchParams();
+  if (companyId) params.append('companyId', companyId);
+  if (filters?.substance) params.append('substance', filters.substance);
+  if (filters?.jurisdiction) params.append('jurisdiction', filters.jurisdiction);
+  if (filters?.jurisdictionId) params.append('jurisdictionId', filters.jurisdictionId);
+  
+  const queryString = params.toString();
+  const url = companyId
+    ? `${crimeEndpoints.legislation.list}${queryString ? `?${queryString}` : ''}`
+    : null;
+  
+  return useAPI<ResponseEnvelope<LegislationStatusDTO[]>>(url, options);
+}
+
+/**
+ * Fetch Politics Bills linked to Crime LegislationStatus records
+ * Enables discovery of which bills affect substance legalization
+ * 
+ * @param filters - Optional filters (substance, jurisdiction, jurisdictionId, onlyLinked)
+ * @param options - SWR options
+ * @returns ResponseEnvelope containing LegislationBillDTO[]
+ * 
+ * @example
+ * ```typescript
+ * // All linked bills
+ * const { data } = useCrimeLegislationBills({ onlyLinked: true });
+ * 
+ * // Bills affecting specific substance
+ * const { data: cannabisBills } = useCrimeLegislationBills({
+ *   substance: 'Cannabis',
+ *   onlyLinked: true
+ * });
+ * 
+ * // Bills for specific jurisdiction
+ * const { data: californiaLaws } = useCrimeLegislationBills({
+ *   jurisdiction: 'CA',
+ *   onlyLinked: true
+ * });
+ * ```
+ */
+export function useCrimeLegislationBills(
+  filters?: LegislationBillsFilters,
+  options?: UseAPIOptions
+) {
+  const params = new URLSearchParams();
+  if (filters?.substance) params.append('substance', filters.substance);
+  if (filters?.jurisdiction) params.append('jurisdiction', filters.jurisdiction);
+  if (filters?.jurisdictionId) params.append('jurisdictionId', filters.jurisdictionId);
+  if (filters?.onlyLinked !== undefined) params.append('onlyLinked', String(filters.onlyLinked));
+  
+  const queryString = params.toString();
+  const url = `${crimeEndpoints.legislation.bills}${queryString ? `?${queryString}` : ''}`;
+  
+  return useAPI<ResponseEnvelope<LegislationBillDTO[]>>(url, options);
+}
+
+/**
+ * Convert illegal facility to legitimate business
+ * Mutation hook for POST /api/crime/conversion/convert
+ * 
+ * @returns Object with convertFacility mutation function and loading/error states
+ * 
+ * @example
+ * ```typescript
+ * const { convertFacility, isLoading, error, result } = useConvertFacility();
+ * 
+ * // Convert facility after substance legalized
+ * await convertFacility({
+ *   facilityId: '507f1f77bcf86cd799439011',
+ *   substance: 'Cannabis',
+ *   newBusinessType: 'Dispensary',
+ *   licenseApplicationData: {
+ *     businessName: 'Green Valley Dispensary',
+ *     owners: ['507f191e810c19729de860ea'],
+ *     capitalInvestment: 500000,
+ *     employeeCount: 12
+ *   }
+ * });
+ * 
+ * if (result?.success) {
+ *   console.log('Converted facility:', result.data.convertedFacilityId);
+ *   console.log('New business:', result.data.businessId);
+ *   console.log('Estimated annual revenue:', result.data.conversionDetails.estimatedAnnualRevenue);
+ * }
+ * ```
+ */
+export function useConvertFacility() {
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [result, setResult] = useState<ResponseEnvelope<ConversionResultDTO> | null>(null);
+
+  const convertFacility = useCallback(async (data: {
+    facilityId: string;
+    substance: SubstanceName;
+    newBusinessType: 'Dispensary' | 'Cultivation Facility' | 'Distribution Center' | 'Processing Plant';
+    licenseApplicationData?: {
+      businessName: string;
+      owners: string[];
+      capitalInvestment: number;
+      employeeCount: number;
+    };
+  }) => {
+    setIsLoading(true);
+    setError(null);
+    setResult(null);
+
+    try {
+      const response = await fetch(crimeEndpoints.conversion.convert, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      const json = await response.json() as ResponseEnvelope<ConversionResultDTO>;
+      setResult(json);
+
+      if (!response.ok || !json.success) {
+        setError(json.error || 'Conversion failed');
+      }
+
+      return json;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      setError(errorMessage);
+      return {
+        success: false,
+        data: null,
+        error: errorMessage
+      } as ResponseEnvelope<ConversionResultDTO>;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  return {
+    convertFacility,
+    isLoading,
+    error,
+    result
+  };
 }
 
 /**

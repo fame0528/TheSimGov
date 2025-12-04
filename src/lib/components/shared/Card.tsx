@@ -63,7 +63,7 @@ export function Card({
 
   return (
     <HeroCard
-      className={`bg-white ${paddingClass} ${hoverClass} ${cursorClass}`}
+      className={`bg-slate-900 text-white dark:bg-slate-900 dark:text-white ${paddingClass} ${hoverClass} ${cursorClass}`}
       shadow="sm"
       isPressable={!!onClick}
       onPress={onClick}
@@ -71,7 +71,7 @@ export function Card({
       {title && (
         <>
           <CardHeader className={showDivider ? 'pb-0' : ''}>
-            <h3 className="text-xl font-semibold">{title}</h3>
+            <h3 className="text-xl font-semibold text-white dark:text-white">{title}</h3>
           </CardHeader>
           {showDivider && <Divider />}
         </>

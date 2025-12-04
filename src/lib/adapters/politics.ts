@@ -6,24 +6,26 @@ export type ElectionUI = ElectionData & {
   filingDeadline?: string | Date;
   earlyVotingStart?: string | Date;
   termLength?: number;
-  winner?: { candidateId?: string; candidateName?: string } | null;
+  winner?: { playerId?: string; candidateId?: string; candidateName?: string } | null;
   totalVotes?: number;
   turnout?: number;
   margin?: number;
 };
 
 export function toElectionUI(e: ElectionData): ElectionUI {
+  // Use Record type to safely access extended properties from API response
+  const ext = e as unknown as Record<string, unknown>;
   return {
     ...e,
-    officeName: (e as any).officeName ?? undefined,
-    state: (e as any).state ?? undefined,
-    filingDeadline: (e as any).filingDeadline ?? undefined,
-    earlyVotingStart: (e as any).earlyVotingStart ?? undefined,
-    termLength: (e as any).termLength ?? undefined,
-    winner: (e as any).winner ?? null,
-    totalVotes: (e as any).totalVotes ?? 0,
-    turnout: (e as any).turnout ?? 0,
-    margin: (e as any).margin ?? 0,
+    officeName: (ext.officeName as string | undefined) ?? undefined,
+    state: (ext.state as string | undefined) ?? undefined,
+    filingDeadline: (ext.filingDeadline as string | Date | undefined) ?? undefined,
+    earlyVotingStart: (ext.earlyVotingStart as string | Date | undefined) ?? undefined,
+    termLength: (ext.termLength as number | undefined) ?? undefined,
+    winner: (ext.winner as ElectionUI['winner']) ?? null,
+    totalVotes: (ext.totalVotes as number | undefined) ?? 0,
+    turnout: (ext.turnout as number | undefined) ?? 0,
+    margin: (ext.margin as number | undefined) ?? 0,
   };
 }
 
@@ -57,27 +59,28 @@ export type OutreachUI = VoterOutreachData & {
 };
 
 export function toOutreachUI(o: VoterOutreachData): OutreachUI {
-  const anyO = o as any;
+  // Use Record type to safely access extended properties from API response
+  const ext = o as unknown as Record<string, unknown>;
   return {
     ...o,
-    name: anyO.name ?? undefined,
-    type: anyO.type ?? undefined,
-    status: anyO.status ?? undefined,
-    scheduledDate: anyO.scheduledDate ?? undefined,
-    targetContacts: anyO.targetContacts ?? 0,
-    volunteerCount: anyO.volunteerCount ?? 0,
-    volunteers: Array.isArray(anyO.volunteers) ? anyO.volunteers : [],
-    talkingPoints: Array.isArray(anyO.talkingPoints) ? anyO.talkingPoints : [],
-    script: anyO.script ?? undefined,
-    metrics: anyO.metrics ?? {
-      totalAttempts: anyO.totalAttempts ?? 0,
-      successfulContacts: anyO.successfulContacts ?? 0,
-      contactRate: anyO.contactRate ?? 0,
-      supportRate: anyO.supportRate ?? 0,
-      supporterIdentified: anyO.supporterIdentified ?? 0,
-      undecided: anyO.undecided ?? 0,
-      opposition: anyO.opposition ?? 0,
-      noAnswer: anyO.noAnswer ?? 0,
+    name: (ext.name as string | undefined) ?? undefined,
+    type: (ext.type as string | undefined) ?? undefined,
+    status: (ext.status as string | undefined) ?? undefined,
+    scheduledDate: (ext.scheduledDate as string | Date | undefined) ?? undefined,
+    targetContacts: (ext.targetContacts as number | undefined) ?? 0,
+    volunteerCount: (ext.volunteerCount as number | undefined) ?? 0,
+    volunteers: Array.isArray(ext.volunteers) ? ext.volunteers as OutreachUI['volunteers'] : [],
+    talkingPoints: Array.isArray(ext.talkingPoints) ? ext.talkingPoints as string[] : [],
+    script: (ext.script as string | undefined) ?? undefined,
+    metrics: (ext.metrics as OutreachUI['metrics']) ?? {
+      totalAttempts: (ext.totalAttempts as number | undefined) ?? 0,
+      successfulContacts: (ext.successfulContacts as number | undefined) ?? 0,
+      contactRate: (ext.contactRate as number | undefined) ?? 0,
+      supportRate: (ext.supportRate as number | undefined) ?? 0,
+      supporterIdentified: (ext.supporterIdentified as number | undefined) ?? 0,
+      undecided: (ext.undecided as number | undefined) ?? 0,
+      opposition: (ext.opposition as number | undefined) ?? 0,
+      noAnswer: (ext.noAnswer as number | undefined) ?? 0,
     },
   };
 }

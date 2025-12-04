@@ -9,8 +9,9 @@
  * metrics and persists any newly unlocked achievements before returning).
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { auth } from '@/auth';
+import { createSuccessResponse, createErrorResponse, ErrorCode } from '@/lib/utils/apiResponse';
 import { connectDB } from '@/lib/db';
 import AchievementUnlockModel from '@/lib/db/models/AchievementUnlock';
 import { PHASE7_ACHIEVEMENTS, evaluateAchievements, AchievementMetricsProvider } from '@/lib/utils/politics/phase7/achievementEngine';
@@ -61,14 +62,14 @@ export async function GET(req: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
     await connectDB();
 
     const { searchParams } = new URL(req.url);
     const parsed = achievementsQuerySchema.safeParse(Object.fromEntries(searchParams.entries()));
     if (!parsed.success) {
-      return NextResponse.json({ error: 'Invalid query params', details: parsed.error.flatten() }, { status: 400 });
+      return createErrorResponse('Invalid query params', ErrorCode.BAD_REQUEST, 400, parsed.error.flatten());
     }
     const { refresh } = parsed.data;
     const playerId = session.user.id; // direct mapping; adjust if separate player entity
@@ -89,9 +90,9 @@ export async function GET(req: NextRequest) {
       rewardApplied: d.rewardApplied,
     }));
 
-    return NextResponse.json({ achievements: PHASE7_ACHIEVEMENTS, unlocks }, { status: 200 });
+    return createSuccessResponse({ achievements: PHASE7_ACHIEVEMENTS, unlocks });
   } catch (err: any) {
     logger.error('Achievements listing failed', { error: err });
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return createErrorResponse('Internal server error', ErrorCode.INTERNAL_ERROR, 500);
   }
 }

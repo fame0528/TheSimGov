@@ -21,11 +21,12 @@
  * @author ECHO v1.3.1 - Phase 3.1 Energy Action Endpoints
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { auth } from '@/auth';
 import { connectDB } from '@/lib/db';
 import { GasField } from '@/lib/db/models';
 import { z } from 'zod';
+import { createSuccessResponse, createErrorResponse, ErrorCode } from '@/lib/utils/apiResponse';
 
 /** Route parameter types for Next.js 15+ */
 interface RouteParams {
@@ -63,7 +64,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     // 1. Authentication check
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     // 2. Parse and validate request body
@@ -78,19 +79,20 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const field = await GasField.findById(id);
     
     if (!field) {
-      return NextResponse.json({ error: 'Gas field not found' }, { status: 404 });
+      return createErrorResponse('Gas field not found', ErrorCode.NOT_FOUND, 404);
     }
 
     // 5. Verify ownership
     if (field.company.toString() !== session.user.companyId) {
-      return NextResponse.json({ error: 'Unauthorized access to field' }, { status: 403 });
+      return createErrorResponse('Unauthorized access to field', ErrorCode.FORBIDDEN, 403);
     }
 
     // 6. Validate operational status
     if (field.status === 'Abandoned' || field.status === 'Depleted') {
-      return NextResponse.json(
-        { error: `Cannot adjust pressure for field with status: ${field.status}` },
-        { status: 400 }
+      return createErrorResponse(
+        `Cannot adjust pressure for field with status: ${field.status}`,
+        ErrorCode.BAD_REQUEST,
+        400
       );
     }
 
@@ -151,8 +153,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     }
 
     // 12. Return pressure update results
-    return NextResponse.json({
-      success: true,
+    return createSuccessResponse({
       previousPressure: Math.round(previousPressure * 100) / 100,
       newPressure: Math.round(newPressure * 100) / 100,
       pressureChange: Math.round(pressureChange * 100) / 100,
@@ -177,17 +178,11 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
   } catch (error) {
     // Zod validation errors
     if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: 'Validation failed', details: error.errors },
-        { status: 400 }
-      );
+      return createErrorResponse('Validation failed', ErrorCode.VALIDATION_ERROR, 400, error.errors);
     }
 
     // Generic error handling
     console.error('POST /api/energy/gas-fields/[id]/update-pressure error:', error);
-    return NextResponse.json(
-      { error: 'Failed to process pressure update operation' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to process pressure update operation', ErrorCode.INTERNAL_ERROR, 500);
   }
 }

@@ -7,8 +7,9 @@
  * @author ECHO v1.3.0 Healthcare Implementation
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { auth } from '@/auth';
+import { createSuccessResponse, createErrorResponse, ErrorCode } from '@/lib/utils/apiResponse';
 import Pharmaceutical from '@/lib/db/models/healthcare/Pharmaceutical';
 import Company from '@/lib/db/models/Company';
 import {
@@ -95,7 +96,7 @@ export async function GET(
   try {
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     const { id } = await params;
@@ -106,13 +107,13 @@ export async function GET(
       .lean();
 
     if (!pharmaceutical) {
-      return NextResponse.json({ error: 'Pharmaceutical company not found' }, { status: 404 });
+      return createErrorResponse('Pharmaceutical company not found', ErrorCode.NOT_FOUND, 404);
     }
 
     // Check ownership
     const company = await Company.findById(pharmaceutical.ownedBy);
     if (!company || company.owner?.toString() !== session.user.id) {
-      return NextResponse.json({ error: 'Unauthorized - Pharmaceutical company not owned by user' }, { status: 403 });
+      return createErrorResponse('Unauthorized - Pharmaceutical company not owned by user', ErrorCode.FORBIDDEN, 403);
     }
 
     // Calculate comprehensive metrics
@@ -162,7 +163,7 @@ export async function GET(
       pharmaceutical.patentPortfolio || 10
     );
 
-    return NextResponse.json({
+    return createSuccessResponse({
       pharmaceutical: {
         ...pharmaceutical,
         pipeline: pipelineMetrics,
@@ -178,10 +179,7 @@ export async function GET(
 
   } catch (error) {
     console.error('Error fetching pharmaceutical company:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return createErrorResponse('Internal server error', ErrorCode.INTERNAL_ERROR, 500);
   }
 }
 
@@ -196,7 +194,7 @@ export async function PUT(
   try {
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     const { id } = await params;
@@ -207,12 +205,12 @@ export async function PUT(
     // Find and verify ownership
     const pharmaceutical = await Pharmaceutical.findById(id);
     if (!pharmaceutical) {
-      return NextResponse.json({ error: 'Pharmaceutical company not found' }, { status: 404 });
+      return createErrorResponse('Pharmaceutical company not found', ErrorCode.NOT_FOUND, 404);
     }
 
     const company = await Company.findById(pharmaceutical.ownedBy);
     if (!company || company.owner?.toString() !== session.user.id) {
-      return NextResponse.json({ error: 'Unauthorized - Pharmaceutical company not owned by user' }, { status: 403 });
+      return createErrorResponse('Unauthorized - Pharmaceutical company not owned by user', ErrorCode.FORBIDDEN, 403);
     }
 
     // Update pharmaceutical company
@@ -264,17 +262,14 @@ export async function PUT(
       });
 
       if (!metricsValidation.isValid) {
-        return NextResponse.json({
-          error: 'Updated pharmaceutical company metrics validation failed',
-          details: metricsValidation.errors
-        }, { status: 400 });
+        return createErrorResponse('Updated pharmaceutical company metrics validation failed', ErrorCode.BAD_REQUEST, 400);
       }
     }
 
     await pharmaceutical.save();
     await pharmaceutical.populate('ownedBy', 'name industry');
 
-    return NextResponse.json({
+    return createSuccessResponse({
       pharmaceutical,
       message: 'Pharmaceutical company updated successfully'
     });
@@ -282,15 +277,9 @@ export async function PUT(
   } catch (error) {
     console.error('Error updating pharmaceutical company:', error);
     if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: 'Invalid update data', details: error.errors },
-        { status: 400 }
-      );
+      return createErrorResponse('Invalid update data', ErrorCode.BAD_REQUEST, 400);
     }
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return createErrorResponse('Internal server error', ErrorCode.INTERNAL_ERROR, 500);
   }
 }
 
@@ -305,7 +294,7 @@ export async function DELETE(
   try {
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     const { id } = await params;
@@ -313,26 +302,23 @@ export async function DELETE(
     // Find and verify ownership
     const pharmaceutical = await Pharmaceutical.findById(id);
     if (!pharmaceutical) {
-      return NextResponse.json({ error: 'Pharmaceutical company not found' }, { status: 404 });
+      return createErrorResponse('Pharmaceutical company not found', ErrorCode.NOT_FOUND, 404);
     }
 
     const company = await Company.findById(pharmaceutical.ownedBy);
     if (!company || company.owner?.toString() !== session.user.id) {
-      return NextResponse.json({ error: 'Unauthorized - Pharmaceutical company not owned by user' }, { status: 403 });
+      return createErrorResponse('Unauthorized - Pharmaceutical company not owned by user', ErrorCode.FORBIDDEN, 403);
     }
 
     // Delete pharmaceutical company
     await Pharmaceutical.findByIdAndDelete(id);
 
-    return NextResponse.json({
+    return createSuccessResponse({
       message: 'Pharmaceutical company deleted successfully'
     });
 
   } catch (error) {
     console.error('Error deleting pharmaceutical company:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return createErrorResponse('Internal server error', ErrorCode.INTERNAL_ERROR, 500);
   }
 }

@@ -899,13 +899,13 @@ export default function OnboardingDashboard({
                   <div>
                     <h4 className="font-semibold mb-2">Mentor's Expertise</h4>
                     <div className="space-y-2">
-                      {['leadership', 'industry', 'technical'].map((skill: string) => (
+                      {(['leadership', 'industry', 'technical'] as const).map((skill) => (
                         <div key={skill}>
                           <p className="text-sm capitalize mb-1">{skill}</p>
                           <Progress
                             value={Math.min(
                               100,
-                              (mentorData.skills as any)[skill] || 70
+                              mentorData.skills[skill] || 70
                             )}
                             color="success"
                             size="sm"
@@ -974,12 +974,12 @@ export default function OnboardingDashboard({
                           {Math.round((new Date().getTime() - new Date(member.hiredAt).getTime()) / (365.25 * 24 * 60 * 60 * 1000))} years here
                         </p>
                         <div className="flex gap-1 flex-wrap">
-                          {(Object.entries(member.skills) as any)
+                          {(Object.entries(member.skills) as [string, number][])
                             .sort(
-                              ([, a]: any, [, b]: any) => (b as number) - (a as number)
+                              ([, a], [, b]) => b - a
                             )
                             .slice(0, 2)
-                            .map(([skill, level]: any) => (
+                            .map(([skill]) => (
                               <Badge key={skill} size="sm" color="primary" variant="flat">
                                 {skill}
                               </Badge>
@@ -1018,12 +1018,12 @@ export default function OnboardingDashboard({
                         <div>
                           <p className="text-sm text-gray-600 mb-2">Top Skills</p>
                           <div className="space-y-1">
-                            {(Object.entries(selectedTeamMember.skills) as any)
+                            {(Object.entries(selectedTeamMember.skills) as [string, number][])
                               .sort(
-                                ([, a]: any, [, b]: any) => (b as number) - (a as number)
+                                ([, a], [, b]) => b - a
                               )
                               .slice(0, 5)
-                              .map(([skill, level]: any) => (
+                              .map(([skill, level]) => (
                                 <div key={skill} className="flex justify-between text-sm">
                                   <span className="capitalize">
                                     {skill.replace(/([A-Z])/g, ' $1').trim()}

@@ -9,11 +9,12 @@
  * and load shifting to optimize grid utilization and reduce costs.
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { connectDB as dbConnect } from '@/lib/db';
 import { GridNode } from '@/lib/db/models';
 import { auth } from '@/auth';
+import { createSuccessResponse, createErrorResponse, ErrorCode } from '@/lib/utils/apiResponse';
 
 // ============================================================================
 // VALIDATION SCHEMAS
@@ -64,7 +65,7 @@ export async function POST(
     // Authentication
     const session = await auth();
     if (!session?.user?.companyId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     // Parse request body
@@ -72,10 +73,7 @@ export async function POST(
     const validation = LoadManageSchema.safeParse(body);
     
     if (!validation.success) {
-      return NextResponse.json(
-        { error: 'Invalid input', details: validation.error.flatten() },
-        { status: 400 }
-      );
+      return createErrorResponse('Invalid input', ErrorCode.BAD_REQUEST, 400);
     }
 
     const { strategy, targetReduction, duration, priority, incentiveRate } = validation.data;
@@ -90,10 +88,7 @@ export async function POST(
     });
 
     if (!gridNode) {
-      return NextResponse.json(
-        { error: 'Grid node not found or access denied' },
-        { status: 404 }
-      );
+      return createErrorResponse('Grid node not found or access denied', ErrorCode.NOT_FOUND, 404);
     }
 
     // Calculate current load metrics
@@ -165,7 +160,7 @@ export async function POST(
     // Log load management action
     console.log(`[ENERGY] Load management: ${gridNode.name} (${gridNode._id}), Strategy: ${strategy}, Reduction: ${achievableReductionMW.toFixed(2)} MW, Cost: $${programCost.toFixed(0)}`);
 
-    return NextResponse.json({
+    return createSuccessResponse({
       success: true,
       gridNode: {
         id: gridNode._id,
@@ -211,10 +206,7 @@ export async function POST(
 
   } catch (error) {
     console.error('[ENERGY] Load management error:', error);
-    return NextResponse.json(
-      { error: 'Failed to manage grid load', details: error instanceof Error ? error.message : 'Unknown error' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to manage grid load', ErrorCode.INTERNAL_ERROR, 500);
   }
 }
 

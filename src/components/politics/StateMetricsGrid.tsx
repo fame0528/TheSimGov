@@ -145,8 +145,8 @@ export default function StateMetricsGrid() {
       {/* Header with sorting controls */}
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold">State Influence Metrics</h2>
-          <p className="text-default-500 text-sm mt-1">
+          <h2 className="text-2xl font-bold text-white">State Influence Metrics</h2>
+          <p className="text-slate-400 text-sm mt-1">
             {sortedStates.length} jurisdictions • Sorted by {sortBy.replace(/([A-Z])/g, ' $1').toLowerCase()}
           </p>
         </div>
@@ -180,15 +180,15 @@ export default function StateMetricsGrid() {
       {/* State cards grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {sortedStates.map((state, index) => (
-          <Card key={state.stateCode} className="hover:shadow-lg transition-shadow">
-            <CardHeader className="flex gap-3 bg-gradient-to-r from-primary-50 to-secondary-50 dark:from-primary-900/20 dark:to-secondary-900/20">
+          <Card key={state.stateCode} className="hover:shadow-lg transition-shadow bg-slate-800/50 border border-slate-700/50">
+            <CardHeader className="flex gap-3 bg-gradient-to-r from-slate-800 to-slate-900">
               <div className="flex flex-col flex-1">
-                <p className="text-lg font-bold">{state.stateCode}</p>
-                <p className="text-xs text-default-500">Rank #{index + 1}</p>
+                <p className="text-lg font-bold text-white">{state.stateCode}</p>
+                <p className="text-xs text-slate-400">Rank #{index + 1}</p>
               </div>
               <div className="flex items-center gap-2">
-                <TrendingUp className="w-5 h-5 text-primary" />
-                <span className="text-lg font-semibold text-primary">
+                <TrendingUp className="w-5 h-5 text-blue-400" />
+                <span className="text-lg font-semibold text-blue-400">
                   {formatPercent(state.compositeInfluenceWeight)}
                 </span>
               </div>
@@ -198,37 +198,37 @@ export default function StateMetricsGrid() {
               {/* GDP Share */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <DollarSign className="w-4 h-4 text-success" />
-                  <span className="text-sm text-default-600">GDP Share</span>
+                  <DollarSign className="w-4 h-4 text-emerald-400" />
+                  <span className="text-sm text-slate-400">GDP Share</span>
                 </div>
-                <span className="text-sm font-semibold">{formatPercent(state.gdpShare)}</span>
+                <span className="text-sm font-semibold text-white">{formatPercent(state.gdpShare)}</span>
               </div>
 
               {/* Population Share */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Users className="w-4 h-4 text-info" />
-                  <span className="text-sm text-default-600">Population</span>
+                  <Users className="w-4 h-4 text-blue-400" />
+                  <span className="text-sm text-slate-400">Population</span>
                 </div>
-                <span className="text-sm font-semibold">{formatPercent(state.populationShare)}</span>
+                <span className="text-sm font-semibold text-white">{formatPercent(state.populationShare)}</span>
               </div>
 
               {/* Crime Percentile */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <AlertTriangle className="w-4 h-4 text-warning" />
-                  <span className="text-sm text-default-600">Crime Index</span>
+                  <AlertTriangle className="w-4 h-4 text-amber-400" />
+                  <span className="text-sm text-slate-400">Crime Index</span>
                 </div>
-                <span className="text-sm font-semibold">{formatPercentile(state.crimePercentile)}</span>
+                <span className="text-sm font-semibold text-white">{formatPercentile(state.crimePercentile)}</span>
               </div>
 
               {/* Divider */}
-              <div className="border-t border-default-200 dark:border-default-700 my-1"></div>
+              <div className="border-t border-slate-700 my-1"></div>
 
               {/* Composite Weight (large display) */}
               <div className="text-center">
-                <p className="text-xs text-default-500 uppercase tracking-wide">Influence Weight</p>
-                <p className="text-2xl font-bold text-primary mt-1">
+                <p className="text-xs text-slate-400 uppercase tracking-wide">Influence Weight</p>
+                <p className="text-2xl font-bold text-blue-400 mt-1">
                   {formatPercent(state.compositeInfluenceWeight)}
                 </p>
               </div>

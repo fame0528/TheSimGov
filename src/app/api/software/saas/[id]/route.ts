@@ -6,10 +6,11 @@
  * @author ECHO v1.3.1
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { auth } from '@/auth';
 import { connectDB } from '@/lib/db';
 import { SaaSSubscription } from '@/lib/db/models';
+import { createSuccessResponse, createErrorResponse, ErrorCode } from '@/lib/utils/apiResponse';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -19,7 +20,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     const { id } = await params;
@@ -30,13 +31,13 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       .lean();
       
     if (!subscription) {
-      return NextResponse.json({ error: 'Subscription not found' }, { status: 404 });
+      return createErrorResponse('Subscription not found', ErrorCode.NOT_FOUND, 404);
     }
 
-    return NextResponse.json({ subscription });
+    return createSuccessResponse({ subscription });
   } catch (error) {
     console.error('GET /api/software/saas/[id] error:', error);
-    return NextResponse.json({ error: 'Failed to fetch subscription' }, { status: 500 });
+    return createErrorResponse('Failed to fetch subscription', ErrorCode.INTERNAL_ERROR, 500);
   }
 }
 
@@ -44,7 +45,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
   try {
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     const { id } = await params;
@@ -64,13 +65,13 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     );
 
     if (!subscription) {
-      return NextResponse.json({ error: 'Subscription not found' }, { status: 404 });
+      return createErrorResponse('Subscription not found', ErrorCode.NOT_FOUND, 404);
     }
 
-    return NextResponse.json({ message: 'Subscription updated', subscription });
+    return createSuccessResponse({ message: 'Subscription updated', subscription });
   } catch (error) {
     console.error('PATCH /api/software/saas/[id] error:', error);
-    return NextResponse.json({ error: 'Failed to update subscription' }, { status: 500 });
+    return createErrorResponse('Failed to update subscription', ErrorCode.INTERNAL_ERROR, 500);
   }
 }
 
@@ -78,7 +79,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     const { id } = await params;
@@ -86,12 +87,12 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
 
     const subscription = await SaaSSubscription.findByIdAndDelete(id);
     if (!subscription) {
-      return NextResponse.json({ error: 'Subscription not found' }, { status: 404 });
+      return createErrorResponse('Subscription not found', ErrorCode.NOT_FOUND, 404);
     }
 
-    return NextResponse.json({ message: 'Subscription deleted' });
+    return createSuccessResponse({ message: 'Subscription deleted' });
   } catch (error) {
     console.error('DELETE /api/software/saas/[id] error:', error);
-    return NextResponse.json({ error: 'Failed to delete subscription' }, { status: 500 });
+    return createErrorResponse('Failed to delete subscription', ErrorCode.INTERNAL_ERROR, 500);
   }
 }

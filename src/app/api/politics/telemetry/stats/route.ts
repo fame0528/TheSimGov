@@ -8,9 +8,10 @@
  * previous windows (lightweight) if query param `recompute=true`.
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { auth } from '@/auth';
 import { connectDB } from '@/lib/db';
+import { createSuccessResponse, createErrorResponse } from '@/lib/utils/apiResponse';
 import TelemetryAggregateModel from '@/lib/db/models/TelemetryAggregate';
 import { telemetryStatsQuerySchema } from '@/lib/schemas/politicsPhase7Api';
 import { createComponentLogger } from '@/lib/utils/logger';
@@ -22,13 +23,13 @@ export async function GET(req: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', 'UNAUTHORIZED', 401);
     }
     await connectDB();
     const { searchParams } = new URL(req.url);
     const parsed = telemetryStatsQuerySchema.safeParse(Object.fromEntries(searchParams.entries()));
     if (!parsed.success) {
-      return NextResponse.json({ error: 'Invalid query', details: parsed.error.flatten() }, { status: 400 });
+      return createErrorResponse('Invalid query', 'VALIDATION_ERROR', 400, parsed.error.flatten());
     }
     const { playerId: overridePlayerId, range = 'recent', startEpoch, endEpoch, recompute } = parsed.data;
     const playerId = overridePlayerId || session.user.id;
@@ -44,7 +45,7 @@ export async function GET(req: NextRequest) {
       weeklyFilter = { playerId, granularity: 'WEEKLY', periodStartEpoch: { $gte: weeklyStart } };
     } else {
       if (!startEpoch || !endEpoch || endEpoch <= startEpoch) {
-        return NextResponse.json({ error: 'Invalid custom range' }, { status: 400 });
+        return createErrorResponse('Invalid custom range', 'VALIDATION_ERROR', 400);
       }
       dailyFilter = { playerId, granularity: 'DAILY', periodStartEpoch: { $gte: startEpoch, $lt: endEpoch } };
       weeklyFilter = { playerId, granularity: 'WEEKLY', periodStartEpoch: { $gte: startEpoch - 7*24*60*60, $lt: endEpoch } };
@@ -60,9 +61,9 @@ export async function GET(req: NextRequest) {
     const daily = await TelemetryAggregateModel.find(dailyFilter).sort({ periodStartEpoch: -1 }).lean();
     const weekly = await TelemetryAggregateModel.find(weeklyFilter).sort({ periodStartEpoch: -1 }).lean();
 
-    return NextResponse.json({ daily, weekly }, { status: 200 });
+    return createSuccessResponse({ daily, weekly });
   } catch (err: any) {
     logger.error('Telemetry stats fetch failed', { error: err });
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return createErrorResponse('Internal server error', 'INTERNAL_ERROR', 500);
   }
 }

@@ -228,7 +228,7 @@ export default function OppositionResearchPanel({
                 <div key={tier} className="flex items-center justify-between">
                   <Chip
                     size="sm"
-                    color={getDiscoveryTierColor(tier as DiscoveryTier) as any}
+                    color={getDiscoveryTierColor(tier as DiscoveryTier)}
                     variant="flat"
                   >
                     {getDiscoveryTierName(tier as DiscoveryTier)}
@@ -318,7 +318,7 @@ export default function OppositionResearchPanel({
                   <span className="font-medium">{getResearchTypeName(research.researchType)}</span>
                   <Chip
                     size="sm"
-                    color={getDiscoveryTierColor(research.discoveryResult?.tier || DiscoveryTier.NOTHING) as any}
+                    color={getDiscoveryTierColor(research.discoveryResult?.tier || DiscoveryTier.NOTHING)}
                     variant="flat"
                   >
                     {getDiscoveryTierName(research.discoveryResult?.tier || DiscoveryTier.NOTHING)}

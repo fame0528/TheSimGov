@@ -10,11 +10,13 @@
  * Scope 1/2/3 categorization and regulatory compliance reporting.
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { connectDB as dbConnect } from '@/lib/db';
 import { OilWell, GasField, PowerPlant } from '@/lib/db/models';
 import { auth } from '@/auth';
+import { createSuccessResponse, createErrorResponse, ErrorCode } from '@/lib/utils/apiResponse';
+import type { OilWellLean, GasFieldLean, PowerPlantLean } from '@/lib/types/energy-lean';
 
 // ============================================================================
 // CONSTANTS - EMISSION FACTORS (kg CO2e per unit)
@@ -66,7 +68,7 @@ export async function GET(req: NextRequest) {
     // Authentication
     const session = await auth();
     if (!session?.user?.companyId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     // Parse query parameters
@@ -79,10 +81,7 @@ export async function GET(req: NextRequest) {
     const validation = EmissionsQuerySchema.safeParse(queryData);
     
     if (!validation.success) {
-      return NextResponse.json(
-        { error: 'Invalid query parameters', details: validation.error.flatten() },
-        { status: 400 }
-      );
+      return createErrorResponse('Invalid query parameters: ' + JSON.stringify(validation.error.flatten()), ErrorCode.BAD_REQUEST, 400);
     }
 
     const { year, scope } = validation.data;
@@ -92,30 +91,30 @@ export async function GET(req: NextRequest) {
 
     const filter = { company: session.user.companyId };
 
-    // Query all emitting assets
+    // Query all emitting assets (properly typed)
     const [oilWells, gasFields, powerPlants] = await Promise.all([
-      OilWell.find(filter).lean(),
-      GasField.find(filter).lean(),
-      PowerPlant.find(filter).lean()
+      OilWell.find(filter).lean<OilWellLean[]>(),
+      GasField.find(filter).lean<GasFieldLean[]>(),
+      PowerPlant.find(filter).lean<PowerPlantLean[]>()
     ]);
 
     // SCOPE 1: Direct emissions from owned/controlled sources
     let scope1Emissions = 0;
 
-    // Oil well operations (venting, flaring, fugitive)
-    const oilVenting = oilWells.reduce((sum, well) => sum + (((well as any).dailyProduction ?? 0) * EMISSION_FACTORS.oilProduction), 0);
+    // Oil well operations (venting, flaring, fugitive) - uses currentProduction
+    const oilVenting = oilWells.reduce((sum, well) => sum + ((well.currentProduction ?? 0) * EMISSION_FACTORS.oilProduction), 0);
     scope1Emissions += oilVenting;
 
-    // Gas field operations (venting, flaring, compressor fuel)
-    const gasVenting = gasFields.reduce((sum, field) => sum + (((field as any).dailyProduction ?? 0) * EMISSION_FACTORS.gasProduction), 0);
+    // Gas field operations (venting, flaring, compressor fuel) - uses currentProduction
+    const gasVenting = gasFields.reduce((sum, field) => sum + ((field.currentProduction ?? 0) * EMISSION_FACTORS.gasProduction), 0);
     scope1Emissions += gasVenting;
 
-    // Power plant combustion
-    const plantsByFuel = powerPlants.reduce((acc: any, plant) => {
-      const fuel = (plant as any).plantType || 'NATURAL_GAS';
+    // Power plant combustion - group by plantType
+    const plantsByFuel = powerPlants.reduce((acc: Record<string, { count: number; generation: number }>, plant) => {
+      const fuel = plant.plantType || 'NaturalGas';
       if (!acc[fuel]) acc[fuel] = { count: 0, generation: 0 };
       acc[fuel].count++;
-      acc[fuel].generation += ((plant as any).currentOutput ?? 0);
+      acc[fuel].generation += (plant.currentOutput ?? 0);
       return acc;
     }, {});
 
@@ -187,8 +186,7 @@ export async function GET(req: NextRequest) {
       }
     };
 
-    return NextResponse.json({
-      success: true,
+    return createSuccessResponse({
       reportingYear: year,
       scope,
       summary: {
@@ -227,10 +225,7 @@ export async function GET(req: NextRequest) {
 
   } catch (error) {
     console.error('[ENERGY] Emissions tracking error:', error);
-    return NextResponse.json(
-      { error: 'Failed to retrieve emissions data', details: error instanceof Error ? error.message : 'Unknown error' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to retrieve emissions data: ' + (error instanceof Error ? error.message : 'Unknown error'), ErrorCode.INTERNAL_ERROR, 500);
   }
 }
 

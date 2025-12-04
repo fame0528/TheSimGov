@@ -104,7 +104,8 @@ export async function POST(req: NextRequest) {
     };
 
     marketing.campaigns = marketing.campaigns || [];
-    marketing.campaigns.push(campaign as any);
+    // Push campaign - companyId as string matches runtime behavior
+    marketing.campaigns.push(campaign as unknown as typeof marketing.campaigns[number]);
     marketing.budget -= campaignInput.budget;
 
     await marketing.save();

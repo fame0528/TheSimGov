@@ -109,7 +109,8 @@
  * - Performance rating alignment maps productivity 0-100 to 1-5 scale
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+import { createSuccessResponse, createErrorResponse, ErrorCode } from '@/lib/utils/apiResponse';
 import { connectDB } from '@/lib/db';
 import Company from '@/lib/db/models/Company';
 import Employee from '@/lib/db/models/Employee';
@@ -158,17 +159,11 @@ export async function GET(
     const teamSize = teamSizeParam ? parseInt(teamSizeParam, 10) : 5;
 
     if (isNaN(projectComplexity) || projectComplexity < 1 || projectComplexity > 10) {
-      return NextResponse.json(
-        { success: false, error: 'Project complexity must be between 1 and 10.' },
-        { status: 400 }
-      );
+      return createErrorResponse('Project complexity must be between 1 and 10.', ErrorCode.VALIDATION_ERROR, 400);
     }
 
     if (isNaN(teamSize) || teamSize < 1 || teamSize > 50) {
-      return NextResponse.json(
-        { success: false, error: 'Team size must be between 1 and 50.' },
-        { status: 400 }
-      );
+      return createErrorResponse('Team size must be between 1 and 50.', ErrorCode.VALIDATION_ERROR, 400);
     }
 
     // 4. Connect to database
@@ -178,10 +173,7 @@ export async function GET(
     const company = await Company.findById(companyId);
 
     if (!company || !['Technology', 'AI'].includes(company.industry)) {
-      return NextResponse.json(
-        { success: false, error: 'No AI/Technology company found for this user.' },
-        { status: 403 }
-      );
+      return createErrorResponse('No AI/Technology company found for this user.', ErrorCode.FORBIDDEN, 403);
     }
 
     // 6. Find employee
@@ -192,31 +184,24 @@ export async function GET(
     });
 
     if (!employee) {
-      return NextResponse.json(
-        { success: false, error: 'Employee not found or not employed at your company.' },
-        { status: 404 }
-      );
+      return createErrorResponse('Employee not found or not employed at your company.', ErrorCode.NOT_FOUND, 404);
     }
 
     // 7. Validate employee has AI role
     if (!AI_ROLES.includes(employee.role as AIRole)) {
-      return NextResponse.json(
-        { 
-          success: false, 
-          error: `Productivity calculation only available for AI roles (${AI_ROLES.join(', ')}). Employee role: ${employee.role}` 
-        },
-        { status: 400 }
+      return createErrorResponse(
+        `Productivity calculation only available for AI roles (${AI_ROLES.join(', ')}). Employee role: ${employee.role}`,
+        ErrorCode.VALIDATION_ERROR,
+        400
       );
     }
 
     // 8. Validate employee has AI-specific fields
     if (employee.researchAbility === undefined || employee.codingSkill === undefined) {
-      return NextResponse.json(
-        { 
-          success: false, 
-          error: 'Employee missing AI-specific fields (researchAbility, codingSkill). Cannot calculate productivity.' 
-        },
-        { status: 400 }
+      return createErrorResponse(
+        'Employee missing AI-specific fields (researchAbility, codingSkill). Cannot calculate productivity.',
+        ErrorCode.VALIDATION_ERROR,
+        400
       );
     }
 
@@ -259,8 +244,7 @@ export async function GET(
     };
 
     // 14. Return comprehensive productivity analysis
-    return NextResponse.json({
-      success: true,
+    return createSuccessResponse({
       employee: {
         _id: employee._id,
         name: employee.name,

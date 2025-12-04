@@ -11,10 +11,11 @@
  * @author ECHO v1.3.1
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { auth } from '@/auth';
 import { connectDB } from '@/lib/db';
 import { PPA } from '@/lib/db/models';
+import { createSuccessResponse, createErrorResponse, ErrorCode } from '@/lib/utils/apiResponse';
 
 /**
  * GET /api/energy/ppas/[id]
@@ -27,7 +28,7 @@ export async function GET(
   try {
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     await connectDB();
@@ -36,7 +37,7 @@ export async function GET(
     const ppa = await PPA.findById(id).lean();
 
     if (!ppa) {
-      return NextResponse.json({ error: 'PPA not found' }, { status: 404 });
+      return createErrorResponse('PPA not found', ErrorCode.NOT_FOUND, 404);
     }
 
     // Calculate delivery performance
@@ -54,7 +55,7 @@ export async function GET(
     const elapsed = now.getTime() - start.getTime();
     const progressPercent = Math.max(0, Math.min(100, (elapsed / totalDuration) * 100));
 
-    return NextResponse.json({
+    return createSuccessResponse({
       ppa,
       performance: {
         totalDelivered,
@@ -74,10 +75,7 @@ export async function GET(
     });
   } catch (error) {
     console.error('GET /api/energy/ppas/[id] error:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch PPA' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to fetch PPA', ErrorCode.INTERNAL_ERROR, 500);
   }
 }
 
@@ -92,7 +90,7 @@ export async function PATCH(
   try {
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     await connectDB();
@@ -102,15 +100,12 @@ export async function PATCH(
     const ppa = await PPA.findById(id);
 
     if (!ppa) {
-      return NextResponse.json({ error: 'PPA not found' }, { status: 404 });
+      return createErrorResponse('PPA not found', ErrorCode.NOT_FOUND, 404);
     }
 
     // Only allow modification of active contracts
     if (!ppa.active) {
-      return NextResponse.json(
-        { error: 'Cannot modify inactive PPA' },
-        { status: 400 }
-      );
+      return createErrorResponse('Cannot modify inactive PPA', ErrorCode.BAD_REQUEST, 400);
     }
 
     const allowedUpdates = [
@@ -130,10 +125,7 @@ export async function PATCH(
     }
 
     if (Object.keys(updates).length === 0) {
-      return NextResponse.json(
-        { error: 'No valid updates provided' },
-        { status: 400 }
-      );
+      return createErrorResponse('No valid updates provided', ErrorCode.BAD_REQUEST, 400);
     }
 
     const updatedPPA = await PPA.findByIdAndUpdate(
@@ -142,16 +134,13 @@ export async function PATCH(
       { new: true, runValidators: true }
     );
 
-    return NextResponse.json({
+    return createSuccessResponse({
       message: 'PPA updated',
       ppa: updatedPPA,
     });
   } catch (error) {
     console.error('PATCH /api/energy/ppas/[id] error:', error);
-    return NextResponse.json(
-      { error: 'Failed to update PPA' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to update PPA', ErrorCode.INTERNAL_ERROR, 500);
   }
 }
 
@@ -166,7 +155,7 @@ export async function DELETE(
   try {
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     await connectDB();
@@ -175,7 +164,7 @@ export async function DELETE(
     const ppa = await PPA.findById(id);
 
     if (!ppa) {
-      return NextResponse.json({ error: 'PPA not found' }, { status: 404 });
+      return createErrorResponse('PPA not found', ErrorCode.NOT_FOUND, 404);
     }
 
     // Calculate early termination penalty if applicable
@@ -193,16 +182,13 @@ export async function DELETE(
     ppa.active = false;
     await ppa.save();
 
-    return NextResponse.json({
+    return createSuccessResponse({
       message: 'PPA terminated',
       ppa,
       terminationPenalty,
     });
   } catch (error) {
     console.error('DELETE /api/energy/ppas/[id] error:', error);
-    return NextResponse.json(
-      { error: 'Failed to terminate PPA' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to terminate PPA', ErrorCode.INTERNAL_ERROR, 500);
   }
 }

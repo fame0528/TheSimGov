@@ -39,6 +39,10 @@ import {
   Search,
   Megaphone,
   AlertTriangle,
+  Users,
+  Flag,
+  Vote,
+  FileText,
 } from 'lucide-react';
 
 // Import politics components (7 new)
@@ -56,6 +60,7 @@ import PoliticalInfluencePanel from '@/components/politics/PoliticalInfluencePan
  */
 const TAB_CONFIG = [
   { key: 'overview', label: 'Overview', icon: TrendingUp },
+  { key: 'organizations', label: 'Organizations', icon: Users },
   { key: 'campaign', label: 'Campaign', icon: Settings },
   { key: 'polling', label: 'Polling', icon: BarChart3 },
   { key: 'momentum', label: 'Momentum', icon: MapPin },
@@ -109,7 +114,7 @@ export default function PoliticsPage() {
   /**
    * Loading state
    */
-  if (status === 'loading' || companyLoading) {
+  if (status === 'loading') {
     return (
       <div className="w-full min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center">
         <Spinner size="lg" label="Loading politics dashboard..." />
@@ -117,62 +122,10 @@ export default function PoliticsPage() {
     );
   }
 
-  /**
-   * No company state - AAA modal pattern (matching contracts/marketplace)
-   */
-  if (companyError || !companyData?.success || !companyData?.company) {
-    return (
-      <div className="w-full min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center p-8">
-        <Card className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-xl border border-white/10 max-w-2xl w-full">
-          <CardBody className="gap-6 py-12 items-center text-center">
-            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-rose-500/20 to-rose-600/10 flex items-center justify-center">
-              <svg className="w-10 h-10 text-rose-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
-              </svg>
-            </div>
-            <div className="space-y-2">
-              <h2 className="text-2xl font-bold text-white">Create Your First Company</h2>
-              <p className="text-lg text-slate-400 max-w-md">
-                To run for political office, you need to create a company first.
-              </p>
-            </div>
-            <Button 
-              size="lg"
-              className="bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white font-bold shadow-xl shadow-blue-500/30 transition-all duration-300"
-              onPress={() => router.push('/game/companies/create')}
-            >
-              Create Company
-            </Button>
-          </CardBody>
-        </Card>
-      </div>
-    );
-  }
-
-  const company = companyData.company;
-  const currentCash = company.cash;
-  const currentLevel = company.level as CompanyLevel; // Type-safe cast (DB ensures valid values)
-
-  // Type-safe IDs (guaranteed to exist after loading/error checks)
-  if (!playerId || !companyId) {
-    return (
-      <div className="w-full min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center">
-        <Card className="bg-danger-50 dark:bg-danger-900/20 max-w-md">
-          <CardBody>
-            <div className="flex items-center gap-3 text-danger">
-              <AlertTriangle className="w-6 h-6" />
-              <div>
-                <p className="font-semibold">Session Error</p>
-                <p className="text-sm text-danger-600 dark:text-danger-400">
-                  Missing player or company ID in session
-                </p>
-              </div>
-            </div>
-          </CardBody>
-        </Card>
-      </div>
-    );
-  }
+  // Company data is optional - some features may use it if available
+  const company = companyData?.success ? companyData.company : null;
+  const currentCash = company?.cash ?? 0;
+  const currentLevel = (company?.level ?? 1) as CompanyLevel;
 
   return (
     <div className="w-full min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
@@ -238,8 +191,97 @@ export default function PoliticsPage() {
                   </div>
                 )}
 
+                {/* Organizations Tab */}
+                {key === 'organizations' && (
+                  <div className="space-y-6">
+                    <h2 className="text-2xl font-bold text-white mb-4">Political Organizations</h2>
+                    <p className="text-slate-400 mb-6">
+                      Join or create political organizations to amplify your influence and collaborate with other players.
+                    </p>
+                    
+                    {/* Organization Navigation Cards */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                      {/* Lobbies */}
+                      <Card 
+                        isPressable
+                        className="bg-gradient-to-br from-blue-900/50 to-blue-950/50 border border-blue-500/20 hover:border-blue-400/40 transition-all"
+                        onPress={() => router.push('/game/politics/lobbies')}
+                      >
+                        <CardBody className="p-6">
+                          <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center">
+                              <Users className="w-6 h-6 text-blue-400" />
+                            </div>
+                            <div>
+                              <h3 className="text-lg font-semibold text-white">Lobbies</h3>
+                              <p className="text-sm text-slate-400">Interest groups & advocacy</p>
+                            </div>
+                          </div>
+                        </CardBody>
+                      </Card>
+
+                      {/* Parties */}
+                      <Card 
+                        isPressable
+                        className="bg-gradient-to-br from-purple-900/50 to-purple-950/50 border border-purple-500/20 hover:border-purple-400/40 transition-all"
+                        onPress={() => router.push('/game/politics/parties')}
+                      >
+                        <CardBody className="p-6">
+                          <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center">
+                              <Flag className="w-6 h-6 text-purple-400" />
+                            </div>
+                            <div>
+                              <h3 className="text-lg font-semibold text-white">Parties</h3>
+                              <p className="text-sm text-slate-400">Political party organizations</p>
+                            </div>
+                          </div>
+                        </CardBody>
+                      </Card>
+
+                      {/* Elections */}
+                      <Card 
+                        isPressable
+                        className="bg-gradient-to-br from-amber-900/50 to-amber-950/50 border border-amber-500/20 hover:border-amber-400/40 transition-all"
+                        onPress={() => router.push('/game/politics/elections/leadership')}
+                      >
+                        <CardBody className="p-6">
+                          <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-xl bg-amber-500/20 flex items-center justify-center">
+                              <Vote className="w-6 h-6 text-amber-400" />
+                            </div>
+                            <div>
+                              <h3 className="text-lg font-semibold text-white">Elections</h3>
+                              <p className="text-sm text-slate-400">Leadership elections</p>
+                            </div>
+                          </div>
+                        </CardBody>
+                      </Card>
+
+                      {/* Proposals */}
+                      <Card 
+                        isPressable
+                        className="bg-gradient-to-br from-emerald-900/50 to-emerald-950/50 border border-emerald-500/20 hover:border-emerald-400/40 transition-all"
+                        onPress={() => router.push('/game/politics/proposals')}
+                      >
+                        <CardBody className="p-6">
+                          <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-xl bg-emerald-500/20 flex items-center justify-center">
+                              <FileText className="w-6 h-6 text-emerald-400" />
+                            </div>
+                            <div>
+                              <h3 className="text-lg font-semibold text-white">Proposals</h3>
+                              <p className="text-sm text-slate-400">Submit & vote on policies</p>
+                            </div>
+                          </div>
+                        </CardBody>
+                      </Card>
+                    </div>
+                  </div>
+                )}
+
                 {/* Campaign Tab */}
-                {key === 'campaign' && (
+                {key === 'campaign' && playerId && (
                   <div className="space-y-6">
                     {/* Campaign Phase Manager */}
                     <CampaignManager playerId={playerId} />
@@ -254,7 +296,7 @@ export default function PoliticsPage() {
                 )}
 
                 {/* Polling Tab */}
-                {key === 'polling' && (
+                {key === 'polling' && playerId && (
                   <div className="space-y-6">
                     {/* Polling Analytics */}
                     <PollingAnalytics playerId={playerId} />
@@ -262,7 +304,7 @@ export default function PoliticsPage() {
                 )}
 
                 {/* Momentum Tab */}
-                {key === 'momentum' && (
+                {key === 'momentum' && playerId && (
                   <div className="space-y-6">
                     {/* Momentum Dashboard */}
                     <MomentumDashboard playerId={playerId} />

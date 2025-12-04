@@ -9,11 +9,12 @@
  * updates maintenance history, calculates costs, and enforces maintenance intervals.
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { connectDB as dbConnect } from '@/lib/db';
 import { WindTurbine } from '@/lib/db/models';
 import { auth } from '@/auth';
+import { createSuccessResponse, createErrorResponse, ErrorCode } from '@/lib/utils/apiResponse';
 
 // ============================================================================
 // VALIDATION SCHEMAS
@@ -58,7 +59,7 @@ export async function POST(
     // Authentication
     const session = await auth();
     if (!session?.user?.companyId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     // Parse request body
@@ -66,10 +67,7 @@ export async function POST(
     const validation = MaintainWindTurbineSchema.safeParse(body);
     
     if (!validation.success) {
-      return NextResponse.json(
-        { error: 'Invalid input', details: validation.error.flatten() },
-        { status: 400 }
-      );
+      return createErrorResponse('Invalid input', ErrorCode.VALIDATION_ERROR, 400, validation.error.flatten());
     }
 
     const { maintenanceType, cost: costOverride, notes } = validation.data;
@@ -84,10 +82,7 @@ export async function POST(
     });
 
     if (!turbine) {
-      return NextResponse.json(
-        { error: 'Wind turbine not found or access denied' },
-        { status: 404 }
-      );
+      return createErrorResponse('Wind turbine not found or access denied', ErrorCode.NOT_FOUND, 404);
     }
 
     // Calculate maintenance cost
@@ -120,8 +115,7 @@ export async function POST(
     // Log maintenance
     console.log(`[ENERGY] Wind turbine maintenance: ${turbine.name} (${turbine._id}), Type: ${maintenanceType}, Cost: $${finalCost}, Hours reset: ${hoursReset.toFixed(1)}`);
 
-    return NextResponse.json({
-      success: true,
+    return createSuccessResponse({
       turbine: {
         id: turbine._id,
         name: turbine.name,
@@ -146,9 +140,11 @@ export async function POST(
 
   } catch (error) {
     console.error('[ENERGY] Wind turbine maintenance error:', error);
-    return NextResponse.json(
-      { error: 'Failed to maintain wind turbine', details: error instanceof Error ? error.message : 'Unknown error' },
-      { status: 500 }
+    return createErrorResponse(
+      'Failed to maintain wind turbine',
+      ErrorCode.INTERNAL_ERROR,
+      500,
+      error instanceof Error ? error.message : 'Unknown error'
     );
   }
 }

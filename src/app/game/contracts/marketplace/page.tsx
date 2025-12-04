@@ -128,14 +128,14 @@ function ContractMarketplaceContent() {
    * Handle company selection
    */
   const handleCompanyChange = (newCompanyId: string) => {
-    router.push(`/contracts/marketplace?companyId=${newCompanyId}`);
+    router.push(`/game/contracts/marketplace?companyId=${newCompanyId}`);
   };
 
   /**
    * Handle contract click
    */
   const handleContractClick = (contractId: string) => {
-    router.push(`/contracts/${contractId}?companyId=${companyId}`);
+    router.push(`/game/contracts/${contractId}?companyId=${companyId}`);
   };
 
   /**

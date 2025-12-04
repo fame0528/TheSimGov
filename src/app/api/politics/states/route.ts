@@ -13,13 +13,13 @@
  */
 
 import { z } from 'zod';
-import { NextResponse } from 'next/server';
 import { STATES } from '@/lib/data/states';
 import {
   computeDerivedMetrics,
   getDerivedMetricsForState,
 } from '@/lib/utils/politics/stateDerivedMetrics';
 import {
+  createSuccessResponse,
   createErrorResponse,
   handleApiError,
 } from '@/lib/utils/apiResponse';
@@ -80,14 +80,12 @@ export async function GET(request: Request) {
           404
         );
       }
-      const payload = { success: true as const, data: { state: one } };
-      maybeValidateResponse(StateMetricsResponseSchema, payload, 'states');
-      return NextResponse.json(payload);
+      maybeValidateResponse(StateMetricsResponseSchema, { success: true as const, data: { state: one } }, 'states');
+      return createSuccessResponse({ state: one });
     }
 
-    const payload = { success: true as const, data: { states: sortedDerived } };
-    maybeValidateResponse(StateMetricsResponseSchema, payload, 'states');
-    return NextResponse.json(payload);
+    maybeValidateResponse(StateMetricsResponseSchema, { success: true as const, data: { states: sortedDerived } }, 'states');
+    return createSuccessResponse({ states: sortedDerived });
   } catch (error) {
     return handleApiError(error, 'Failed to compute derived metrics');
   }

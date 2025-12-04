@@ -40,8 +40,9 @@
  * @implementation Phase 6 API Routes Batch 2
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { auth } from '@/auth';
+import { createSuccessResponse, createErrorResponse, ErrorCode } from '@/lib/utils/apiResponse';
 import { connectDB } from '@/lib/db';
 import Company from '@/lib/db/models/Company';
 import AGIMilestone from '@/lib/db/models/AI/AGIMilestone';
@@ -93,7 +94,7 @@ export async function POST(
     // Authentication - verify user session
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     await connectDB();
@@ -101,7 +102,7 @@ export async function POST(
     // Get user's company
     const company = await Company.findOne({ userId: session.user.id });
     if (!company) {
-      return NextResponse.json({ error: 'Company not found' }, { status: 404 });
+      return createErrorResponse('Company not found', ErrorCode.NOT_FOUND, 404);
     }
 
     // Parse request body
@@ -110,10 +111,7 @@ export async function POST(
 
     // Validation: Both fields required
     if (researchPoints === undefined || computeBudget === undefined) {
-      return NextResponse.json(
-        { error: 'researchPoints and computeBudget are required' },
-        { status: 400 }
-      );
+      return createErrorResponse('researchPoints and computeBudget are required', ErrorCode.VALIDATION_ERROR, 400);
     }
 
     // Validation: Positive numbers only
@@ -123,10 +121,7 @@ export async function POST(
       researchPoints <= 0 ||
       computeBudget <= 0
     ) {
-      return NextResponse.json(
-        { error: 'researchPoints and computeBudget must be positive numbers' },
-        { status: 400 }
-      );
+      return createErrorResponse('researchPoints and computeBudget must be positive numbers', ErrorCode.VALIDATION_ERROR, 400);
     }
 
     // Find milestone (must be owned by company)
@@ -137,44 +132,40 @@ export async function POST(
     });
 
     if (!milestone) {
-      return NextResponse.json(
-        { error: 'Milestone not found or not owned by company' },
-        { status: 404 }
-      );
+      return createErrorResponse('Milestone not found or not owned by company', ErrorCode.NOT_FOUND, 404);
     }
 
     // Check if milestone can be attempted
     if (milestone.status === 'Achieved') {
-      return NextResponse.json(
-        {
-          error: 'Milestone already achieved',
-          details: 'Cannot attempt already completed milestone',
-        },
-        { status: 400 }
+      return createErrorResponse(
+        'Milestone already achieved',
+        ErrorCode.BAD_REQUEST,
+        400,
+        { details: 'Cannot attempt already completed milestone' }
       );
     }
 
     if (milestone.status === 'Locked') {
-      return NextResponse.json(
-        {
-          error: 'Milestone is locked',
-          details: 'Prerequisites not met - complete required milestones first',
-        },
-        { status: 400 }
+      return createErrorResponse(
+        'Milestone is locked',
+        ErrorCode.BAD_REQUEST,
+        400,
+        { details: 'Prerequisites not met - complete required milestones first' }
       );
     }
 
     // Verify prerequisites using instance method
     const prerequisiteCheck = milestone.checkPrerequisites();
     if (!prerequisiteCheck.canAttempt) {
-      return NextResponse.json(
+      return createErrorResponse(
+        'Prerequisites not met',
+        ErrorCode.BAD_REQUEST,
+        400,
         {
-          error: 'Prerequisites not met',
           missingPrerequisites: prerequisiteCheck.missingPrerequisites,
           requirementsMet: prerequisiteCheck.requirementsMet,
           details: 'Complete prerequisite milestones and meet minimum capability/alignment levels',
-        },
-        { status: 400 }
+        }
       );
     }
 
@@ -216,8 +207,7 @@ export async function POST(
     //   });
     // }
 
-    return NextResponse.json({
-      success: true,
+    return createSuccessResponse({
       result,
       milestone,
       message: result.success
@@ -226,12 +216,11 @@ export async function POST(
     });
   } catch (error) {
     console.error('Error attempting AGI milestone:', error);
-    return NextResponse.json(
-      {
-        error: 'Failed to attempt milestone',
-        details: error instanceof Error ? error.message : 'Unknown error',
-      },
-      { status: 500 }
+    return createErrorResponse(
+      'Failed to attempt milestone',
+      ErrorCode.INTERNAL_ERROR,
+      500,
+      { details: error instanceof Error ? error.message : 'Unknown error' }
     );
   }
 }

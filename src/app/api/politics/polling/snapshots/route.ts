@@ -3,10 +3,9 @@
  * @description Get recent polling snapshots for a player
  */
 
-import { NextResponse } from 'next/server';
 import { connectDB } from '@/lib/db';
 import PollingSnapshot from '@/lib/db/models/politics/PollingSnapshot';
-import { handleApiError, createErrorResponse } from '@/lib/utils/apiResponse';
+import { handleApiError, createErrorResponse, createSuccessResponse } from '@/lib/utils/apiResponse';
 import { maybeValidateResponse } from '@/lib/utils/apiResponseSchemas';
 import { z } from 'zod';
 import { PollingSnapshotsResponseSchema, GetPollingSnapshotsQuerySchema } from '@/lib/validation/politics';
@@ -40,7 +39,7 @@ export async function GET(request: Request) {
     };
 
     maybeValidateResponse(PollingSnapshotsResponseSchema, payload, 'polling/snapshots');
-    return NextResponse.json(payload);
+    return createSuccessResponse({ snapshots });
   } catch (error) {
     return handleApiError(error, 'Failed to fetch polling snapshots');
   }

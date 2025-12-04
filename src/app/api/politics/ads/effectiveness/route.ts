@@ -9,8 +9,9 @@
  * Part of: Opposition Research System (FID-20251125-001C Phase 5)
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { auth } from '@/auth';
+import { createSuccessResponse, createErrorResponse, ErrorCode } from '@/lib/utils/apiResponse';
 
 /**
  * GET handler - Retrieve ad effectiveness
@@ -20,10 +21,7 @@ export async function GET(request: NextRequest) {
     // Authenticate request
     const session = await auth();
     if (!session || !session.user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     // Get query parameters
@@ -31,10 +29,7 @@ export async function GET(request: NextRequest) {
     const adId = searchParams.get('adId');
 
     if (!adId) {
-      return NextResponse.json(
-        { error: 'Ad ID required' },
-        { status: 400 }
-      );
+      return createErrorResponse('Ad ID required', ErrorCode.BAD_REQUEST, 400);
     }
 
     // TODO: Query database for ad record
@@ -42,7 +37,7 @@ export async function GET(request: NextRequest) {
     // TODO: Check if ad was countered by opponent
     
     // Mock response
-    return NextResponse.json({
+    return createSuccessResponse({
       adId,
       effectiveness: 65,
       backfireOccurred: false,
@@ -52,13 +47,10 @@ export async function GET(request: NextRequest) {
       },
       ethicsPenalty: 15,
       countered: false,
-    }, { status: 200 });
+    });
 
   } catch (error) {
     console.error('Error retrieving ad effectiveness:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return createErrorResponse('Internal server error', ErrorCode.INTERNAL_ERROR, 500);
   }
 }

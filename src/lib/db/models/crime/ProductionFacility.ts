@@ -1,7 +1,7 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
 
 export type FacilityType = 'Lab' | 'Farm' | 'Warehouse';
-export type FacilityStatus = 'Active' | 'Raided' | 'Abandoned' | 'Seized';
+export type FacilityStatus = 'Active' | 'Raided' | 'Abandoned' | 'Seized' | 'Converted';
 
 export interface IFacilityInventoryItem {
   substance: string; // validated by catalog elsewhere
@@ -58,7 +58,7 @@ const ProductionFacilitySchema = new Schema<IProductionFacility>({
   capacity: { type: Number, required: true, min: 1 },
   quality: { type: Number, required: true, min: 0, max: 100 },
   suspicionLevel: { type: Number, required: true, min: 0, max: 100, default: 0 },
-  status: { type: String, enum: ['Active','Raided','Abandoned','Seized'], required: true, default: 'Active', index: true },
+  status: { type: String, enum: ['Active','Raided','Abandoned','Seized','Converted'], required: true, default: 'Active', index: true },
   upgrades: { type: [FacilityUpgradeSchema], default: [] },
   employees: { type: [{ userId: { type: Schema.Types.ObjectId, ref: 'User', required: true }, role: { type: String, required: true }, skill: { type: Number, min: 0, max: 100 } }], default: [] },
   inventory: { type: [FacilityInventorySchema], default: [] }

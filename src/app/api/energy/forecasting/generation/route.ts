@@ -10,11 +10,13 @@
  * for solar and wind resources.
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { connectDB as dbConnect } from '@/lib/db';
 import { SolarFarm, WindTurbine } from '@/lib/db/models';
 import { auth } from '@/auth';
+import { createSuccessResponse, createErrorResponse, ErrorCode } from '@/lib/utils/apiResponse';
+import type { SolarFarmLean, WindTurbineLean } from '@/lib/types/energy-lean';
 
 // ============================================================================
 // CONSTANTS - GENERATION PATTERNS
@@ -90,7 +92,7 @@ export async function GET(req: NextRequest) {
     // Authentication
     const session = await auth();
     if (!session?.user?.companyId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     // Parse query parameters
@@ -103,10 +105,7 @@ export async function GET(req: NextRequest) {
     const validation = GenerationForecastSchema.safeParse(queryData);
     
     if (!validation.success) {
-      return NextResponse.json(
-        { error: 'Invalid query parameters', details: validation.error.flatten() },
-        { status: 400 }
-      );
+      return createErrorResponse('Invalid query parameters', ErrorCode.BAD_REQUEST, 400);
     }
 
     const { horizon, technology } = validation.data;
@@ -116,15 +115,15 @@ export async function GET(req: NextRequest) {
 
     const filter = { company: session.user.companyId };
 
-    // Get solar and wind assets
+    // Get solar and wind assets (properly typed)
     const [solarFarms, windTurbines] = await Promise.all([
-      technology === 'wind' ? [] : SolarFarm.find(filter).lean(),
-      technology === 'solar' ? [] : WindTurbine.find(filter).lean()
+      technology === 'wind' ? Promise.resolve([] as SolarFarmLean[]) : SolarFarm.find(filter).lean<SolarFarmLean[]>(),
+      technology === 'solar' ? Promise.resolve([] as WindTurbineLean[]) : WindTurbine.find(filter).lean<WindTurbineLean[]>()
     ]);
 
-    // Calculate total capacity
-    const solarCapacity = solarFarms.reduce((sum, f) => sum + (((f as any).nameplateCapacity ?? (f as any).ratedCapacity ?? (f as any).capacity ?? 0)), 0);
-    const windCapacity = windTurbines.reduce((sum, t) => sum + (((t as any).ratedCapacity ?? (t as any).nameplateCapacity ?? (t as any).capacity ?? 0)), 0);
+    // Calculate total capacity (using correct field names)
+    const solarCapacity = solarFarms.reduce((sum, f) => sum + (f.installedCapacity ?? 0), 0);
+    const windCapacity = windTurbines.reduce((sum, t) => sum + (t.ratedCapacity ?? 0), 0);
     const totalCapacity = solarCapacity + windCapacity;
 
     // Current date/time
@@ -132,9 +131,9 @@ export async function GET(req: NextRequest) {
     const currentMonth = now.getMonth();
     const currentHour = now.getHours();
 
-    // Get current seasonal factors
-    const solarMonthlyFactor = (SOLAR_PATTERNS.monthly as any)[currentMonth];
-    const windMonthlyFactor = (WIND_PATTERNS.monthly as any)[currentMonth];
+    // Get current seasonal factors (use typed access)
+    const solarMonthlyFactor = SOLAR_PATTERNS.monthly[currentMonth as keyof typeof SOLAR_PATTERNS.monthly];
+    const windMonthlyFactor = WIND_PATTERNS.monthly[currentMonth as keyof typeof WIND_PATTERNS.monthly];
 
     let forecast: any = {};
 
@@ -142,8 +141,8 @@ export async function GET(req: NextRequest) {
       // 24-hour forecast
       const hourlyForecast = [];
       for (let hour = 0; hour < 24; hour++) {
-        const solarHourlyFactor = (SOLAR_PATTERNS.hourly as any)[hour];
-        const windHourlyFactor = (WIND_PATTERNS.hourly as any)[hour];
+        const solarHourlyFactor = SOLAR_PATTERNS.hourly[hour as keyof typeof SOLAR_PATTERNS.hourly];
+        const windHourlyFactor = WIND_PATTERNS.hourly[hour as keyof typeof WIND_PATTERNS.hourly];
 
         const solarGeneration = solarCapacity * solarMonthlyFactor * solarHourlyFactor;
         const windGeneration = windCapacity * windMonthlyFactor * windHourlyFactor;
@@ -185,8 +184,8 @@ export async function GET(req: NextRequest) {
         forecastDate.setDate(now.getDate() + day);
         const month = forecastDate.getMonth();
         
-        const solarMonthFactor = (SOLAR_PATTERNS.monthly as any)[month];
-        const windMonthFactor = (WIND_PATTERNS.monthly as any)[month];
+        const solarMonthFactor = SOLAR_PATTERNS.monthly[month as keyof typeof SOLAR_PATTERNS.monthly];
+        const windMonthFactor = WIND_PATTERNS.monthly[month as keyof typeof WIND_PATTERNS.monthly];
 
         // Daily energy = capacity × CF × 24 hours
         const solarDaily = solarCapacity * solarMonthFactor * 24;
@@ -217,8 +216,8 @@ export async function GET(req: NextRequest) {
         weekDate.setDate(now.getDate() + (week * 7));
         const month = weekDate.getMonth();
         
-        const solarMonthFactor = (SOLAR_PATTERNS.monthly as any)[month];
-        const windMonthFactor = (WIND_PATTERNS.monthly as any)[month];
+        const solarMonthFactor = SOLAR_PATTERNS.monthly[month as keyof typeof SOLAR_PATTERNS.monthly];
+        const windMonthFactor = WIND_PATTERNS.monthly[month as keyof typeof WIND_PATTERNS.monthly];
 
         // Weekly energy = capacity × CF × 24 hours × 7 days
         const solarWeekly = solarCapacity * solarMonthFactor * 24 * 7;
@@ -246,8 +245,8 @@ export async function GET(req: NextRequest) {
       const monthlyForecast = [];
       for (let monthOffset = 0; monthOffset < 12; monthOffset++) {
         const forecastMonth = (currentMonth + monthOffset) % 12;
-        const solarMonthFactor = (SOLAR_PATTERNS.monthly as any)[forecastMonth];
-        const windMonthFactor = (WIND_PATTERNS.monthly as any)[forecastMonth];
+        const solarMonthFactor = SOLAR_PATTERNS.monthly[forecastMonth as keyof typeof SOLAR_PATTERNS.monthly];
+        const windMonthFactor = WIND_PATTERNS.monthly[forecastMonth as keyof typeof WIND_PATTERNS.monthly];
 
         // Monthly energy = capacity × CF × 24 hours × 30 days (approximate)
         const solarMonthly = solarCapacity * solarMonthFactor * 24 * 30;
@@ -284,8 +283,7 @@ export async function GET(req: NextRequest) {
       };
     }
 
-    return NextResponse.json({
-      success: true,
+    return createSuccessResponse({
       timestamp: now.toISOString(),
       capacity: {
         solar: solarCapacity.toFixed(2) + ' MW',
@@ -306,10 +304,7 @@ export async function GET(req: NextRequest) {
 
   } catch (error) {
     console.error('[ENERGY] Generation forecasting error:', error);
-    return NextResponse.json(
-      { error: 'Failed to generate renewable forecast', details: error instanceof Error ? error.message : 'Unknown error' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to generate renewable forecast', ErrorCode.INTERNAL_ERROR, 500);
   }
 }
 

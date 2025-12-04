@@ -428,7 +428,7 @@ export default function PharmaceuticalPipeline({ companyId }: PharmaceuticalPipe
               <Select
                 label="Company Type"
                 selectedKeys={[formData.companyType]}
-                onChange={(e) => setFormData({ ...formData, companyType: e.target.value as any })}
+                onChange={(e) => setFormData({ ...formData, companyType: e.target.value as typeof formData.companyType })}
                 isRequired
               >
                 <SelectItem key="big_pharma">Big Pharma</SelectItem>

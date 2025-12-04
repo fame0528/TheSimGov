@@ -165,8 +165,9 @@ CampaignPhaseStateSchema.virtual('id').get(function (this: ICampaignPhaseStateDo
 CampaignPhaseStateSchema.set('toJSON', {
   virtuals: true,
   transform: (_doc, ret) => {
-    delete (ret as any)._id;
-    delete (ret as any).__v;
+    const obj = ret as unknown as Record<string, unknown>;
+    delete obj._id;
+    delete obj.__v;
     return ret;
   },
 });

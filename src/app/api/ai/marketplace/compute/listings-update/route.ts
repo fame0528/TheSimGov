@@ -21,8 +21,9 @@
  * @legacy-source old projects/politics/app/api/ai/marketplace/listings/route.ts (PATCH)
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { authenticateRequest, handleAPIError } from '@/lib/utils/api-helpers';
+import { createSuccessResponse, createErrorResponse, ErrorCode } from '@/lib/utils/apiResponse';
 import { connectDB } from '@/lib/db/mongoose';
 import Company from '@/lib/db/models/Company';
 import ComputeListing from '@/lib/db/models/ComputeListing';
@@ -64,7 +65,7 @@ export async function PATCH(request: NextRequest) {
 
     // Validate required fields
     if (!listingId) {
-      return NextResponse.json({ error: 'listingId is required' }, { status: 422 });
+      return createErrorResponse('listingId is required', ErrorCode.VALIDATION_ERROR, 422);
     }
 
     // Connect to database
@@ -73,20 +74,20 @@ export async function PATCH(request: NextRequest) {
     // Load listing
     const listing = await ComputeListing.findById(listingId).populate('seller');
     if (!listing) {
-      return NextResponse.json({ error: 'Listing not found' }, { status: 404 });
+      return createErrorResponse('Listing not found', ErrorCode.NOT_FOUND, 404);
     }
 
     // Verify seller owns the listing
     const companyQuery = { _id: listing.seller, owner: userId };
     const company = await Company.findOne(companyQuery);
     if (!company) {
-      return NextResponse.json({ error: 'Not authorized to update this listing' }, { status: 403 });
+      return createErrorResponse('Not authorized to update this listing', ErrorCode.FORBIDDEN, 403);
     }
 
     // Update price if provided
     if (pricePerGPUHour !== undefined) {
       if (pricePerGPUHour < 0.10) {
-        return NextResponse.json({ error: 'Price must be at least $0.10 per GPU hour' }, { status: 422 });
+        return createErrorResponse('Price must be at least $0.10 per GPU hour', ErrorCode.VALIDATION_ERROR, 422);
       }
       listing.pricePerGPUHour = pricePerGPUHour;
     }
@@ -95,12 +96,12 @@ export async function PATCH(request: NextRequest) {
     if (status !== undefined) {
       // Only allow Active/Inactive status changes (Reserved/Expired managed by system)
       if (!['Active', 'Inactive'].includes(status)) {
-        return NextResponse.json({ error: 'Invalid status. Only Active or Inactive allowed.' }, { status: 422 });
+        return createErrorResponse('Invalid status. Only Active or Inactive allowed.', ErrorCode.VALIDATION_ERROR, 422);
       }
 
       // Prevent deactivating reserved listings
       if (status === 'Inactive' && listing.status === 'Reserved') {
-        return NextResponse.json({ error: 'Cannot deactivate listing with active contracts (Reserved status)' }, { status: 422 });
+        return createErrorResponse('Cannot deactivate listing with active contracts (Reserved status)', ErrorCode.VALIDATION_ERROR, 422);
       }
 
       listing.status = status;
@@ -109,7 +110,7 @@ export async function PATCH(request: NextRequest) {
     // Save changes
     await listing.save();
 
-    return NextResponse.json({ success: true, message: 'Listing updated successfully', listing }, { status: 200 });
+    return createSuccessResponse({ message: 'Listing updated successfully', listing });
   } catch (error) {
     return handleAPIError('[PATCH /api/ai/marketplace/compute/listings-update]', error, 'Failed to update marketplace listing');
   }

@@ -14,6 +14,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import Department from '@/lib/db/models/Department';
 import { connectDB } from '@/lib/db';
+import { createSuccessResponse, createErrorResponse } from '@/lib/utils/apiResponse';
 import type { Department as IDepartment } from '@/lib/types/department';
 
 /**
@@ -41,19 +42,13 @@ export async function GET(req: NextRequest) {
     // Authenticate user
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: 'Unauthorized - Please sign in' },
-        { status: 401 }
-      );
+      return createErrorResponse('Unauthorized - Please sign in', 'UNAUTHORIZED', 401);
     }
 
     // Get user's company ID from session
     const companyId = session.user.companyId;
     if (!companyId) {
-      return NextResponse.json(
-        { error: 'No company associated with this user' },
-        { status: 400 }
-      );
+      return createErrorResponse('No company associated with this user', 'VALIDATION_ERROR', 400);
     }
 
     // Connect to database
@@ -65,16 +60,13 @@ export async function GET(req: NextRequest) {
     // If no departments exist, initialize them
     if (!departments || departments.length === 0) {
       const newDepartments = await Department.initializeForCompany(companyId);
-      return NextResponse.json(newDepartments, { status: 200 });
+      return createSuccessResponse({ departments: newDepartments });
     }
 
-    return NextResponse.json(departments, { status: 200 });
+    return createSuccessResponse({ departments });
   } catch (error) {
     console.error('[GET /api/departments] Error:', error);
-    return NextResponse.json(
-      { error: 'Failed to retrieve departments' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to retrieve departments', 'INTERNAL_ERROR', 500);
   }
 }
 

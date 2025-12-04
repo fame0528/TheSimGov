@@ -24,7 +24,6 @@
  */
 
 import { z } from 'zod';
-import { NextResponse } from 'next/server';
 import { connectDB } from '@/lib/db';
 import PoliticalContribution from '@/lib/db/models/PoliticalContribution';
 import CompanyModel from '@/lib/db/models/Company';
@@ -32,6 +31,7 @@ import LeaderboardSnapshot from '@/lib/db/models/LeaderboardSnapshot';
 import LobbyPayment from '@/lib/db/models/LobbyPayment';
 import { LeaderboardMetricType, TrendDirection } from '@/lib/types/politics';
 import {
+  createSuccessResponse,
   createErrorResponse,
   handleApiError,
 } from '@/lib/utils/apiResponse';
@@ -155,21 +155,20 @@ export async function GET(request: Request) {
     const agg = await getMetricData(metric, limit);
 
     if (agg.length === 0) {
-      return NextResponse.json({
-        success: true,
-        data: {
+      return createSuccessResponse(
+        {
           leaderboard: [],
           metric,
           seasonId,
         },
-        meta: {
+        {
           limit,
           includeTrends,
           message: metric !== LeaderboardMetricType.INFLUENCE && metric !== LeaderboardMetricType.FUNDRAISING
             ? `Metric ${metric} not yet implemented`
             : 'No data available',
-        },
-      });
+        }
+      );
     }
 
     // Determine if we're aggregating by company or player
@@ -236,19 +235,18 @@ export async function GET(request: Request) {
       });
     }
 
-    return NextResponse.json({
-      success: true,
-      data: {
+    return createSuccessResponse(
+      {
         leaderboard,
         metric,
         seasonId,
       },
-      meta: {
+      {
         limit,
         includeTrends,
         count: leaderboard.length,
-      },
-    });
+      }
+    );
   } catch (error) {
     return handleApiError(error, 'Failed to compute leaderboard');
   }

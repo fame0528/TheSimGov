@@ -7,8 +7,9 @@
  * @author ECHO v1.3.0 Healthcare Implementation
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { auth } from '@/auth';
+import { createSuccessResponse, createErrorResponse, ErrorCode } from '@/lib/utils/apiResponse';
 import HealthcareInsurance from '@/lib/db/models/healthcare/HealthcareInsurance';
 import Company from '@/lib/db/models/Company';
 import {
@@ -131,7 +132,7 @@ export async function GET(
   try {
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     const { id } = await params;
@@ -142,13 +143,13 @@ export async function GET(
       .lean();
 
     if (!insuranceCompany) {
-      return NextResponse.json({ error: 'Healthcare insurance company not found' }, { status: 404 });
+      return createErrorResponse('Healthcare insurance company not found', ErrorCode.NOT_FOUND, 404);
     }
 
     // Check ownership
     const company = await Company.findById(insuranceCompany.ownedBy);
     if (!company || company.owner?.toString() !== session.user.id) {
-      return NextResponse.json({ error: 'Unauthorized - Healthcare insurance company not owned by user' }, { status: 403 });
+      return createErrorResponse('Unauthorized - Healthcare insurance company not owned by user', ErrorCode.FORBIDDEN, 403);
     }
 
     // Calculate comprehensive metrics
@@ -166,7 +167,7 @@ export async function GET(
 
     const demandProjection = insuranceCompany.enrollment?.monthlyGrowth ? insuranceCompany.enrollment.monthlyGrowth * 12 : 0;
 
-    return NextResponse.json({
+    return createSuccessResponse({
       insurance: {
         ...insuranceCompany,
         metrics: {
@@ -183,10 +184,7 @@ export async function GET(
 
   } catch (error) {
     console.error('Error fetching healthcare insurance company:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return createErrorResponse('Internal server error', ErrorCode.INTERNAL_ERROR, 500);
   }
 }
 
@@ -201,7 +199,7 @@ export async function PUT(
   try {
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     const { id } = await params;
@@ -212,12 +210,12 @@ export async function PUT(
     // Find and verify ownership
     const insuranceCompany = await HealthcareInsurance.findById(id);
     if (!insuranceCompany) {
-      return NextResponse.json({ error: 'Healthcare insurance company not found' }, { status: 404 });
+      return createErrorResponse('Healthcare insurance company not found', ErrorCode.NOT_FOUND, 404);
     }
 
     const company = await Company.findById(insuranceCompany.ownedBy);
     if (!company || company.owner?.toString() !== session.user.id) {
-      return NextResponse.json({ error: 'Unauthorized - Healthcare insurance company not owned by user' }, { status: 403 });
+      return createErrorResponse('Unauthorized - Healthcare insurance company not owned by user', ErrorCode.FORBIDDEN, 403);
     }
 
     // Update insurance company
@@ -242,17 +240,14 @@ export async function PUT(
       });
 
       if (!metricsValidation.isValid) {
-        return NextResponse.json({
-          error: 'Updated healthcare insurance company metrics validation failed',
-          details: metricsValidation.errors
-        }, { status: 400 });
+        return createErrorResponse('Updated healthcare insurance company metrics validation failed', ErrorCode.BAD_REQUEST, 400);
       }
     }
 
     await insuranceCompany.save();
     await insuranceCompany.populate('ownedBy', 'name industry');
 
-    return NextResponse.json({
+    return createSuccessResponse({
       insurance: insuranceCompany,
       message: 'Healthcare insurance company updated successfully'
     });
@@ -260,15 +255,9 @@ export async function PUT(
   } catch (error) {
     console.error('Error updating healthcare insurance company:', error);
     if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: 'Invalid update data', details: error.errors },
-        { status: 400 }
-      );
+      return createErrorResponse('Invalid update data', ErrorCode.BAD_REQUEST, 400);
     }
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return createErrorResponse('Internal server error', ErrorCode.INTERNAL_ERROR, 500);
   }
 }
 
@@ -283,7 +272,7 @@ export async function DELETE(
   try {
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     const { id } = await params;
@@ -291,26 +280,23 @@ export async function DELETE(
     // Find and verify ownership
     const insuranceCompany = await HealthcareInsurance.findById(id);
     if (!insuranceCompany) {
-      return NextResponse.json({ error: 'Healthcare insurance company not found' }, { status: 404 });
+      return createErrorResponse('Healthcare insurance company not found', ErrorCode.NOT_FOUND, 404);
     }
 
     const company = await Company.findById(insuranceCompany.ownedBy);
     if (!company || company.owner?.toString() !== session.user.id) {
-      return NextResponse.json({ error: 'Unauthorized - Healthcare insurance company not owned by user' }, { status: 403 });
+      return createErrorResponse('Unauthorized - Healthcare insurance company not owned by user', ErrorCode.FORBIDDEN, 403);
     }
 
     // Delete healthcare insurance company
     await HealthcareInsurance.findByIdAndDelete(id);
 
-    return NextResponse.json({
+    return createSuccessResponse({
       message: 'Healthcare insurance company deleted successfully'
     });
 
   } catch (error) {
     console.error('Error deleting healthcare insurance company:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return createErrorResponse('Internal server error', ErrorCode.INTERNAL_ERROR, 500);
   }
 }

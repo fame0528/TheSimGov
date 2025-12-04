@@ -183,7 +183,7 @@ export function EmployeeCard({
               <p className="text-sm text-gray-600">
                 Retention Risk
               </p>
-              <Chip color={retentionConfig.color.includes('green') ? 'success' : retentionConfig.color.includes('orange') ? 'warning' : 'danger' as any}>
+              <Chip color={retentionConfig.color.includes('green') ? 'success' : retentionConfig.color.includes('orange') ? 'warning' : 'danger'}>
                 {retentionConfig.label.toUpperCase()}
               </Chip>
             </div>

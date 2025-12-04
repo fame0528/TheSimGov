@@ -42,9 +42,10 @@
  * @implementation Phase 5 API Routes Batch 1
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { auth } from '@/auth';
 import { connectDB } from '@/lib/db';
+import { createSuccessResponse, createErrorResponse, ErrorCode } from '@/lib/utils/apiResponse';
 import Company from '@/lib/db/models/Company';
 import AGIMilestone from '@/lib/db/models/AI/AGIMilestone';
 import { predictIndustryDisruption } from '@/lib/utils/ai';
@@ -83,7 +84,7 @@ export async function GET(req: NextRequest) {
     // Authentication - verify user session
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     await connectDB();
@@ -91,7 +92,7 @@ export async function GET(req: NextRequest) {
     // Get user's company
     const company = await Company.findOne({ userId: session.user.id });
     if (!company) {
-      return NextResponse.json({ error: 'Company not found' }, { status: 404 });
+      return createErrorResponse('Company not found', ErrorCode.NOT_FOUND, 404);
     }
 
     // Parse query parameters
@@ -103,10 +104,7 @@ export async function GET(req: NextRequest) {
     if (milestoneTypeParam) {
       // Validate milestone type
       if (!Object.values(MilestoneType).includes(milestoneTypeParam)) {
-        return NextResponse.json(
-          { error: `Invalid milestone type: ${milestoneTypeParam}` },
-          { status: 400 }
-        );
+        return createErrorResponse(`Invalid milestone type: ${milestoneTypeParam}`, ErrorCode.VALIDATION_ERROR, 400);
       }
 
       // Find specific milestone for this company
@@ -117,12 +115,11 @@ export async function GET(req: NextRequest) {
       });
 
       if (!milestone) {
-        return NextResponse.json(
-          {
-            error: `Milestone ${milestoneTypeParam} not achieved by company`,
-            details: 'Only achieved milestones can be analyzed for impact',
-          },
-          { status: 404 }
+        return createErrorResponse(
+          `Milestone ${milestoneTypeParam} not achieved by company`,
+          ErrorCode.NOT_FOUND,
+          404,
+          { details: 'Only achieved milestones can be analyzed for impact' }
         );
       }
     } else {
@@ -133,12 +130,11 @@ export async function GET(req: NextRequest) {
       }).sort({ achievedAt: -1 }); // Sort by most recent achievement
 
       if (!milestone) {
-        return NextResponse.json(
-          {
-            error: 'No achieved milestones found',
-            details: 'Company must achieve at least one milestone to analyze impact',
-          },
-          { status: 404 }
+        return createErrorResponse(
+          'No achieved milestones found',
+          ErrorCode.NOT_FOUND,
+          404,
+          { details: 'Company must achieve at least one milestone to analyze impact' }
         );
       }
     }
@@ -239,8 +235,7 @@ export async function GET(req: NextRequest) {
       milestoneImpacts,
     };
 
-    return NextResponse.json({
-      success: true,
+    return createSuccessResponse({
       milestone: {
         milestoneType: milestone.milestoneType,
         status: milestone.status,
@@ -253,12 +248,11 @@ export async function GET(req: NextRequest) {
     });
   } catch (error) {
     console.error('Error predicting industry impact:', error);
-    return NextResponse.json(
-      {
-        error: 'Failed to predict industry impact',
-        details: error instanceof Error ? error.message : 'Unknown error',
-      },
-      { status: 500 }
+    return createErrorResponse(
+      'Failed to predict industry impact',
+      ErrorCode.INTERNAL_ERROR,
+      500,
+      { details: error instanceof Error ? error.message : 'Unknown error' }
     );
   }
 }

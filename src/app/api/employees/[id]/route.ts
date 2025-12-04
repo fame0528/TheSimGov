@@ -10,7 +10,8 @@
  * @author ECHO v1.1.0
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+import { createSuccessResponse, createErrorResponse } from '@/lib/utils/apiResponse';
 import { auth } from '@/auth';
 import { connectDB, Employee, Company } from '@/lib/db';
 import { ApiError } from '@/lib/api/errors';
@@ -83,7 +84,7 @@ export async function GET(
     // Authenticate user
     const session = await auth();
     if (!session?.user?.id) {
-      throw new ApiError('Unauthorized', 401);
+      return createErrorResponse('Unauthorized', 'UNAUTHORIZED', 401);
     }
 
     await connectDB();
@@ -91,7 +92,7 @@ export async function GET(
     // Verify ownership and fetch employee
     const employee = await verifyOwnership(id, session.user.id);
 
-    return NextResponse.json({
+    return createSuccessResponse({
       id: employee._id.toString(),
       companyId: employee.companyId,
       userId: employee.userId,
@@ -121,10 +122,10 @@ export async function GET(
     });
   } catch (error) {
     if (error instanceof ApiError) {
-      return NextResponse.json({ error: error.message }, { status: error.statusCode });
+      return createErrorResponse(error.message, 'API_ERROR', error.statusCode);
     }
     console.error('GET /api/employees/[id] error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return createErrorResponse('Internal server error', 'INTERNAL_ERROR', 500);
   }
 }
 
@@ -159,7 +160,7 @@ export async function PATCH(
     // Authenticate user
     const session = await auth();
     if (!session?.user?.id) {
-      throw new ApiError('Unauthorized', 401);
+      return createErrorResponse('Unauthorized', 'UNAUTHORIZED', 401);
     }
 
     await connectDB();
@@ -172,9 +173,11 @@ export async function PATCH(
     const validationResult = updateEmployeeSchema.safeParse(body);
     
     if (!validationResult.success) {
-      throw new ApiError(
-        `Validation failed: ${validationResult.error.errors.map(e => e.message).join(', ')}`,
-        400
+      return createErrorResponse(
+        'Validation failed',
+        'VALIDATION_ERROR',
+        400,
+        validationResult.error.flatten()
       );
     }
 
@@ -191,7 +194,7 @@ export async function PATCH(
 
     await employee.save();
 
-    return NextResponse.json({
+    return createSuccessResponse({
       id: employee._id.toString(),
       companyId: employee.companyId,
       userId: employee.userId,
@@ -218,10 +221,10 @@ export async function PATCH(
     });
   } catch (error) {
     if (error instanceof ApiError) {
-      return NextResponse.json({ error: error.message }, { status: error.statusCode });
+      return createErrorResponse(error.message, 'API_ERROR', error.statusCode);
     }
     console.error('PATCH /api/employees/[id] error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return createErrorResponse('Internal server error', 'INTERNAL_ERROR', 500);
   }
 }
 
@@ -251,7 +254,7 @@ export async function DELETE(
     // Authenticate user
     const session = await auth();
     if (!session?.user?.id) {
-      throw new ApiError('Unauthorized', 401);
+      return createErrorResponse('Unauthorized', 'UNAUTHORIZED', 401);
     }
 
     await connectDB();
@@ -261,13 +264,13 @@ export async function DELETE(
 
     // Check if already terminated
     if (employee.status === 'terminated') {
-      throw new ApiError('Employee already terminated', 400);
+      return createErrorResponse('Employee already terminated', 'VALIDATION_ERROR', 400);
     }
 
     // Terminate employee (soft delete with audit trail)
     await employee.terminate('Terminated by employer');
 
-    return NextResponse.json({
+    return createSuccessResponse({
       message: 'Employee terminated successfully',
       employee: {
         id: employee._id.toString(),
@@ -279,9 +282,9 @@ export async function DELETE(
     });
   } catch (error) {
     if (error instanceof ApiError) {
-      return NextResponse.json({ error: error.message }, { status: error.statusCode });
+      return createErrorResponse(error.message, 'API_ERROR', error.statusCode);
     }
     console.error('DELETE /api/employees/[id] error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return createErrorResponse('Internal server error', 'INTERNAL_ERROR', 500);
   }
 }

@@ -14,9 +14,9 @@
  */
 
 import { z } from 'zod';
-import { NextResponse } from 'next/server';
 import type { EndorsementStub } from '@/politics/types/politicsTypes';
 import {
+  createSuccessResponse,
   createErrorResponse,
   handleApiError,
 } from '@/lib/utils/apiResponse';
@@ -71,7 +71,15 @@ export async function GET(request: Request) {
       meta: { page, pageSize, total: ENDORSEMENTS.length },
     };
     maybeValidateResponse(EndorsementsResponseSchema, payload, 'endorsements');
-    return NextResponse.json(payload);
+    return createSuccessResponse(
+      {
+        page,
+        pageSize,
+        total: ENDORSEMENTS.length,
+        endorsements: items,
+      },
+      { page, pageSize, total: ENDORSEMENTS.length }
+    );
   } catch (error) {
     return handleApiError(error, 'Failed to fetch endorsements');
   }

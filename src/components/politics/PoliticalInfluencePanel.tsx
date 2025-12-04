@@ -27,7 +27,7 @@ import { CompanyLevel } from '@/lib/types/game';
 import { getPoliticalCapabilities } from '@/lib/utils/politicalinfluence';
 
 interface PoliticalInfluencePanelProps {
-  companyId: string;
+  companyId?: string;
   level: CompanyLevel;
 }
 

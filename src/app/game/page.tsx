@@ -1,12 +1,87 @@
-'use client';
+
+"use client";
+
+import React from "react";
 
 import { Button, Card, CardHeader, CardBody, CardFooter, Chip, Divider, Progress } from '@heroui/react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
+import { useCompanies } from '@/lib/hooks/useCompany';
 
 export default function GameDashboard() {
   const router = useRouter();
   const { data: session } = useSession();
+  const { data: companies, isLoading: companiesLoading } = useCompanies();
+
+  // Contracts aggregation: fetch for each company
+  const [totalActiveContracts, setTotalActiveContracts] = React.useState<number>(0);
+  React.useEffect(() => {
+    async function fetchContracts() {
+      if (!Array.isArray(companies) || companies.length === 0) {
+        setTotalActiveContracts(0);
+        return;
+      }
+      // Fetch contracts for each company
+      const results = await Promise.all(
+        companies.map(async (company: any) => {
+          try {
+            const res = await fetch(`/api/contracts?companyId=${company.id}`);
+            if (!res.ok) return [];
+            const data = await res.json();
+            // Only count contracts with status 'active' or 'in_progress'
+            if (Array.isArray(data.contracts)) {
+              return data.contracts.filter((c: any) => c.status === 'active' || c.status === 'in_progress').length;
+            }
+            return 0;
+          } catch {
+            return 0;
+          }
+        })
+      );
+      setTotalActiveContracts(results.reduce((sum: number, count: number) => sum + count, 0));
+    }
+    fetchContracts();
+  }, [companies]);
+
+  // Employees aggregation: fetch for each company
+  const [totalEmployees, setTotalEmployees] = React.useState<number>(0);
+  React.useEffect(() => {
+    async function fetchEmployees() {
+      if (!Array.isArray(companies) || companies.length === 0) {
+        setTotalEmployees(0);
+        return;
+      }
+      // Fetch employees for each company
+      const results = await Promise.all(
+        companies.map(async (company: any) => {
+          try {
+            const res = await fetch(`/api/employees?companyId=${company.id}`);
+            if (!res.ok) return [];
+            const data = await res.json();
+            return Array.isArray(data.data) ? data.data.length : 0;
+          } catch {
+            return 0;
+          }
+        })
+      );
+      setTotalEmployees(results.reduce((sum, count) => sum + count, 0));
+    }
+    fetchEmployees();
+  }, [companies]);
+
+    // Revenue aggregation: sum company.revenue for all companies
+    const [totalRevenue, setTotalRevenue] = React.useState<number>(0);
+    React.useEffect(() => {
+      if (!Array.isArray(companies) || companies.length === 0) {
+        setTotalRevenue(0);
+        return;
+      }
+      // Sum revenue for all companies
+      const revenueSum = companies.reduce((sum: number, company: any) => {
+        return sum + (typeof company.revenue === 'number' ? company.revenue : 0);
+      }, 0);
+      setTotalRevenue(revenueSum);
+    }, [companies]);
 
   return (
     <div className="w-full min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
@@ -20,16 +95,31 @@ export default function GameDashboard() {
               </h1>
               <p className="text-slate-400 mt-1 text-sm">Building empires, one decision at a time</p>
             </div>
-            <Chip 
-              size="lg"
-              variant="shadow"
-              classNames={{
-                base: "bg-gradient-to-br from-green-500 to-emerald-600 border-0",
-                content: "text-white font-bold"
-              }}
-            >
-              ● Online
-            </Chip>
+            <div className="flex items-center gap-6">
+              <Chip 
+                size="lg"
+                variant="shadow"
+                classNames={{
+                  base: "bg-gradient-to-br from-green-500 to-emerald-600 border-0",
+                  content: "text-white font-bold"
+                }}
+              >
+                5cf Online
+              </Chip>
+              <div className="flex items-center bg-gradient-to-br from-amber-500/20 to-amber-600/10 px-4 py-2 rounded-xl border border-amber-500/30">
+                <span className="text-xs text-slate-400 mr-2">Cash:</span>
+                <span className="text-lg font-bold text-amber-400">
+                  {
+                    (() => {
+                      // TypeScript fallback for cash property
+                      if (!session || !session.user) return '0';
+                      const user = session.user as typeof session.user & { cash?: number };
+                      return typeof user.cash === 'number' ? user.cash.toLocaleString() : '0';
+                    })()
+                  }
+                </span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -54,8 +144,12 @@ export default function GameDashboard() {
               </div>
               <div className="space-y-2">
                 <p className="text-sm font-medium text-slate-400 uppercase tracking-wider">Companies</p>
-                <p className="text-5xl font-black text-white">0</p>
-                <p className="text-xs text-slate-500">Create your first venture →</p>
+                <p className="text-5xl font-black text-white">
+                  {companiesLoading ? '...' : Array.isArray(companies) ? companies.length : 0}
+                </p>
+                <p className="text-xs text-slate-500">
+                  {Array.isArray(companies) && companies.length > 0 ? 'View your companies →' : 'Create your first venture →'}
+                </p>
               </div>
             </CardBody>
           </Card>
@@ -77,8 +171,8 @@ export default function GameDashboard() {
               </div>
               <div className="space-y-2">
                 <p className="text-sm font-medium text-slate-400 uppercase tracking-wider">Employees</p>
-                <p className="text-5xl font-black text-white">0</p>
-                <p className="text-xs text-slate-500">Build your dream team →</p>
+                <p className="text-5xl font-black text-white">{companiesLoading ? '...' : totalEmployees}</p>
+                <p className="text-xs text-slate-500">{totalEmployees > 0 ? 'Build your dream team →' : 'No employees yet. Hire your first team member!'}</p>
               </div>
             </CardBody>
           </Card>
@@ -100,8 +194,8 @@ export default function GameDashboard() {
               </div>
               <div className="space-y-2">
                 <p className="text-sm font-medium text-slate-400 uppercase tracking-wider">Active Contracts</p>
-                <p className="text-5xl font-black text-white">0</p>
-                <p className="text-xs text-slate-500">Execute and earn →</p>
+                <p className="text-5xl font-black text-white">{companiesLoading ? '...' : totalActiveContracts}</p>
+                <p className="text-xs text-slate-500">{totalActiveContracts > 0 ? 'Execute and earn →' : 'No active contracts yet.'}</p>
               </div>
             </CardBody>
           </Card>
@@ -122,8 +216,12 @@ export default function GameDashboard() {
               </div>
               <div className="space-y-2">
                 <p className="text-sm font-medium text-slate-400 uppercase tracking-wider">Total Revenue</p>
-                <p className="text-5xl font-black text-white">$0</p>
-                <p className="text-xs text-slate-500">Complete contracts →</p>
+                <p className="text-5xl font-black text-white">
+                  {companiesLoading ? '...' : `$${totalRevenue.toLocaleString()}`}
+                </p>
+                <p className="text-xs text-slate-500">
+                  {totalRevenue > 0 ? 'Reinvest profits →' : 'Complete contracts →'}
+                </p>
               </div>
             </CardBody>
           </Card>

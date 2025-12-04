@@ -35,7 +35,8 @@ export async function POST(req: NextRequest) {
     // Validate type by extension
     const filename = (file.name || 'upload').toLowerCase();
     const ext = path.extname(filename);
-    if (!AVATAR_CONSTRAINTS.ALLOWED_EXTENSIONS.includes(ext as any)) {
+    const allowedExtensions: readonly string[] = AVATAR_CONSTRAINTS.ALLOWED_EXTENSIONS;
+    if (!allowedExtensions.includes(ext)) {
       return NextResponse.json({ isValid: false, errors: ['Invalid file type'] }, { status: 400 });
     }
 

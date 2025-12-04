@@ -10,12 +10,13 @@
  * @author ECHO v1.3.0
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { auth } from '@/auth';
 import { connectDB } from '@/lib/db';
 import Patent from '@/lib/db/models/Patent';
 import Breakthrough from '@/lib/db/models/Breakthrough';
 import Company from '@/lib/db/models/Company';
+import { createSuccessResponse, createErrorResponse } from '@/lib/utils/apiResponse';
 import { calculatePatentFilingCost, estimatePatentGrantProbability } from '@/lib/utils/ai';
 import type { PatentJurisdiction } from '@/lib/utils/ai/patentCalculations';
 import type { BreakthroughArea } from '@/lib/utils/ai/breakthroughCalculations';
@@ -41,7 +42,7 @@ export async function POST(request: NextRequest) {
     // Authentication check
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', 'UNAUTHORIZED', 401);
     }
 
     // Parse request body
@@ -54,7 +55,7 @@ export async function POST(request: NextRequest) {
 
     // Validation
     if (!breakthroughId) {
-      return NextResponse.json({ error: 'Breakthrough ID required' }, { status: 400 });
+      return createErrorResponse('Breakthrough ID required', 'VALIDATION_ERROR', 400);
     }
 
     await connectDB();
@@ -62,37 +63,36 @@ export async function POST(request: NextRequest) {
     // Load breakthrough
     const breakthrough = await Breakthrough.findById(breakthroughId);
     if (!breakthrough) {
-      return NextResponse.json({ error: 'Breakthrough not found' }, { status: 404 });
+      return createErrorResponse('Breakthrough not found', 'NOT_FOUND', 404);
     }
 
     // Check patentability
     if (!breakthrough.patentable) {
-      return NextResponse.json(
-        { error: 'Breakthrough is not patentable (insufficient novelty or impact)' },
-        { status: 400 }
+      return createErrorResponse(
+        'Breakthrough is not patentable (insufficient novelty or impact)',
+        'VALIDATION_ERROR',
+        400
       );
     }
 
     // Check if already filed
     if (breakthrough.patentFiled) {
-      return NextResponse.json(
-        { error: 'Patent already filed for this breakthrough' },
-        { status: 400 }
+      return createErrorResponse(
+        'Patent already filed for this breakthrough',
+        'VALIDATION_ERROR',
+        400
       );
     }
 
     // Load company
     const company = await Company.findById(breakthrough.company);
     if (!company) {
-      return NextResponse.json({ error: 'Company not found' }, { status: 404 });
+      return createErrorResponse('Company not found', 'NOT_FOUND', 404);
     }
 
     // Ownership check
     if (company.userId !== session.user.id) {
-      return NextResponse.json(
-        { error: 'You do not own this company' },
-        { status: 403 }
-      );
+      return createErrorResponse('You do not own this company', 'FORBIDDEN', 403);
     }
 
     // Calculate filing cost
@@ -109,14 +109,10 @@ export async function POST(request: NextRequest) {
 
     // Check if company can afford filing
     if (company.cash < totalCost) {
-      return NextResponse.json(
-        {
-          error: 'Insufficient funds for patent filing',
-          required: totalCost,
-          available: company.cash,
-          shortfall: totalCost - company.cash,
-        },
-        { status: 400 }
+      return createErrorResponse(
+        `Insufficient funds for patent filing: ${company.cash} available, ${totalCost} required`,
+        'VALIDATION_ERROR',
+        400
       );
     }
 
@@ -158,7 +154,7 @@ export async function POST(request: NextRequest) {
     breakthrough.patentId = patent.id;
     await breakthrough.save();
 
-    return NextResponse.json({
+    return createSuccessResponse({
       patent,
       filingCost: {
         total: totalCost,
@@ -171,9 +167,10 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error('Patent filing error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error during patent filing' },
-      { status: 500 }
+    return createErrorResponse(
+      'Internal server error during patent filing',
+      'INTERNAL_ERROR',
+      500
     );
   }
 }
@@ -200,7 +197,7 @@ export async function GET(request: NextRequest) {
     // Authentication check
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', 'UNAUTHORIZED', 401);
     }
 
     const { searchParams } = new URL(request.url);
@@ -209,7 +206,7 @@ export async function GET(request: NextRequest) {
 
     // Validation
     if (!companyId) {
-      return NextResponse.json({ error: 'Company ID required' }, { status: 400 });
+      return createErrorResponse('Company ID required', 'VALIDATION_ERROR', 400);
     }
 
     await connectDB();
@@ -217,10 +214,10 @@ export async function GET(request: NextRequest) {
     // Verify company ownership
     const company = await Company.findById(companyId);
     if (!company) {
-      return NextResponse.json({ error: 'Company not found' }, { status: 404 });
+      return createErrorResponse('Company not found', 'NOT_FOUND', 404);
     }
     if (company.userId !== session.user.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+      return createErrorResponse('Unauthorized', 'FORBIDDEN', 403);
     }
 
     // Build query filter
@@ -247,7 +244,7 @@ export async function GET(request: NextRequest) {
     const totalRevenue = grantedPatents.reduce((sum, p) => sum + (p.licensingRevenue || 0), 0);
     const totalCitations = patents.reduce((sum, p) => sum + (p.citations || 0), 0);
 
-    return NextResponse.json({
+    return createSuccessResponse({
       patents,
       totalCount,
       byStatus,
@@ -257,9 +254,10 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('List patents error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error listing patents' },
-      { status: 500 }
+    return createErrorResponse(
+      'Internal server error listing patents',
+      'INTERNAL_ERROR',
+      500
     );
   }
 }
@@ -281,7 +279,7 @@ export async function PATCH(request: NextRequest) {
     // Authentication check
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', 'UNAUTHORIZED', 401);
     }
 
     // Parse request body
@@ -290,16 +288,18 @@ export async function PATCH(request: NextRequest) {
 
     // Validation
     if (!patentId || !status) {
-      return NextResponse.json(
-        { error: 'Patent ID and status required' },
-        { status: 400 }
+      return createErrorResponse(
+        'Patent ID and status required',
+        'VALIDATION_ERROR',
+        400
       );
     }
 
     if (!['Pending', 'Granted', 'Rejected'].includes(status)) {
-      return NextResponse.json(
-        { error: 'Invalid status (must be Pending/Granted/Rejected)' },
-        { status: 400 }
+      return createErrorResponse(
+        'Invalid status (must be Pending/Granted/Rejected)',
+        'VALIDATION_ERROR',
+        400
       );
     }
 
@@ -308,13 +308,13 @@ export async function PATCH(request: NextRequest) {
     // Load patent
     const patent = await Patent.findById(patentId);
     if (!patent) {
-      return NextResponse.json({ error: 'Patent not found' }, { status: 404 });
+      return createErrorResponse('Patent not found', 'NOT_FOUND', 404);
     }
 
     // Verify ownership
     const company = await Company.findById(patent.company);
     if (!company || company.userId !== session.user.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+      return createErrorResponse('Unauthorized', 'FORBIDDEN', 403);
     }
 
     // Update status
@@ -329,15 +329,16 @@ export async function PATCH(request: NextRequest) {
 
     await patent.save();
 
-    return NextResponse.json({
+    return createSuccessResponse({
       patent,
       message: `Patent ${patentId} status updated to ${status}`,
     });
   } catch (error) {
     console.error('Patent status update error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error updating patent status' },
-      { status: 500 }
+    return createErrorResponse(
+      'Internal server error updating patent status',
+      'INTERNAL_ERROR',
+      500
     );
   }
 }

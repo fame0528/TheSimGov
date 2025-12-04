@@ -60,8 +60,26 @@ export async function GET(req: NextRequest) {
     const exists = !!existing;
 
     return NextResponse.json({ valid: true, exists });
-  } catch (error) {
+  } catch (error: any) {
     console.error('GET /api/companies/check-name error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+
+    // Enhanced error handling for DNS/Connection issues
+    if (
+      error?.message?.includes('DNS SRV') ||
+      error?.message?.includes('ESERVFAIL') ||
+      error?.code === 'ESERVFAIL' ||
+      error?.name === 'MongooseServerSelectionError'
+    ) {
+      return NextResponse.json({
+        error: 'Database connection error. Please try again later.',
+        code: 'DB_CONNECTION_ERROR',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      }, { status: 503 });
+    }
+
+    return NextResponse.json({
+      error: 'Internal server error',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    }, { status: 500 });
   }
 }

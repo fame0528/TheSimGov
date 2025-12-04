@@ -12,10 +12,11 @@
  * @author ECHO v1.3.1
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { auth } from '@/auth';
 import { connectDB } from '@/lib/db';
 import { GridNode, TransmissionLine } from '@/lib/db/models';
+import { createSuccessResponse, createErrorResponse, ErrorCode } from '@/lib/utils/apiResponse';
 
 /**
  * POST /api/energy/grid-nodes/[id]/contingency
@@ -28,7 +29,7 @@ export async function POST(
   try {
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     await connectDB();
@@ -37,7 +38,7 @@ export async function POST(
     const node = await GridNode.findById(id);
 
     if (!node) {
-      return NextResponse.json({ error: 'Grid node not found' }, { status: 404 });
+      return createErrorResponse('Grid node not found', ErrorCode.NOT_FOUND, 404);
     }
 
     // Get connected transmission lines
@@ -92,7 +93,7 @@ export async function POST(
     const overloadedNeighbors = neighborCapacity.filter(n => n.wouldOverload).length;
     const contingencyPass = canRedistribute && overloadedNeighbors === 0;
 
-    return NextResponse.json({
+    return createSuccessResponse({
       message: 'N-1 contingency analysis completed',
       node: {
         id: node._id,
@@ -119,9 +120,6 @@ export async function POST(
     });
   } catch (error) {
     console.error('POST /api/energy/grid-nodes/[id]/contingency error:', error);
-    return NextResponse.json(
-      { error: 'Failed to execute contingency analysis' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to execute contingency analysis', ErrorCode.INTERNAL_ERROR, 500);
   }
 }

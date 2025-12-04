@@ -15,6 +15,7 @@ import { auth } from '@/auth';
 import { connectDB, Company } from '@/lib/db';
 import { ApiError } from '@/lib/api/errors';
 import { IndustryType } from '@/lib/types';
+import { createSuccessResponse, createErrorResponse, handleApiError } from '@/lib/utils/apiResponse';
 import { z } from 'zod';
 
 /**
@@ -59,7 +60,18 @@ export async function GET(req: NextRequest) {
       const isDnsSrv = message.includes('querySrv') || code === 'ESERVFAIL' || String(hostname).includes('mongodb.net');
       if (isDnsSrv) {
         console.error('DB connection DNS SRV error, serving fallback list:', dbErr);
-        return NextResponse.json({ data: [], total: 0, page: 1, limit: 20, pages: 0, meta: { warning: 'Database DNS SRV error; returning empty companies list (fallback).', code, hostname } }, { status: 200 });
+        return createSuccessResponse(
+          { companies: [] },
+          { 
+            total: 0, 
+            page: 1, 
+            limit: 20, 
+            pages: 0, 
+            warning: 'Database DNS SRV error; returning empty companies list (fallback).',
+            code,
+            hostname 
+          }
+        );
       }
       throw dbErr;
     }
@@ -93,34 +105,39 @@ export async function GET(req: NextRequest) {
       Company.countDocuments(query),
     ]);
 
-    return NextResponse.json({
-      data: companies.map(c => ({
-        id: c._id.toString(),
-        userId: c.userId,
-        name: c.name,
-        industry: c.industry,
-        level: c.level,
-        revenue: c.revenue,
-        expenses: c.expenses,
-        profit: c.profit,
-        cash: c.cash,
-        employees: c.employees || [],
-        contracts: c.contracts || [],
-        loans: c.loans || [],
-        createdAt: c.createdAt,
-        updatedAt: c.updatedAt,
-      })),
-      total,
-      page,
-      limit,
-      pages: Math.ceil(total / limit),
-    });
+    return createSuccessResponse(
+      {
+        companies: companies.map(c => ({
+          id: c._id.toString(),
+          userId: c.userId,
+          name: c.name,
+          industry: c.industry,
+          level: c.level,
+          revenue: c.revenue,
+          expenses: c.expenses,
+          profit: c.profit,
+          cash: c.cash,
+          employees: c.employees || [],
+          contracts: c.contracts || [],
+          loans: c.loans || [],
+          createdAt: c.createdAt,
+          updatedAt: c.updatedAt,
+        })),
+      },
+      {
+        pagination: {
+          total,
+          page,
+          limit,
+          pages: Math.ceil(total / limit),
+        },
+      }
+    );
   } catch (error) {
     if (error instanceof ApiError) {
-      return NextResponse.json({ error: error.message }, { status: error.statusCode });
+      return createErrorResponse(error.message, 'API_ERROR', error.statusCode);
     }
-    console.error('GET /api/companies error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return handleApiError(error, 'Failed to fetch companies');
   }
 }
 
@@ -162,7 +179,7 @@ export async function POST(req: NextRequest) {
       const isDnsSrv = message.includes('querySrv') || code === 'ESERVFAIL' || String(hostname).includes('mongodb.net');
       if (isDnsSrv) {
         console.error('DB connection DNS SRV error on POST, returning service unavailable:', dbErr);
-        return NextResponse.json({ error: 'Service temporarily unavailable due to database DNS error. Please retry later.' }, { status: 503 });
+        return createErrorResponse('Service temporarily unavailable due to database DNS error. Please retry later.', 'DB_UNAVAILABLE', 503);
       }
       throw dbErr;
     }
@@ -201,27 +218,32 @@ export async function POST(req: NextRequest) {
       loans: [],
     });
 
-    return NextResponse.json({
-      id: company._id.toString(),
-      userId: company.userId,
-      name: company.name,
-      industry: company.industry,
-      level: company.level,
-      revenue: company.revenue,
-      expenses: company.expenses,
-      profit: company.profit,
-      cash: company.cash,
-      employees: company.employees,
-      contracts: company.contracts,
-      loans: company.loans,
-      createdAt: company.createdAt,
-      updatedAt: company.updatedAt,
-    }, { status: 201 });
+    return createSuccessResponse(
+      {
+        company: {
+          id: company._id.toString(),
+          userId: company.userId,
+          name: company.name,
+          industry: company.industry,
+          level: company.level,
+          revenue: company.revenue,
+          expenses: company.expenses,
+          profit: company.profit,
+          cash: company.cash,
+          employees: company.employees,
+          contracts: company.contracts,
+          loans: company.loans,
+          createdAt: company.createdAt,
+          updatedAt: company.updatedAt,
+        },
+      },
+      undefined,
+      201
+    );
   } catch (error) {
     if (error instanceof ApiError) {
-      return NextResponse.json({ error: error.message }, { status: error.statusCode });
+      return createErrorResponse(error.message, 'API_ERROR', error.statusCode);
     }
-    console.error('POST /api/companies error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return handleApiError(error, 'Failed to create company');
   }
 }

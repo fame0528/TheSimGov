@@ -15,6 +15,7 @@ import { auth } from '@/auth';
 import { connectDB, Employee, Company } from '@/lib/db';
 import { ApiError } from '@/lib/api/errors';
 import { EMPLOYEE_PARAMETERS } from '@/lib/utils/constants';
+import { createSuccessResponse, createErrorResponse, handleApiError } from '@/lib/utils/apiResponse';
 import { z } from 'zod';
 
 /**
@@ -120,35 +121,40 @@ export async function GET(req: NextRequest) {
       Employee.countDocuments(query),
     ]);
 
-    return NextResponse.json({
-      data: employees.map((e: any) => ({
-        id: e._id.toString(),
-        companyId: e.companyId,
-        userId: e.userId,
-        name: e.name,
-        role: e.role,
-        salary: e.salary,
-        hiredAt: e.hiredAt,
-        skills: e.skills,
-        performance: e.performance,
-        morale: e.morale,
-        status: e.status,
-        trainingRecords: e.trainingRecords || [],
-        reviews: e.reviews || [],
-        createdAt: e.createdAt,
-        updatedAt: e.updatedAt,
-      })),
-      total,
-      page,
-      limit,
-      pages: Math.ceil(total / limit),
-    });
+    return createSuccessResponse(
+      {
+        employees: employees.map((e: any) => ({
+          id: e._id.toString(),
+          companyId: e.companyId,
+          userId: e.userId,
+          name: e.name,
+          role: e.role,
+          salary: e.salary,
+          hiredAt: e.hiredAt,
+          skills: e.skills,
+          performance: e.performance,
+          morale: e.morale,
+          status: e.status,
+          trainingRecords: e.trainingRecords || [],
+          reviews: e.reviews || [],
+          createdAt: e.createdAt,
+          updatedAt: e.updatedAt,
+        })),
+      },
+      {
+        pagination: {
+          total,
+          page,
+          limit,
+          pages: Math.ceil(total / limit),
+        },
+      }
+    );
   } catch (error) {
     if (error instanceof ApiError) {
-      return NextResponse.json({ error: error.message }, { status: error.statusCode });
+      return createErrorResponse(error.message, 'API_ERROR', error.statusCode);
     }
-    console.error('GET /api/employees error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return handleApiError(error, 'Failed to fetch employees');
   }
 }
 
@@ -254,28 +260,33 @@ export async function POST(req: NextRequest) {
     company.expenses += weeklySalary;
     await company.save();
 
-    return NextResponse.json({
-      id: employee._id.toString(),
-      companyId: employee.companyId,
-      userId: employee.userId,
-      name: employee.name,
-      role: employee.role,
-      salary: employee.salary,
-      hiredAt: employee.hiredAt,
-      skills: employee.skills,
-      performance: employee.performance,
-      morale: employee.morale,
-      status: employee.status,
-      trainingRecords: employee.trainingRecords,
-      reviews: employee.reviews,
-      createdAt: employee.createdAt,
-      updatedAt: employee.updatedAt,
-    }, { status: 201 });
+    return createSuccessResponse(
+      {
+        employee: {
+          id: employee._id.toString(),
+          companyId: employee.companyId,
+          userId: employee.userId,
+          name: employee.name,
+          role: employee.role,
+          salary: employee.salary,
+          hiredAt: employee.hiredAt,
+          skills: employee.skills,
+          performance: employee.performance,
+          morale: employee.morale,
+          status: employee.status,
+          trainingRecords: employee.trainingRecords,
+          reviews: employee.reviews,
+          createdAt: employee.createdAt,
+          updatedAt: employee.updatedAt,
+        },
+      },
+      undefined,
+      201
+    );
   } catch (error) {
     if (error instanceof ApiError) {
-      return NextResponse.json({ error: error.message }, { status: error.statusCode });
+      return createErrorResponse(error.message, 'API_ERROR', error.statusCode);
     }
-    console.error('POST /api/employees error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return handleApiError(error, 'Failed to hire employee');
   }
 }

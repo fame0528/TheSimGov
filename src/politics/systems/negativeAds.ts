@@ -375,12 +375,12 @@ export function getEffectivenessTierName(effectiveness: number): string {
 /**
  * Get effectiveness color code
  */
-export function getEffectivenessColor(effectiveness: number): string {
-  if (effectiveness >= 80) return 'red';
-  if (effectiveness >= 60) return 'orange';
-  if (effectiveness >= 40) return 'yellow';
-  if (effectiveness >= 20) return 'blue';
-  return 'gray';
+export function getEffectivenessColor(effectiveness: number): 'danger' | 'warning' | 'primary' | 'secondary' | 'default' {
+  if (effectiveness >= 80) return 'danger';
+  if (effectiveness >= 60) return 'warning';
+  if (effectiveness >= 40) return 'warning';
+  if (effectiveness >= 20) return 'primary';
+  return 'default';
 }
 
 /**

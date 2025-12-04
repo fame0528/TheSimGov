@@ -31,9 +31,10 @@
  * ```
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { auth } from '@/auth';
 import { connectDB } from '@/lib/db';
+import { createSuccessResponse, createErrorResponse, ErrorCode } from '@/lib/utils/apiResponse';
 import EdTechCourse from '@/lib/db/models/edtech/EdTechCourse';
 import Company from '@/lib/db/models/Company';
 import { IndustryType } from '@/lib/types';
@@ -54,7 +55,7 @@ export async function GET(req: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     await connectDB();
@@ -103,16 +104,13 @@ export async function GET(req: NextRequest) {
       metrics.byDifficulty[course.difficulty] = (metrics.byDifficulty[course.difficulty] || 0) + 1;
     });
 
-    return NextResponse.json({
+    return createSuccessResponse({
       courses,
       metrics,
     });
   } catch (error) {
     console.error('GET /api/edtech/courses error:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch courses' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to fetch courses', ErrorCode.INTERNAL_ERROR, 500);
   }
 }
 
@@ -138,7 +136,7 @@ export async function POST(req: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     await connectDB();
@@ -169,29 +167,20 @@ export async function POST(req: NextRequest) {
     // Validate company exists and is Technology/Software industry
     const companyDoc = await Company.findById(company);
     if (!companyDoc) {
-      return NextResponse.json({ error: 'Company not found' }, { status: 404 });
+      return createErrorResponse('Company not found', ErrorCode.NOT_FOUND, 404);
     }
 
     if (companyDoc.industry !== IndustryType.TECH) {
-      return NextResponse.json(
-        { error: 'EdTech courses only available for Technology companies' },
-        { status: 400 }
-      );
+      return createErrorResponse('EdTech courses only available for Technology companies', ErrorCode.BAD_REQUEST, 400);
     }
 
     // Validate pricing model
     if (pricingModel === 'Free' && price > 0) {
-      return NextResponse.json(
-        { error: 'Free courses cannot have a price' },
-        { status: 400 }
-      );
+      return createErrorResponse('Free courses cannot have a price', ErrorCode.VALIDATION_ERROR, 400);
     }
 
     if (pricingModel === 'OneTime' && price === 0) {
-      return NextResponse.json(
-        { error: 'One-time courses must have a price' },
-        { status: 400 }
-      );
+      return createErrorResponse('One-time courses must have a price', ErrorCode.VALIDATION_ERROR, 400);
     }
 
     // Create course
@@ -219,20 +208,14 @@ export async function POST(req: NextRequest) {
       launchedAt: new Date(),
     });
 
-    return NextResponse.json(course, { status: 201 });
+    return createSuccessResponse(course, undefined, 201);
   } catch (error) {
     console.error('POST /api/edtech/courses error:', error);
     
     if ((error as { name?: string }).name === 'ValidationError') {
-      return NextResponse.json(
-        { error: 'Validation error', details: (error as { errors?: unknown }).errors },
-        { status: 400 }
-      );
+      return createErrorResponse('Validation error', ErrorCode.VALIDATION_ERROR, 400, (error as { errors?: unknown }).errors);
     }
 
-    return NextResponse.json(
-      { error: 'Failed to create course' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to create course', ErrorCode.INTERNAL_ERROR, 500);
   }
 }

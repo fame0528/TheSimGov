@@ -5,9 +5,10 @@
  * @created 2025-11-23
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { auth } from '@/auth';
 import { connectDB, Company } from '@/lib/db';
+import { createSuccessResponse, createErrorResponse } from '@/lib/utils/apiResponse';
 import { calculateCreditScore } from '@/lib/utils/banking/creditScoring';
 import { z } from 'zod';
 
@@ -25,10 +26,7 @@ export async function GET(request: NextRequest) {
     // Authenticate user
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: 'Authentication required' },
-        { status: 401 }
-      );
+      return createErrorResponse('Authentication required', 'UNAUTHORIZED', 401);
     }
 
     // Get companyId from query params
@@ -36,10 +34,7 @@ export async function GET(request: NextRequest) {
     const companyId = searchParams.get('companyId');
 
     if (!companyId) {
-      return NextResponse.json(
-        { error: 'Company ID is required' },
-        { status: 400 }
-      );
+      return createErrorResponse('Company ID is required', 'VALIDATION_ERROR', 400);
     }
 
     // Connect to database
@@ -52,16 +47,13 @@ export async function GET(request: NextRequest) {
     });
 
     if (!company) {
-      return NextResponse.json(
-        { error: 'Company not found or access denied' },
-        { status: 404 }
-      );
+      return createErrorResponse('Company not found or access denied', 'NOT_FOUND', 404);
     }
 
     // Calculate credit score with breakdown
     const creditScoreResult = await calculateCreditScore(company);
 
-    return NextResponse.json({
+    return createSuccessResponse({
       companyId,
       creditScore: creditScoreResult.score,
       rating: creditScoreResult.rating,
@@ -73,10 +65,7 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     console.error('Credit score API error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return createErrorResponse('Internal server error', 'INTERNAL_ERROR', 500);
   }
 }
 
@@ -89,10 +78,7 @@ export async function POST(request: NextRequest) {
     // Authenticate user
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: 'Authentication required' },
-        { status: 401 }
-      );
+      return createErrorResponse('Authentication required', 'UNAUTHORIZED', 401);
     }
 
     // Parse and validate request body
@@ -100,13 +86,7 @@ export async function POST(request: NextRequest) {
     const validationResult = creditScoreSchema.safeParse(body);
 
     if (!validationResult.success) {
-      return NextResponse.json(
-        {
-          error: 'Validation failed',
-          details: validationResult.error.issues
-        },
-        { status: 400 }
-      );
+      return createErrorResponse('Validation failed', 'VALIDATION_ERROR', 400, validationResult.error.issues);
     }
 
     const { companyId } = validationResult.data;
@@ -121,16 +101,13 @@ export async function POST(request: NextRequest) {
     });
 
     if (!company) {
-      return NextResponse.json(
-        { error: 'Company not found or access denied' },
-        { status: 404 }
-      );
+      return createErrorResponse('Company not found or access denied', 'NOT_FOUND', 404);
     }
 
     // Calculate credit score with breakdown
     const creditScoreResult = await calculateCreditScore(company);
 
-    return NextResponse.json({
+    return createSuccessResponse({
       companyId,
       creditScore: creditScoreResult.score,
       rating: creditScoreResult.rating,
@@ -142,9 +119,6 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Credit score API error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return createErrorResponse('Internal server error', 'INTERNAL_ERROR', 500);
   }
 }

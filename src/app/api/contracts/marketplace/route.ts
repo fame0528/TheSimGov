@@ -14,6 +14,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { connectDB, Contract, Company } from '@/lib/db';
+import { createSuccessResponse, createErrorResponse } from '@/lib/utils/apiResponse';
 import { CONTRACT_PARAMETERS } from '@/lib/utils/constants';
 import { faker } from '@faker-js/faker';
 import type { EmployeeSkills } from '@/lib/types';
@@ -36,7 +37,7 @@ export async function GET(request: NextRequest) {
     // Authenticate
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', 'UNAUTHORIZED', 401);
     }
 
     // Get query params
@@ -46,7 +47,7 @@ export async function GET(request: NextRequest) {
     const industryFilter = searchParams.get('industry');
 
     if (!companyId) {
-      return NextResponse.json({ error: 'Company ID required' }, { status: 400 });
+      return createErrorResponse('Company ID required', 'VALIDATION_ERROR', 400);
     }
 
     await connectDB();
@@ -54,12 +55,12 @@ export async function GET(request: NextRequest) {
     // Get company to determine level
     const company = await Company.findById(companyId);
     if (!company) {
-      return NextResponse.json({ error: 'Company not found' }, { status: 404 });
+      return createErrorResponse('Company not found', 'COMPANY_NOT_FOUND', 404);
     }
 
     // Verify ownership
     if (company.userId.toString() !== session.user.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+      return createErrorResponse('Unauthorized', 'FORBIDDEN', 403);
     }
 
     // Determine which tiers are available based on company level
@@ -84,14 +85,11 @@ export async function GET(request: NextRequest) {
       contracts.push(...tierContracts);
     }
 
-    return NextResponse.json(contracts, { status: 200 });
+    return createSuccessResponse({ contracts });
 
   } catch (error: any) {
     console.error('Marketplace generation error:', error);
-    return NextResponse.json(
-      { error: 'Failed to generate marketplace contracts', details: error.message },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to generate marketplace contracts', 'INTERNAL_ERROR', 500, error.message);
   }
 }
 

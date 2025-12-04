@@ -11,6 +11,7 @@
  * - createSuccessResponse<T>: Wrap data in standardized success envelope
  * - createErrorResponse: Generate consistent error responses with codes/status
  * - handleApiError: Universal error serialization with logging
+ * - ErrorCode: Standard error code constants
  *
  * IMPLEMENTATION NOTES:
  * - DRY principle: Single source of truth for response formatting
@@ -19,6 +20,22 @@
  */
 
 import { NextResponse } from 'next/server';
+
+/**
+ * Standard error codes for API responses
+ */
+export const ErrorCode = {
+  UNAUTHORIZED: 'UNAUTHORIZED',
+  NOT_FOUND: 'NOT_FOUND',
+  FORBIDDEN: 'FORBIDDEN',
+  VALIDATION_ERROR: 'VALIDATION_ERROR',
+  BAD_REQUEST: 'BAD_REQUEST',
+  INTERNAL_ERROR: 'INTERNAL_ERROR',
+  RATE_LIMIT: 'RATE_LIMIT',
+  CONFLICT: 'CONFLICT',
+} as const;
+
+export type ErrorCodeType = typeof ErrorCode[keyof typeof ErrorCode];
 
 /**
  * Success response envelope with optional metadata
@@ -56,7 +73,8 @@ export interface ApiErrorResponse {
  */
 export function createSuccessResponse<T>(
   data: T,
-  meta?: Record<string, unknown>
+  meta?: Record<string, unknown>,
+  status: number = 200
 ): NextResponse<ApiSuccessResponse<T>> {
   const response: ApiSuccessResponse<T> = {
     success: true,
@@ -67,7 +85,7 @@ export function createSuccessResponse<T>(
     response.meta = meta;
   }
 
-  return NextResponse.json(response);
+  return NextResponse.json(response, { status });
 }
 
 /**

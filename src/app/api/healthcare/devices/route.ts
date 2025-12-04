@@ -8,8 +8,9 @@
  * @author ECHO v1.3.0 Healthcare Implementation
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { auth } from '@/auth';
+import { createSuccessResponse, createErrorResponse, ErrorCode } from '@/lib/utils/apiResponse';
 import { connectDB } from '@/lib/db/mongoose';
 import { MedicalDevice } from '@/lib/db/models';
 import {
@@ -96,7 +97,7 @@ export async function GET(request: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     const { searchParams } = new URL(request.url);
@@ -167,7 +168,8 @@ export async function GET(request: NextRequest) {
 
         const totalPortfolioValue = portfolioMetrics.reduce((sum, product) => sum + (product.averageSellingPrice * product.annualUnits), 0);
 
-        const licenseValid = validateHealthcareLicenseFromAccreditations((device as any).accreditations || []);
+        // Use qualityCertifications for device license validation (accreditations doesn't exist on MedicalDevice)
+        const licenseValid = validateHealthcareLicenseFromAccreditations(device.qualityCertifications || []);
 
         const metricsValid = validateHealthcareMetrics({
           totalPortfolioValue,
@@ -179,7 +181,7 @@ export async function GET(request: NextRequest) {
     // Get total count for pagination
     const totalCount = await MedicalDevice.countDocuments(mongoQuery);
 
-    return NextResponse.json({
+    return createSuccessResponse({
       devices: devicesWithMetrics,
       pagination: {
         total: totalCount,
@@ -193,15 +195,9 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Error fetching medical devices:', error);
     if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: 'Invalid query parameters', details: error.errors },
-        { status: 400 }
-      );
+      return createErrorResponse('Invalid query parameters', ErrorCode.BAD_REQUEST, 400);
     }
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return createErrorResponse('Internal server error', ErrorCode.INTERNAL_ERROR, 500);
   }
 }
 
@@ -213,7 +209,7 @@ export async function POST(request: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     const body = await request.json();
@@ -222,11 +218,11 @@ export async function POST(request: NextRequest) {
     // Verify company ownership
     const company = await Company.findById(validatedData.company);
     if (!company) {
-      return NextResponse.json({ error: 'Company not found' }, { status: 404 });
+      return createErrorResponse('Company not found', ErrorCode.NOT_FOUND, 404);
     }
 
     if (company.owner?.toString() !== session.user.id) {
-      return NextResponse.json({ error: 'Unauthorized - Company not owned by user' }, { status: 403 });
+      return createErrorResponse('Unauthorized - Company not owned by user', ErrorCode.FORBIDDEN, 403);
     }
 
     // Calculate initial portfolio metrics
@@ -250,7 +246,8 @@ export async function POST(request: NextRequest) {
 
     const totalPortfolioValue = portfolioWithMetrics.reduce((sum: number, product: any) => sum + (product.averageSellingPrice * product.annualUnits), 0);
 
-    const licenseValid = validateHealthcareLicenseFromAccreditations((validatedData as any).accreditations || []);
+    // Use manufacturing certifications for license validation (MedicalDevice uses certifications, not accreditations)
+    const licenseValid = validateHealthcareLicenseFromAccreditations(validatedData.manufacturing.certifications || []);
 
     const metricsValid = validateHealthcareMetrics({
       totalPortfolioValue,
@@ -268,7 +265,7 @@ export async function POST(request: NextRequest) {
     await medicalDevice.save();
     await medicalDevice.populate('company', 'name industry');
 
-    return NextResponse.json({
+    return createSuccessResponse({
       device: {
         ...medicalDevice.toObject(),
         metrics: {
@@ -278,19 +275,13 @@ export async function POST(request: NextRequest) {
         }
       },
       message: 'Medical device company created successfully'
-    }, { status: 201 });
+    }, undefined, 201);
 
   } catch (error) {
     console.error('Error creating medical device company:', error);
     if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: 'Invalid medical device data', details: error.errors },
-        { status: 400 }
-      );
+      return createErrorResponse('Invalid medical device data', ErrorCode.BAD_REQUEST, 400);
     }
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return createErrorResponse('Internal server error', ErrorCode.INTERNAL_ERROR, 500);
   }
 }

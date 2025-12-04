@@ -18,9 +18,10 @@
  * @author ECHO v1.3.0
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { authenticateRequest, handleAPIError } from '@/lib/utils/api-helpers';
 import { connectDB } from '@/lib/db';
+import { createSuccessResponse, createErrorResponse, ErrorCode } from '@/lib/utils/apiResponse';
 import DataCenter from '@/lib/db/models/DataCenter';
 import Company from '@/lib/db/models/Company';
 import { recommendCoolingUpgrade } from '@/lib/utils/ai/infrastructure';
@@ -75,17 +76,19 @@ export async function POST(request: NextRequest) {
 
     // 3. Validate required fields
     if (!dataCenterId) {
-      return NextResponse.json(
-        { success: false, error: 'Missing required field: dataCenterId' },
-        { status: 400 }
+      return createErrorResponse(
+        'Missing required field: dataCenterId',
+        ErrorCode.BAD_REQUEST,
+        400
       );
     }
 
     // 4. Validate powerCostPerKWh range
     if (typeof powerCostPerKWh !== 'number' || powerCostPerKWh < 0 || powerCostPerKWh > 1) {
-      return NextResponse.json(
-        { success: false, error: 'powerCostPerKWh must be between 0 and 1' },
-        { status: 400 }
+      return createErrorResponse(
+        'powerCostPerKWh must be between 0 and 1',
+        ErrorCode.VALIDATION_ERROR,
+        400
       );
     }
 
@@ -94,26 +97,29 @@ export async function POST(request: NextRequest) {
     // 5. Find user's company
     const company = await Company.findById(companyId);
     if (!company) {
-      return NextResponse.json(
-        { success: false, error: 'Company not found' },
-        { status: 404 }
+      return createErrorResponse(
+        'Company not found',
+        ErrorCode.NOT_FOUND,
+        404
       );
     }
 
     // 6. Load data center with ownership verification
     const dataCenter = await DataCenter.findById(dataCenterId);
     if (!dataCenter) {
-      return NextResponse.json(
-        { success: false, error: 'Data center not found' },
-        { status: 404 }
+      return createErrorResponse(
+        'Data center not found',
+        ErrorCode.NOT_FOUND,
+        404
       );
     }
 
     // Verify ownership
     if (dataCenter.company.toString() !== companyId) {
-      return NextResponse.json(
-        { success: false, error: 'Data center does not belong to your company' },
-        { status: 403 }
+      return createErrorResponse(
+        'Data center does not belong to your company',
+        ErrorCode.FORBIDDEN,
+        403
       );
     }
 
@@ -121,8 +127,7 @@ export async function POST(request: NextRequest) {
     const recommendation = recommendCoolingUpgrade(dataCenter, powerCostPerKWh);
 
     // 8. Return recommendation
-    return NextResponse.json({
-      success: true,
+    return createSuccessResponse({
       dataCenterId: dataCenter._id,
       dataCenterName: dataCenter.name,
       recommendation,

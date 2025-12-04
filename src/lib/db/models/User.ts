@@ -54,10 +54,10 @@ const userSchema = new Schema<User>({
     required: true,
     uppercase: true,
     validate: {
-      validator: function(v: string) {
-        return STATE_ABBREVIATIONS.includes(v as any);
+      validator: function (v: string) {
+        return STATE_ABBREVIATIONS.includes(v as typeof STATE_ABBREVIATIONS[number]);
       },
-      message: (props: any) => `${props.value} is not a valid state abbreviation`
+      message: (props: { value: string }) => `${props.value} is not a valid state abbreviation`
     },
   },
   gender: {
@@ -70,17 +70,17 @@ const userSchema = new Schema<User>({
     type: Date,
     required: true,
     validate: {
-      validator: function(v: Date) {
+      validator: function (v: Date) {
         // Validate user is at least 18 years old
         const today = new Date();
         const birthDate = new Date(v);
         const age = today.getFullYear() - birthDate.getFullYear();
         const monthDiff = today.getMonth() - birthDate.getMonth();
         const dayDiff = today.getDate() - birthDate.getDate();
-        
+
         // Adjust age if birthday hasn't occurred this year yet
         const actualAge = monthDiff < 0 || (monthDiff === 0 && dayDiff < 0) ? age - 1 : age;
-        
+
         return actualAge >= 18;
       },
       message: 'User must be at least 18 years old'
@@ -103,7 +103,7 @@ const userSchema = new Schema<User>({
     required: true,
     trim: true,
     validate: {
-      validator: function(v: string) {
+      validator: function (v: string) {
         // Validate URL is either preset portrait or user upload
         if (!v) return false; // Required field
         return v.startsWith('/portraits/') || v.startsWith('/avatars/');
@@ -122,6 +122,11 @@ const userSchema = new Schema<User>({
     type: String,
     ref: 'Company',
   }],
+  cash: {
+    type: Number,
+    default: 0,
+    min: 0,
+  },
 });
 
 // Indexes for faster lookups

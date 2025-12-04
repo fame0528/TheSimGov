@@ -9,11 +9,12 @@
  * calculation, performance tracking, and contract compliance monitoring.
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { connectDB as dbConnect } from '@/lib/db';
 import { PPA } from '@/lib/db/models';
 import { auth } from '@/auth';
+import { createSuccessResponse, createErrorResponse, ErrorCode } from '@/lib/utils/apiResponse';
 
 // ============================================================================
 // VALIDATION SCHEMAS
@@ -43,7 +44,7 @@ export async function POST(
     // Authentication
     const session = await auth();
     if (!session?.user?.companyId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     // Parse request body
@@ -51,10 +52,7 @@ export async function POST(
     const validation = DeliverEnergySchema.safeParse(body);
     
     if (!validation.success) {
-      return NextResponse.json(
-        { error: 'Invalid input', details: validation.error.flatten() },
-        { status: 400 }
-      );
+      return createErrorResponse('Invalid input: ' + JSON.stringify(validation.error.flatten()), ErrorCode.BAD_REQUEST, 400);
     }
 
     const { energyDelivered, deliveryDate, actualPrice, notes } = validation.data;
@@ -69,27 +67,18 @@ export async function POST(
     });
 
     if (!ppa) {
-      return NextResponse.json(
-        { error: 'PPA not found or access denied' },
-        { status: 404 }
-      );
+      return createErrorResponse('PPA not found or access denied', ErrorCode.NOT_FOUND, 404);
     }
 
     // Check if PPA is active per model
     if (!ppa.active) {
-      return NextResponse.json(
-        { error: 'Cannot deliver energy to inactive PPA' },
-        { status: 400 }
-      );
+      return createErrorResponse('Cannot deliver energy to inactive PPA', ErrorCode.BAD_REQUEST, 400);
     }
 
     // Validate delivery date within contract period
     const delivery = new Date(deliveryDate);
     if (delivery < ppa.startDate || delivery > ppa.endDate) {
-      return NextResponse.json(
-        { error: `Delivery date ${deliveryDate} is outside contract period (${ppa.startDate.toISOString()} to ${ppa.endDate.toISOString()})` },
-        { status: 400 }
-      );
+      return createErrorResponse(`Delivery date ${deliveryDate} is outside contract period (${ppa.startDate.toISOString()} to ${ppa.endDate.toISOString()})`, ErrorCode.BAD_REQUEST, 400);
     }
 
     // Determine effective price using base + annual escalation; allow override
@@ -119,8 +108,7 @@ export async function POST(
     // Log delivery
     console.log(`[ENERGY] PPA delivery: ${ppa.contractId} (${ppa._id}), ${energyDelivered} MWh @ $${effectivePrice.toFixed(2)}/MWh = $${revenue.toFixed(2)}`);
 
-    return NextResponse.json({
-      success: true,
+    return createSuccessResponse({
       ppa: {
         id: ppa._id,
         contractId: ppa.contractId,
@@ -153,14 +141,11 @@ export async function POST(
         remainingVolume: remainingVolume.toLocaleString() + ' MWh',
         percentComplete: ((deliveredTotal / (ppa.contractedAnnualMWh * contractDurationYears)) * 100).toFixed(2) + '%'
       }
-    });
+    }, undefined, 201);
 
   } catch (error) {
     console.error('[ENERGY] PPA delivery error:', error);
-    return NextResponse.json(
-      { error: 'Failed to record energy delivery', details: error instanceof Error ? error.message : 'Unknown error' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to record energy delivery: ' + (error instanceof Error ? error.message : 'Unknown error'), ErrorCode.INTERNAL_ERROR, 500);
   }
 }
 

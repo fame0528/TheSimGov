@@ -11,10 +11,11 @@
  * @author ECHO v1.3.1
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { auth } from '@/auth';
 import { connectDB } from '@/lib/db';
 import { SoftwareProduct } from '@/lib/db/models';
+import { createSuccessResponse, createErrorResponse, ErrorCode } from '@/lib/utils/apiResponse';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -28,7 +29,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     const { id } = await params;
@@ -40,16 +41,13 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       .lean();
       
     if (!product) {
-      return NextResponse.json({ error: 'Software product not found' }, { status: 404 });
+      return createErrorResponse('Software product not found', ErrorCode.NOT_FOUND, 404);
     }
 
-    return NextResponse.json({ product });
+    return createSuccessResponse({ product });
   } catch (error) {
     console.error('GET /api/software/products/[id] error:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch software product' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to fetch software product', ErrorCode.INTERNAL_ERROR, 500);
   }
 }
 
@@ -61,7 +59,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
   try {
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     const { id } = await params;
@@ -76,16 +74,13 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     );
 
     if (!product) {
-      return NextResponse.json({ error: 'Software product not found' }, { status: 404 });
+      return createErrorResponse('Software product not found', ErrorCode.NOT_FOUND, 404);
     }
 
-    return NextResponse.json({ message: 'Software product updated', product });
+    return createSuccessResponse({ message: 'Software product updated', product });
   } catch (error) {
     console.error('PATCH /api/software/products/[id] error:', error);
-    return NextResponse.json(
-      { error: 'Failed to update software product' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to update software product', ErrorCode.INTERNAL_ERROR, 500);
   }
 }
 
@@ -97,7 +92,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     const { id } = await params;
@@ -105,15 +100,12 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
 
     const product = await SoftwareProduct.findByIdAndDelete(id);
     if (!product) {
-      return NextResponse.json({ error: 'Software product not found' }, { status: 404 });
+      return createErrorResponse('Software product not found', ErrorCode.NOT_FOUND, 404);
     }
 
-    return NextResponse.json({ message: 'Software product deleted' });
+    return createSuccessResponse({ message: 'Software product deleted' });
   } catch (error) {
     console.error('DELETE /api/software/products/[id] error:', error);
-    return NextResponse.json(
-      { error: 'Failed to delete software product' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to delete software product', ErrorCode.INTERNAL_ERROR, 500);
   }
 }

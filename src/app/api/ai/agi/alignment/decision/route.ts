@@ -43,9 +43,10 @@
  * @implementation Phase 6 API Routes Batch 2
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { auth } from '@/auth';
 import { connectDB } from '@/lib/db';
+import { createSuccessResponse, createErrorResponse, ErrorCode } from '@/lib/utils/apiResponse';
 import Company from '@/lib/db/models/Company';
 import AGIMilestone from '@/lib/db/models/AI/AGIMilestone';
 
@@ -92,7 +93,7 @@ export async function POST(req: NextRequest) {
     // Authentication - verify user session
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     await connectDB();
@@ -100,7 +101,7 @@ export async function POST(req: NextRequest) {
     // Get user's company
     const company = await Company.findOne({ userId: session.user.id });
     if (!company) {
-      return NextResponse.json({ error: 'Company not found' }, { status: 404 });
+      return createErrorResponse('Company not found', ErrorCode.NOT_FOUND, 404);
     }
 
     // Parse request body
@@ -109,18 +110,12 @@ export async function POST(req: NextRequest) {
 
     // Validation: All fields required
     if (!milestoneId || !challengeId || !choice) {
-      return NextResponse.json(
-        { error: 'milestoneId, challengeId, and choice are required' },
-        { status: 400 }
-      );
+      return createErrorResponse('milestoneId, challengeId, and choice are required', ErrorCode.VALIDATION_ERROR, 400);
     }
 
     // Validation: Choice must be 'safety' or 'capability'
     if (choice !== 'safety' && choice !== 'capability') {
-      return NextResponse.json(
-        { error: 'choice must be "safety" or "capability"' },
-        { status: 400 }
-      );
+      return createErrorResponse('choice must be "safety" or "capability"', ErrorCode.VALIDATION_ERROR, 400);
     }
 
     // Find milestone (must be owned by company)
@@ -130,10 +125,7 @@ export async function POST(req: NextRequest) {
     });
 
     if (!milestone) {
-      return NextResponse.json(
-        { error: 'Milestone not found or not owned by company' },
-        { status: 404 }
-      );
+      return createErrorResponse('Milestone not found or not owned by company', ErrorCode.NOT_FOUND, 404);
     }
 
     // Find challenge in milestone's alignmentChallenges array
@@ -142,21 +134,16 @@ export async function POST(req: NextRequest) {
     );
 
     if (!challenge) {
-      return NextResponse.json(
-        { error: 'Challenge not found in milestone' },
-        { status: 404 }
-      );
+      return createErrorResponse('Challenge not found in milestone', ErrorCode.NOT_FOUND, 404);
     }
 
     // Validation: Challenge must not already be decided
     if (challenge.choiceMade !== undefined) {
-      return NextResponse.json(
-        {
-          error: 'Challenge already decided',
-          choiceMade: challenge.choiceMade,
-          details: 'Decisions are final and cannot be changed',
-        },
-        { status: 400 }
+      return createErrorResponse(
+        'Challenge already decided',
+        ErrorCode.BAD_REQUEST,
+        400,
+        { choiceMade: challenge.choiceMade, details: 'Decisions are final and cannot be changed' }
       );
     }
 
@@ -315,8 +302,7 @@ export async function POST(req: NextRequest) {
     // Save updated milestone
     await milestone.save();
 
-    return NextResponse.json({
-      success: true,
+    return createSuccessResponse({
       choice,
       consequences,
       milestone,
@@ -324,12 +310,11 @@ export async function POST(req: NextRequest) {
     });
   } catch (error) {
     console.error('Error making alignment decision:', error);
-    return NextResponse.json(
-      {
-        error: 'Failed to make alignment decision',
-        details: error instanceof Error ? error.message : 'Unknown error',
-      },
-      { status: 500 }
+    return createErrorResponse(
+      'Failed to make alignment decision',
+      ErrorCode.INTERNAL_ERROR,
+      500,
+      { details: error instanceof Error ? error.message : 'Unknown error' }
     );
   }
 }

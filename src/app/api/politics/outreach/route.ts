@@ -4,12 +4,13 @@
  * @created 2025-11-29
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { auth } from '@/auth';
 import { connectDB } from '@/lib/db';
 import VoterOutreach from '@/lib/db/models/politics/VoterOutreach';
 import { createVoterOutreachSchema, voterOutreachQuerySchema } from '@/lib/validations/politics';
 import { z } from 'zod';
+import { createSuccessResponse, createErrorResponse } from '@/lib/utils/apiResponse';
 
 /**
  * GET /api/politics/outreach
@@ -19,7 +20,7 @@ export async function GET(request: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', 'UNAUTHORIZED', 401);
     }
 
     await connectDB();
@@ -61,7 +62,7 @@ export async function GET(request: NextRequest) {
 
     const total = await VoterOutreach.countDocuments(filter);
 
-    return NextResponse.json({
+    return createSuccessResponse({
       outreach,
       pagination: {
         total,
@@ -73,10 +74,10 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: 'Invalid query parameters', details: error.errors }, { status: 400 });
+      return createErrorResponse('Invalid query parameters', 'VALIDATION_ERROR', 400, error.errors);
     }
     console.error('[Outreach GET] Error:', error);
-    return NextResponse.json({ error: 'Failed to fetch outreach activities' }, { status: 500 });
+    return createErrorResponse('Failed to fetch outreach activities', 'INTERNAL_ERROR', 500);
   }
 }
 
@@ -88,7 +89,7 @@ export async function POST(request: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', 'UNAUTHORIZED', 401);
     }
 
     await connectDB();
@@ -101,13 +102,13 @@ export async function POST(request: NextRequest) {
       company: session.user.companyId,
     });
 
-    return NextResponse.json({ outreach }, { status: 201 });
+    return createSuccessResponse({ outreach }, undefined, 201);
 
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: 'Invalid outreach data', details: error.errors }, { status: 400 });
+      return createErrorResponse('Invalid outreach data', 'VALIDATION_ERROR', 400);
     }
     console.error('[Outreach POST] Error:', error);
-    return NextResponse.json({ error: 'Failed to create outreach activity' }, { status: 500 });
+    return createErrorResponse('Failed to create outreach activity', 'INTERNAL_ERROR', 500);
   }
 }

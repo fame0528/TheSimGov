@@ -20,11 +20,11 @@
  */
 
 import { z } from 'zod';
-import { NextResponse } from 'next/server';
 import { connectDB } from '@/lib/db';
 import LeaderboardSnapshot from '@/lib/db/models/LeaderboardSnapshot';
 import { LeaderboardMetricType } from '@/lib/types/politics';
 import {
+  createSuccessResponse,
   createErrorResponse,
   handleApiError,
 } from '@/lib/utils/apiResponse';
@@ -100,9 +100,8 @@ export async function GET(request: Request) {
       dataPoints: history.length,
     } : null;
 
-    return NextResponse.json({
-      success: true,
-      data: {
+    return createSuccessResponse(
+      {
         playerId,
         metric,
         days,
@@ -111,11 +110,11 @@ export async function GET(request: Request) {
         rankChange,
         stats,
       },
-      meta: {
+      {
         queryPeriod: `${days} days`,
         dataPoints: history.length,
-      },
-    });
+      }
+    );
   } catch (error) {
     return handleApiError(error, 'Failed to retrieve ranking history');
   }

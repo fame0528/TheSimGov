@@ -23,6 +23,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { connectDB } from '@/lib/db/mongoose';
+import { createSuccessResponse, createErrorResponse } from '@/lib/utils/apiResponse';
 import MonetizationSettings from '@/lib/db/models/media/MonetizationSettings';
 import Company from '@/lib/db/models/Company';
 import {
@@ -39,7 +40,7 @@ export async function GET(request: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', 'UNAUTHORIZED', 401);
     }
 
     await connectDB();
@@ -47,7 +48,7 @@ export async function GET(request: NextRequest) {
     // Get company for the user
     const company = await Company.findOne({ owner: session.user.id });
     if (!company) {
-      return NextResponse.json({ error: 'Company not found' }, { status: 404 });
+      return createErrorResponse('Company not found', 'COMPANY_NOT_FOUND', 404);
     }
 
     // Get monetization settings
@@ -84,7 +85,7 @@ export async function GET(request: NextRequest) {
     // Generate optimization recommendations
     const recommendations = generateMonetizationRecommendations(doc, calculatedMetrics);
 
-    return NextResponse.json({
+    return createSuccessResponse({
       settings: {
         ...doc,
         calculatedMetrics,
@@ -94,10 +95,7 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     console.error('Error fetching monetization settings:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return createErrorResponse('Internal server error', 'INTERNAL_ERROR', 500);
   }
 }
 
@@ -109,7 +107,7 @@ export async function POST(request: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', 'UNAUTHORIZED', 401);
     }
 
     await connectDB();
@@ -117,7 +115,7 @@ export async function POST(request: NextRequest) {
     // Get company for the user
     const company = await Company.findOne({ owner: session.user.id });
     if (!company) {
-      return NextResponse.json({ error: 'Company not found' }, { status: 404 });
+      return createErrorResponse('Company not found', 'COMPANY_NOT_FOUND', 404);
     }
 
     const body = await request.json();
@@ -221,21 +219,22 @@ export async function POST(request: NextRequest) {
 
     const recommendations = generateMonetizationRecommendations(doc, calculatedMetrics);
 
-    return NextResponse.json({
-      settings: {
-        ...doc,
-        calculatedMetrics,
-        recommendations
+    return createSuccessResponse(
+      {
+        settings: {
+          ...doc,
+          calculatedMetrics,
+          recommendations
+        },
+        message: settings.isNew ? 'Monetization settings created successfully' : 'Monetization settings updated successfully'
       },
-      message: settings.isNew ? 'Monetization settings created successfully' : 'Monetization settings updated successfully'
-    }, { status: settings.isNew ? 201 : 200 });
+      undefined,
+      settings.isNew ? 201 : 200
+    );
 
   } catch (error) {
     console.error('Error saving monetization settings:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return createErrorResponse('Internal server error', 'INTERNAL_ERROR', 500);
   }
 }
 

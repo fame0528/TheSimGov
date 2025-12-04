@@ -11,10 +11,12 @@
  * @author ECHO v1.3.1
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { auth } from '@/auth';
 import { connectDB } from '@/lib/db';
 import { EnergyTradeOrder } from '@/lib/db/models';
+import { createSuccessResponse, createErrorResponse } from '@/lib/utils/apiResponse';
+import type { IOrderFill } from '@/lib/db/models/energy/EnergyTradeOrder';
 
 /**
  * GET /api/energy/orders/[id]
@@ -27,7 +29,7 @@ export async function GET(
   try {
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', 'UNAUTHORIZED', 401);
     }
 
     await connectDB();
@@ -38,17 +40,18 @@ export async function GET(
       .lean();
 
     if (!order) {
-      return NextResponse.json({ error: 'Order not found' }, { status: 404 });
+      return createErrorResponse('Order not found', 'NOT_FOUND', 404);
     }
 
-    // Calculate order metrics
-    const totalFilled = order.fills?.reduce((sum, fill) => sum + (((fill as any).quantityMWh ?? (fill as any).quantity ?? 0)), 0) || 0;
-    const avgFillPrice = order.fills && order.fills.length > 0
-      ? order.fills.reduce((sum, fill) => sum + ((fill as any).price ?? 0) * (((fill as any).quantityMWh ?? (fill as any).quantity ?? 0)), 0) / Math.max(totalFilled, 1)
+    // Calculate order metrics (fills use volumeMWh per IOrderFill interface)
+    const fills = order.fills as IOrderFill[];
+    const totalFilled = fills?.reduce((sum, fill) => sum + (fill.volumeMWh ?? 0), 0) || 0;
+    const avgFillPrice = fills && fills.length > 0
+      ? fills.reduce((sum, fill) => sum + (fill.price ?? 0) * (fill.volumeMWh ?? 0), 0) / Math.max(totalFilled, 1)
       : 0;
     const remainingVolume = order.quantityMWh - totalFilled;
 
-    return NextResponse.json({
+    return createSuccessResponse({
       order,
       metrics: {
         totalFilled,
@@ -60,10 +63,7 @@ export async function GET(
     });
   } catch (error) {
     console.error('GET /api/energy/orders/[id] error:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch order' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to fetch order', 'INTERNAL_ERROR', 500);
   }
 }
 
@@ -78,7 +78,7 @@ export async function PATCH(
   try {
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', 'UNAUTHORIZED', 401);
     }
 
     await connectDB();
@@ -88,15 +88,12 @@ export async function PATCH(
     const order = await EnergyTradeOrder.findById(id);
 
     if (!order) {
-      return NextResponse.json({ error: 'Order not found' }, { status: 404 });
+      return createErrorResponse('Order not found', 'NOT_FOUND', 404);
     }
 
     // Only allow modification of pending/partially filled orders
     if (!['Pending', 'PartiallyFilled'].includes(order.status)) {
-      return NextResponse.json(
-        { error: `Cannot modify order with status: ${order.status}` },
-        { status: 400 }
-      );
+      return createErrorResponse(`Cannot modify order with status: ${order.status}`, 'BAD_REQUEST', 400);
     }
 
     const allowedUpdates = ['price', 'quantityMWh'];
@@ -106,12 +103,10 @@ export async function PATCH(
       if (key in body) {
         // Validate new volume doesn't reduce below already filled amount
         if (key === 'quantityMWh') {
-          const totalFilled = order.fills?.reduce((sum, fill) => sum + (((fill as any).quantityMWh ?? (fill as any).quantity ?? 0)), 0) || 0;
+          const fills = order.fills as IOrderFill[];
+          const totalFilled = fills?.reduce((sum, fill) => sum + (fill.volumeMWh ?? 0), 0) || 0;
           if (body[key] < totalFilled) {
-            return NextResponse.json(
-              { error: `Cannot reduce volume below already filled amount (${totalFilled} MWh)` },
-              { status: 400 }
-            );
+            return createErrorResponse(`Cannot reduce volume below already filled amount (${totalFilled} MWh)`, 'BAD_REQUEST', 400);
           }
         }
         updates[key] = body[key];
@@ -119,10 +114,7 @@ export async function PATCH(
     }
 
     if (Object.keys(updates).length === 0) {
-      return NextResponse.json(
-        { error: 'No valid updates provided' },
-        { status: 400 }
-      );
+      return createErrorResponse('No valid updates provided', 'BAD_REQUEST', 400);
     }
 
     const updatedOrder = await EnergyTradeOrder.findByIdAndUpdate(
@@ -131,16 +123,13 @@ export async function PATCH(
       { new: true, runValidators: true }
     );
 
-    return NextResponse.json({
+    return createSuccessResponse({
       message: 'Order updated',
       order: updatedOrder,
     });
   } catch (error) {
     console.error('PATCH /api/energy/orders/[id] error:', error);
-    return NextResponse.json(
-      { error: 'Failed to update order' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to update order', 'INTERNAL_ERROR', 500);
   }
 }
 
@@ -155,7 +144,7 @@ export async function DELETE(
   try {
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', 'UNAUTHORIZED', 401);
     }
 
     await connectDB();
@@ -164,15 +153,12 @@ export async function DELETE(
     const order = await EnergyTradeOrder.findById(id);
 
     if (!order) {
-      return NextResponse.json({ error: 'Order not found' }, { status: 404 });
+      return createErrorResponse('Order not found', 'NOT_FOUND', 404);
     }
 
     // Only allow cancellation of pending/partially filled orders
     if (!['Pending', 'PartiallyFilled'].includes(order.status)) {
-      return NextResponse.json(
-        { error: `Cannot cancel order with status: ${order.status}` },
-        { status: 400 }
-      );
+      return createErrorResponse(`Cannot cancel order with status: ${order.status}`, 'BAD_REQUEST', 400);
     }
 
     // Use the model's cancel method if available
@@ -183,15 +169,12 @@ export async function DELETE(
       await order.save();
     }
 
-    return NextResponse.json({
+    return createSuccessResponse({
       message: 'Order cancelled',
       order,
     });
   } catch (error) {
     console.error('DELETE /api/energy/orders/[id] error:', error);
-    return NextResponse.json(
-      { error: 'Failed to cancel order' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to cancel order', 'INTERNAL_ERROR', 500);
   }
 }

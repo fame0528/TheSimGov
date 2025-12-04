@@ -11,9 +11,10 @@
  * @author ECHO v1.3.0
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { connectDB } from '@/lib/db';
 import AIModel from '@/lib/db/models/AIModel';
+import { createSuccessResponse, createErrorResponse } from '@/lib/utils/apiResponse';
 import { TrainingProgressSchema, DeployModelSchema } from '@/lib/validations/ai';
 import { authenticateRequest, authorizeCompany, validateRequestBody, handleAPIError } from '@/lib/utils/api-helpers';
 import { calculateIncrementalCost } from '@/lib/utils/ai';
@@ -63,21 +64,19 @@ export async function GET(
     const model = await AIModel.findById(modelId);
 
     if (!model) {
-      return NextResponse.json(
-        { error: 'AI model not found' },
-        { status: 404 }
-      );
+      return createErrorResponse('AI model not found', 'NOT_FOUND', 404);
     }
 
     // Verify company ownership
     if (model.company.toString() !== companyId) {
-      return NextResponse.json(
-        { error: 'Cannot access another company\'s AI model' },
-        { status: 403 }
+      return createErrorResponse(
+        "Cannot access another company's AI model",
+        'FORBIDDEN',
+        403
       );
     }
 
-    return NextResponse.json(model, { status: 200 });
+    return createSuccessResponse(model);
   } catch (error) {
     return handleAPIError('[GET /api/ai/models/[id]]', error, 'Failed to retrieve AI model');
   }
@@ -148,17 +147,15 @@ export async function PATCH(
     const model = await AIModel.findById(modelId);
 
     if (!model) {
-      return NextResponse.json(
-        { error: 'AI model not found' },
-        { status: 404 }
-      );
+      return createErrorResponse('AI model not found', 'NOT_FOUND', 404);
     }
 
     // Verify company ownership
     if (model.company.toString() !== companyId) {
-      return NextResponse.json(
-        { error: 'Cannot modify another company\'s AI model' },
-        { status: 403 }
+      return createErrorResponse(
+        "Cannot modify another company's AI model",
+        'FORBIDDEN',
+        403
       );
     }
 
@@ -176,12 +173,11 @@ export async function PATCH(
       });
 
       if (!result.success) {
-        return NextResponse.json(
-          {
-            error: 'Invalid training progress data',
-            details: result.error.errors,
-          },
-          { status: 400 }
+        return createErrorResponse(
+          'Invalid training progress data',
+          'VALIDATION_ERROR',
+          400,
+          result.error.errors
         );
       }
 
@@ -189,21 +185,19 @@ export async function PATCH(
 
       // Check if model can be trained
       if (model.status !== 'Training') {
-        return NextResponse.json(
-          { error: 'Model is not in training state', status: model.status },
-          { status: 400 }
+        return createErrorResponse(
+          `Model is not in training state (current: ${model.status})`,
+          'VALIDATION_ERROR',
+          400
         );
       }
 
       // Check progress overflow
       if (model.trainingProgress + increment > 100) {
-        return NextResponse.json(
-          {
-            error: 'Progress increment would exceed 100%',
-            current: model.trainingProgress,
-            increment,
-          },
-          { status: 400 }
+        return createErrorResponse(
+          `Progress increment would exceed 100% (current: ${model.trainingProgress}%, increment: ${increment}%)`,
+          'VALIDATION_ERROR',
+          400
         );
       }
 
@@ -221,16 +215,13 @@ export async function PATCH(
 
       await model.save(); // Auto-completes at 100% via pre-save hook
 
-      return NextResponse.json(
-        {
-          model,
-          message: `Training advanced ${increment}% (cost: $${cost.toLocaleString()})`,
-          totalCost: model.trainingCost,
-          progress: model.trainingProgress,
-          status: model.status, // May auto-transition to 'Completed'
-        },
-        { status: 200 }
-      );
+      return createSuccessResponse({
+        model,
+        message: `Training advanced ${increment}% (cost: $${cost.toLocaleString()})`,
+        totalCost: model.trainingCost,
+        progress: model.trainingProgress,
+        status: model.status, // May auto-transition to 'Completed'
+      });
     }
 
     // ACTION 2: Deploy Model
@@ -242,12 +233,11 @@ export async function PATCH(
       });
 
       if (!result.success) {
-        return NextResponse.json(
-          {
-            error: 'Invalid deployment data',
-            details: result.error.errors,
-          },
-          { status: 400 }
+        return createErrorResponse(
+          'Invalid deployment data',
+          'VALIDATION_ERROR',
+          400,
+          result.error.errors
         );
       }
 
@@ -255,13 +245,10 @@ export async function PATCH(
 
       // Check if model can be deployed
       if (model.status !== 'Completed') {
-        return NextResponse.json(
-          {
-            error: 'Model must be completed before deployment',
-            status: model.status,
-            progress: model.trainingProgress,
-          },
-          { status: 400 }
+        return createErrorResponse(
+          `Model must be completed before deployment (current: ${model.status}, progress: ${model.trainingProgress}%)`,
+          'VALIDATION_ERROR',
+          400
         );
       }
 
@@ -271,20 +258,18 @@ export async function PATCH(
 
       await model.save(); // Generates apiEndpoint via pre-save hook
 
-      return NextResponse.json(
-        {
-          model,
-          message: `Model deployed successfully at ${model.apiEndpoint}`,
-          pricing: `$${pricing} per 1000 API calls`,
-        },
-        { status: 200 }
-      );
+      return createSuccessResponse({
+        model,
+        message: `Model deployed successfully at ${model.apiEndpoint}`,
+        pricing: `$${pricing} per 1000 API calls`,
+      });
     }
 
     // Invalid action
-    return NextResponse.json(
-      { error: 'Invalid action. Must be "train" or "deploy"' },
-      { status: 400 }
+    return createErrorResponse(
+      'Invalid action. Must be "train" or "deploy"',
+      'VALIDATION_ERROR',
+      400
     );
   } catch (error) {
     return handleAPIError('[PATCH /api/ai/models/[id]]', error, 'Failed to update AI model');
@@ -337,40 +322,33 @@ export async function DELETE(
     const model = await AIModel.findById(modelId);
 
     if (!model) {
-      return NextResponse.json(
-        { error: 'AI model not found' },
-        { status: 404 }
-      );
+      return createErrorResponse('AI model not found', 'NOT_FOUND', 404);
     }
 
     // Verify company ownership
     if (model.company.toString() !== companyId) {
-      return NextResponse.json(
-        { error: 'Cannot delete another company\'s AI model' },
-        { status: 403 }
+      return createErrorResponse(
+        "Cannot delete another company's AI model",
+        'FORBIDDEN',
+        403
       );
     }
 
     // Prevent deletion of deployed models
     if (model.deployed) {
-      return NextResponse.json(
-        {
-          error: 'Cannot delete deployed model',
-          message: 'Undeploy the model before deletion',
-        },
-        { status: 400 }
+      return createErrorResponse(
+        'Cannot delete deployed model. Undeploy the model before deletion.',
+        'VALIDATION_ERROR',
+        400
       );
     }
 
     await model.deleteOne();
 
-    return NextResponse.json(
-      {
-        message: `AI model '${model.name}' deleted successfully`,
-        modelId,
-      },
-      { status: 200 }
-    );
+    return createSuccessResponse({
+      message: `AI model '${model.name}' deleted successfully`,
+      modelId,
+    });
   } catch (error) {
     return handleAPIError('[DELETE /api/ai/models/[id]]', error, 'Failed to delete AI model');
   }

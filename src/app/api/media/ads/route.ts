@@ -23,6 +23,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { connectDB } from '@/lib/db/mongoose';
+import { createSuccessResponse, createErrorResponse } from '@/lib/utils/apiResponse';
 import AdCampaign from '@/lib/db/models/media/AdCampaign';
 import Company from '@/lib/db/models/Company';
 import {
@@ -41,7 +42,7 @@ export async function GET(request: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', 'UNAUTHORIZED', 401);
     }
 
     await connectDB();
@@ -49,7 +50,7 @@ export async function GET(request: NextRequest) {
     // Get company for the user
     const company = await Company.findOne({ owner: session.user.id });
     if (!company) {
-      return NextResponse.json({ error: 'Company not found' }, { status: 404 });
+      return createErrorResponse('Company not found', 'COMPANY_NOT_FOUND', 404);
     }
 
     // Parse query parameters
@@ -118,22 +119,21 @@ export async function GET(request: NextRequest) {
     // Get total count for pagination
     const total = await AdCampaign.countDocuments(filter);
 
-    return NextResponse.json({
-      campaigns: campaignsWithMetrics,
-      pagination: {
-        total,
-        limit,
-        offset,
-        hasMore: offset + limit < total
+    return createSuccessResponse(
+      { campaigns: campaignsWithMetrics },
+      {
+        pagination: {
+          total,
+          limit,
+          offset,
+          hasMore: offset + limit < total
+        }
       }
-    });
+    );
 
   } catch (error) {
     console.error('Error fetching ad campaigns:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return createErrorResponse('Internal server error', 'INTERNAL_ERROR', 500);
   }
 }
 
@@ -145,7 +145,7 @@ export async function POST(request: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', 'UNAUTHORIZED', 401);
     }
 
     await connectDB();
@@ -153,7 +153,7 @@ export async function POST(request: NextRequest) {
     // Get company for the user
     const company = await Company.findOne({ owner: session.user.id });
     if (!company) {
-      return NextResponse.json({ error: 'Company not found' }, { status: 404 });
+      return createErrorResponse('Company not found', 'COMPANY_NOT_FOUND', 404);
     }
 
     const body = await request.json();
@@ -176,9 +176,10 @@ export async function POST(request: NextRequest) {
 
     // Validate required fields
     if (!platform || !name || !type || !biddingModel) {
-      return NextResponse.json(
-        { error: 'Missing required fields: platform, name, type, biddingModel' },
-        { status: 400 }
+      return createErrorResponse(
+        'Missing required fields: platform, name, type, biddingModel',
+        'VALIDATION_ERROR',
+        400
       );
     }
 
@@ -222,26 +223,27 @@ export async function POST(request: NextRequest) {
     // Calculate initial metrics
     const adRank = (campaign.qualityScore || 5) * (campaign.relevanceScore || 5) * (campaign.engagementScore || 5) / 125;
 
-    return NextResponse.json({
-      campaign: {
-        ...campaign.toObject(),
-        calculatedMetrics: {
-          adRank,
-          efficiency: 0,
-          engagementRate: 0,
-          roas: 0,
-          ctr: 0,
-          cpa: 0,
-          conversionRate: 0
+    return createSuccessResponse(
+      {
+        campaign: {
+          ...campaign.toObject(),
+          calculatedMetrics: {
+            adRank,
+            efficiency: 0,
+            engagementRate: 0,
+            roas: 0,
+            ctr: 0,
+            cpa: 0,
+            conversionRate: 0
+          }
         }
-      }
-    }, { status: 201 });
+      },
+      undefined,
+      201
+    );
 
   } catch (error) {
     console.error('Error creating ad campaign:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return createErrorResponse('Internal server error', 'INTERNAL_ERROR', 500);
   }
 }

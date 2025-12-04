@@ -13,9 +13,10 @@
  * DELETE /api/consulting/projects/[id] - Delete project
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { auth } from '@/auth';
 import { connectDB } from '@/lib/db';
+import { createSuccessResponse, createErrorResponse } from '@/lib/utils/apiResponse';
 import ConsultingProject from '@/lib/db/models/consulting/ConsultingProject';
 import { updateConsultingProjectSchema } from '@/lib/validations/consulting';
 import mongoose from 'mongoose';
@@ -37,19 +38,13 @@ export async function GET(
 
     // Validate ObjectId
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid project ID' },
-        { status: 400 }
-      );
+      return createErrorResponse('Invalid project ID', 'VALIDATION_ERROR', 400);
     }
 
     // Authenticate
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return createErrorResponse('Unauthorized', 'UNAUTHORIZED', 401);
     }
     const companyId = session.user.companyId;
 
@@ -63,26 +58,18 @@ export async function GET(
     }).lean();
 
     if (!project) {
-      return NextResponse.json(
-        { success: false, error: 'Consulting project not found' },
-        { status: 404 }
-      );
+      return createErrorResponse('Consulting project not found', 'NOT_FOUND', 404);
     }
 
-    return NextResponse.json({
-      success: true,
-      data: project,
-    });
+    return createSuccessResponse({ data: project });
 
   } catch (error) {
     console.error('[API] GET /api/consulting/projects/[id] error:', error);
-    return NextResponse.json(
-      { 
-        success: false, 
-        error: 'Failed to fetch consulting project',
-        details: error instanceof Error ? error.message : 'Unknown error',
-      },
-      { status: 500 }
+    return createErrorResponse(
+      'Failed to fetch consulting project',
+      'INTERNAL_ERROR',
+      500,
+      error instanceof Error ? error.message : 'Unknown error'
     );
   }
 }
@@ -104,19 +91,13 @@ export async function PATCH(
 
     // Validate ObjectId
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid project ID' },
-        { status: 400 }
-      );
+      return createErrorResponse('Invalid project ID', 'VALIDATION_ERROR', 400);
     }
 
     // Authenticate
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return createErrorResponse('Unauthorized', 'UNAUTHORIZED', 401);
     }
     const companyId = session.user.companyId;
 
@@ -126,13 +107,11 @@ export async function PATCH(
     // Validate input
     const validatedData = updateConsultingProjectSchema.safeParse(body);
     if (!validatedData.success) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Validation failed',
-          details: validatedData.error.flatten().fieldErrors,
-        },
-        { status: 400 }
+      return createErrorResponse(
+        'Validation failed',
+        'VALIDATION_ERROR',
+        400,
+        validatedData.error.flatten().fieldErrors
       );
     }
 
@@ -146,10 +125,7 @@ export async function PATCH(
     });
 
     if (!existingProject) {
-      return NextResponse.json(
-        { success: false, error: 'Consulting project not found' },
-        { status: 404 }
-      );
+      return createErrorResponse('Consulting project not found', 'NOT_FOUND', 404);
     }
 
     // Update project
@@ -159,21 +135,18 @@ export async function PATCH(
       { new: true, runValidators: true }
     ).lean();
 
-    return NextResponse.json({
-      success: true,
+    return createSuccessResponse({
       data: updatedProject,
       message: 'Consulting project updated successfully',
     });
 
   } catch (error) {
     console.error('[API] PATCH /api/consulting/projects/[id] error:', error);
-    return NextResponse.json(
-      { 
-        success: false, 
-        error: 'Failed to update consulting project',
-        details: error instanceof Error ? error.message : 'Unknown error',
-      },
-      { status: 500 }
+    return createErrorResponse(
+      'Failed to update consulting project',
+      'INTERNAL_ERROR',
+      500,
+      error instanceof Error ? error.message : 'Unknown error'
     );
   }
 }
@@ -195,19 +168,13 @@ export async function DELETE(
 
     // Validate ObjectId
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid project ID' },
-        { status: 400 }
-      );
+      return createErrorResponse('Invalid project ID', 'VALIDATION_ERROR', 400);
     }
 
     // Authenticate
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return createErrorResponse('Unauthorized', 'UNAUTHORIZED', 401);
     }
     const companyId = session.user.companyId;
 
@@ -221,40 +188,32 @@ export async function DELETE(
     });
 
     if (!project) {
-      return NextResponse.json(
-        { success: false, error: 'Consulting project not found' },
-        { status: 404 }
-      );
+      return createErrorResponse('Consulting project not found', 'NOT_FOUND', 404);
     }
 
     // Check if project can be deleted (not active with significant work)
     if (project.status === 'Active' && project.hoursWorked > 0) {
-      return NextResponse.json(
-        { 
-          success: false, 
-          error: 'Cannot delete active project with logged hours. Cancel or complete the project first.',
-        },
-        { status: 400 }
+      return createErrorResponse(
+        'Cannot delete active project with logged hours. Cancel or complete the project first.',
+        'VALIDATION_ERROR',
+        400
       );
     }
 
     // Delete project
     await ConsultingProject.findByIdAndDelete(id);
 
-    return NextResponse.json({
-      success: true,
+    return createSuccessResponse({
       message: 'Consulting project deleted successfully',
     });
 
   } catch (error) {
     console.error('[API] DELETE /api/consulting/projects/[id] error:', error);
-    return NextResponse.json(
-      { 
-        success: false, 
-        error: 'Failed to delete consulting project',
-        details: error instanceof Error ? error.message : 'Unknown error',
-      },
-      { status: 500 }
+    return createErrorResponse(
+      'Failed to delete consulting project',
+      'INTERNAL_ERROR',
+      500,
+      error instanceof Error ? error.message : 'Unknown error'
     );
   }
 }

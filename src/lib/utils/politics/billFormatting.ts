@@ -83,8 +83,8 @@ export function formatTimeWithUrgency(ms: number): {
  * getBillStatusColor('FAILED')     // "danger"
  * ```
  */
-export function getBillStatusColor(status: BillStatus): string {
-  const colorMap: Record<BillStatus, string> = {
+export function getBillStatusColor(status: BillStatus): 'primary' | 'success' | 'danger' | 'warning' | 'default' {
+  const colorMap: Record<BillStatus, 'primary' | 'success' | 'danger' | 'warning' | 'default'> = {
     ACTIVE: 'primary',
     PASSED: 'success',
     FAILED: 'danger',
@@ -122,8 +122,8 @@ export function getBillStatusText(status: BillStatus): string {
  * getPositionColor('NEUTRAL')    // "default"
  * ```
  */
-export function getPositionColor(position: DebatePosition): string {
-  const colorMap: Record<DebatePosition, string> = {
+export function getPositionColor(position: DebatePosition): 'success' | 'danger' | 'default' {
+  const colorMap: Record<DebatePosition, 'success' | 'danger' | 'default'> = {
     FOR: 'success',
     AGAINST: 'danger',
     NEUTRAL: 'default',
@@ -243,8 +243,8 @@ export function getChamberShortName(chamber: Chamber): string {
 /**
  * Get chamber color
  */
-export function getChamberColor(chamber: Chamber): string {
-  const colorMap: Record<Chamber, string> = {
+export function getChamberColor(chamber: Chamber): 'secondary' | 'primary' | 'default' {
+  const colorMap: Record<Chamber, 'secondary' | 'primary'> = {
     senate: 'secondary',
     house: 'primary',
   };
@@ -390,7 +390,7 @@ export function formatPersuasionScore(score: number): string {
 /**
  * Get persuasion score color
  */
-export function getPersuasionColor(score: number): string {
+export function getPersuasionColor(score: number): 'success' | 'danger' | 'default' {
   if (score > 0) return 'success';
   if (score < 0) return 'danger';
   return 'default';

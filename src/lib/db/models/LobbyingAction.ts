@@ -37,7 +37,7 @@ export type LobbyingStatus = 'Pending' | 'Successful' | 'Failed';
  * Lobbying action document interface
  */
 export interface ILobbyingAction extends Document {
-  company: Types.ObjectId;
+  company?: Types.ObjectId;
   targetLegislation: string;
   legislationType: LegislationType;
   influencePointsCost: number;
@@ -60,8 +60,7 @@ const LobbyingActionSchema = new Schema<ILobbyingAction>(
     company: {
       type: Schema.Types.ObjectId,
       ref: 'Company',
-      required: [true, 'Company is required'],
-      // index: true removed - already indexed via compound index { company: 1, initiatedAt: -1 }
+      // optional to support general lobbying intents
     },
     targetLegislation: {
       type: String,

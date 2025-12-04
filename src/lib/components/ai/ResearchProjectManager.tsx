@@ -199,7 +199,7 @@ export function ResearchProjectManager({
         <span className="text-sm font-medium">Filter:</span>
         <Select
           selectedKeys={[filter]}
-          onSelectionChange={(keys) => setFilter(Array.from(keys)[0] as any)}
+          onSelectionChange={(keys) => setFilter(String(Array.from(keys)[0]) as typeof filter)}
           className="max-w-xs"
           size="sm"
         >
@@ -330,7 +330,7 @@ export function ResearchProjectManager({
               <label className="block text-sm font-medium mb-2">Research Type</label>
               <Select
                 selectedKeys={[newType]}
-                onSelectionChange={(keys) => setNewType(Array.from(keys)[0] as any)}
+                onSelectionChange={(keys) => setNewType(String(Array.from(keys)[0]) as typeof newType)}
               >
               <SelectItem key="Performance">Performance (speed, accuracy)</SelectItem>
               <SelectItem key="Efficiency">Efficiency (cost reduction)</SelectItem>
@@ -341,7 +341,7 @@ export function ResearchProjectManager({
               <label className="block text-sm font-medium mb-2">Complexity</label>
               <Select
                 selectedKeys={[newComplexity]}
-                onSelectionChange={(keys) => setNewComplexity(Array.from(keys)[0] as any)}
+                onSelectionChange={(keys) => setNewComplexity(String(Array.from(keys)[0]) as typeof newComplexity)}
               >
               <SelectItem key="Low">Low (incremental improvement)</SelectItem>
               <SelectItem key="Medium">Medium (significant advancement)</SelectItem>

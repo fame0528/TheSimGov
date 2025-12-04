@@ -51,9 +51,10 @@
  * @implementation Phase 5 API Routes Batch 1
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { auth } from '@/auth';
 import { connectDB } from '@/lib/db';
+import { createSuccessResponse, createErrorResponse, ErrorCode } from '@/lib/utils/apiResponse';
 import Company from '@/lib/db/models/Company';
 import AGIMilestone from '@/lib/db/models/AI/AGIMilestone';
 import { MilestoneType } from '@/lib/types/models/ai/agi';
@@ -110,7 +111,7 @@ export async function GET(req: NextRequest) {
     // Authentication - verify user session
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     await connectDB();
@@ -118,7 +119,7 @@ export async function GET(req: NextRequest) {
     // Get user's company
     const company = await Company.findOne({ userId: session.user.id });
     if (!company) {
-      return NextResponse.json({ error: 'Company not found' }, { status: 404 });
+      return createErrorResponse('Company not found', ErrorCode.NOT_FOUND, 404);
     }
 
     // Fetch all active milestones (InProgress + Achieved)
@@ -129,8 +130,7 @@ export async function GET(req: NextRequest) {
     });
 
     if (milestones.length === 0) {
-      return NextResponse.json({
-        success: true,
+      return createSuccessResponse({
         alignmentScore: 50, // Default neutral score
         capabilityScore: 0, // No capabilities yet
         gap: 50, // Default safe starting point
@@ -287,8 +287,7 @@ export async function GET(req: NextRequest) {
       recommendations.push('🚨 Self-improvement capability detected - alignment must exceed 70 before proceeding');
     }
 
-    return NextResponse.json({
-      success: true,
+    return createSuccessResponse({
       alignmentScore,
       capabilityScore,
       gap,
@@ -302,12 +301,11 @@ export async function GET(req: NextRequest) {
     });
   } catch (error) {
     console.error('Error calculating alignment score:', error);
-    return NextResponse.json(
-      {
-        error: 'Failed to calculate alignment score',
-        details: error instanceof Error ? error.message : 'Unknown error',
-      },
-      { status: 500 }
+    return createErrorResponse(
+      'Failed to calculate alignment score',
+      ErrorCode.INTERNAL_ERROR,
+      500,
+      { details: error instanceof Error ? error.message : 'Unknown error' }
     );
   }
 }

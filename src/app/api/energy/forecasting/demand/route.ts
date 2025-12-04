@@ -10,9 +10,10 @@
  * simple trending algorithms for short/medium-term forecasts.
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { auth } from '@/auth';
+import { createSuccessResponse, createErrorResponse, ErrorCode } from '@/lib/utils/apiResponse';
 
 // ============================================================================
 // CONSTANTS - DEMAND PATTERNS
@@ -82,15 +83,32 @@ const ForecastQuerySchema = z.object({
 // HELPER FUNCTIONS
 // ============================================================================
 
+/** Seasonal factor lookup by month index */
+type MonthName = 'December' | 'January' | 'February' | 'March' | 'April' | 'May' | 
+                 'June' | 'July' | 'August' | 'September' | 'October' | 'November';
+
+const MONTH_NAMES: MonthName[] = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December'
+];
+
 function getMonthlyFactor(month: number): number {
-  const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 
-                      'July', 'August', 'September', 'October', 'November', 'December'];
-  const monthName = monthNames[month];
+  const monthName = MONTH_NAMES[month];
   
-  if (month >= 0 && month <= 2) return (SEASONAL_FACTORS.WINTER as any)[monthName] || 1.0;
-  if (month >= 3 && month <= 5) return (SEASONAL_FACTORS.SPRING as any)[monthName] || 1.0;
-  if (month >= 6 && month <= 8) return (SEASONAL_FACTORS.SUMMER as any)[monthName] || 1.0;
-  return (SEASONAL_FACTORS.FALL as any)[monthName] || 1.0;
+  if (month === 11 || month === 0 || month === 1) {
+    // Winter: Dec, Jan, Feb
+    return SEASONAL_FACTORS.WINTER[monthName as keyof typeof SEASONAL_FACTORS.WINTER] ?? 1.0;
+  }
+  if (month >= 2 && month <= 4) {
+    // Spring: Mar, Apr, May
+    return SEASONAL_FACTORS.SPRING[monthName as keyof typeof SEASONAL_FACTORS.SPRING] ?? 1.0;
+  }
+  if (month >= 5 && month <= 7) {
+    // Summer: Jun, Jul, Aug
+    return SEASONAL_FACTORS.SUMMER[monthName as keyof typeof SEASONAL_FACTORS.SUMMER] ?? 1.0;
+  }
+  // Fall: Sep, Oct, Nov
+  return SEASONAL_FACTORS.FALL[monthName as keyof typeof SEASONAL_FACTORS.FALL] ?? 1.0;
 }
 
 function getDailyProfile(isWeekend: boolean): number[] {
@@ -107,7 +125,7 @@ export async function GET(req: NextRequest) {
     // Authentication
     const session = await auth();
     if (!session?.user?.companyId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     // Parse query parameters
@@ -121,10 +139,7 @@ export async function GET(req: NextRequest) {
     const validation = ForecastQuerySchema.safeParse(queryData);
     
     if (!validation.success) {
-      return NextResponse.json(
-        { error: 'Invalid query parameters', details: validation.error.flatten() },
-        { status: 400 }
-      );
+      return createErrorResponse('Invalid query parameters', ErrorCode.BAD_REQUEST, 400);
     }
 
     const { horizon, scenario, currentLoad } = validation.data;
@@ -204,7 +219,7 @@ export async function GET(req: NextRequest) {
       };
     } else if (horizon === 'month') {
       // 30-day forecast with growth
-      const growthRate = (GROWTH_SCENARIOS as any)[scenario];
+      const growthRate = GROWTH_SCENARIOS[scenario as keyof typeof GROWTH_SCENARIOS];
       const monthlyGrowth = Math.pow(1 + growthRate, 1/12) - 1; // Convert annual to monthly
 
       const weeklyForecast = [];
@@ -228,7 +243,7 @@ export async function GET(req: NextRequest) {
       };
     } else if (horizon === 'year') {
       // 12-month forecast with seasonal variation
-      const growthRate = (GROWTH_SCENARIOS as any)[scenario];
+      const growthRate = GROWTH_SCENARIOS[scenario as keyof typeof GROWTH_SCENARIOS];
       
       const monthlyForecast = [];
       for (let month = 0; month < 12; month++) {
@@ -269,8 +284,7 @@ export async function GET(req: NextRequest) {
       };
     }
 
-    return NextResponse.json({
-      success: true,
+    return createSuccessResponse({
       timestamp: now.toISOString(),
       baseLoad: baseLoad.toFixed(2) + ' MW',
       currentSeasonalFactor: seasonalFactor.toFixed(3),
@@ -279,10 +293,7 @@ export async function GET(req: NextRequest) {
 
   } catch (error) {
     console.error('[ENERGY] Demand forecasting error:', error);
-    return NextResponse.json(
-      { error: 'Failed to generate demand forecast', details: error instanceof Error ? error.message : 'Unknown error' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to generate demand forecast', ErrorCode.INTERNAL_ERROR, 500);
   }
 }
 

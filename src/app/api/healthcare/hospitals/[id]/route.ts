@@ -7,8 +7,9 @@
  * @author ECHO v1.3.0 Healthcare Implementation
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { auth } from '@/auth';
+import { createSuccessResponse, createErrorResponse, ErrorCode } from '@/lib/utils/apiResponse';
 import { connectDB } from '@/lib/db/mongoose';
 import { Hospital, Company } from '@/lib/db/models';
 import {
@@ -84,7 +85,7 @@ export async function GET(
   try {
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     const { id } = await params;
@@ -95,13 +96,13 @@ export async function GET(
       .lean();
 
     if (!hospital) {
-      return NextResponse.json({ error: 'Hospital not found' }, { status: 404 });
+      return createErrorResponse('Hospital not found', ErrorCode.NOT_FOUND, 404);
     }
 
     // Check if user owns the company that owns the hospital
     const company = await Company.findById(hospital.ownedBy);
     if (!company || company.owner?.toString() !== session.user.id) {
-      return NextResponse.json({ error: 'Unauthorized - Hospital not owned by user' }, { status: 403 });
+      return createErrorResponse('Unauthorized - Hospital not owned by user', ErrorCode.FORBIDDEN, 403);
     }
 
     // Calculate comprehensive metrics using correct utility signatures
@@ -144,7 +145,7 @@ export async function GET(
       3 // 3-year projection
     );
 
-    return NextResponse.json({
+    return createSuccessResponse({
       hospital: {
         ...hospital,
         metrics: {
@@ -160,10 +161,7 @@ export async function GET(
 
   } catch (error) {
     console.error('Error fetching hospital:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return createErrorResponse('Internal server error', ErrorCode.INTERNAL_ERROR, 500);
   }
 }
 
@@ -178,7 +176,7 @@ export async function PUT(
   try {
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     const { id } = await params;
@@ -189,12 +187,12 @@ export async function PUT(
     // Find and verify ownership
     const hospital = await Hospital.findById(id);
     if (!hospital) {
-      return NextResponse.json({ error: 'Hospital not found' }, { status: 404 });
+      return createErrorResponse('Hospital not found', ErrorCode.NOT_FOUND, 404);
     }
 
     const company = await Company.findById(hospital.ownedBy);
     if (!company || company.owner?.toString() !== session.user.id) {
-      return NextResponse.json({ error: 'Unauthorized - Hospital not owned by user' }, { status: 403 });
+      return createErrorResponse('Unauthorized - Hospital not owned by user', ErrorCode.FORBIDDEN, 403);
     }
 
     // Update hospital
@@ -241,10 +239,7 @@ export async function PUT(
       });
 
       if (!metricsValidation.isValid) {
-        return NextResponse.json({
-          error: 'Updated hospital metrics validation failed',
-          details: metricsValidation.errors
-        }, { status: 400 });
+        return createErrorResponse('Updated hospital metrics validation failed', ErrorCode.BAD_REQUEST, 400);
       }
 
       hospital.qualityScore = qualityScore;
@@ -253,7 +248,7 @@ export async function PUT(
     await hospital.save();
     await hospital.populate('ownedBy', 'name industry');
 
-    return NextResponse.json({
+    return createSuccessResponse({
       hospital,
       message: 'Hospital updated successfully'
     });
@@ -261,15 +256,9 @@ export async function PUT(
   } catch (error) {
     console.error('Error updating hospital:', error);
     if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: 'Invalid update data', details: error.errors },
-        { status: 400 }
-      );
+      return createErrorResponse('Invalid update data', ErrorCode.BAD_REQUEST, 400);
     }
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return createErrorResponse('Internal server error', ErrorCode.INTERNAL_ERROR, 500);
   }
 }
 
@@ -284,7 +273,7 @@ export async function DELETE(
   try {
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     const { id } = await params;
@@ -292,26 +281,23 @@ export async function DELETE(
     // Find and verify ownership
     const hospital = await Hospital.findById(id);
     if (!hospital) {
-      return NextResponse.json({ error: 'Hospital not found' }, { status: 404 });
+      return createErrorResponse('Hospital not found', ErrorCode.NOT_FOUND, 404);
     }
 
     const company = await Company.findById(hospital.ownedBy);
     if (!company || company.owner?.toString() !== session.user.id) {
-      return NextResponse.json({ error: 'Unauthorized - Hospital not owned by user' }, { status: 403 });
+      return createErrorResponse('Unauthorized - Hospital not owned by user', ErrorCode.FORBIDDEN, 403);
     }
 
     // Delete hospital
     await Hospital.findByIdAndDelete(id);
 
-    return NextResponse.json({
+    return createSuccessResponse({
       message: 'Hospital deleted successfully'
     });
 
   } catch (error) {
     console.error('Error deleting hospital:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return createErrorResponse('Internal server error', ErrorCode.INTERNAL_ERROR, 500);
   }
 }

@@ -24,6 +24,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { connectDB } from '@/lib/db/mongoose';
+import { createSuccessResponse, createErrorResponse } from '@/lib/utils/apiResponse';
 import InfluencerContract from '@/lib/db/models/media/InfluencerContract';
 import Company from '@/lib/db/models/Company';
 import {
@@ -45,7 +46,7 @@ export async function GET(
   try {
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', 'UNAUTHORIZED', 401);
     }
 
     const { id } = await params;
@@ -55,7 +56,7 @@ export async function GET(
     // Get company for the user
     const company = await Company.findOne({ owner: session.user.id });
     if (!company) {
-      return NextResponse.json({ error: 'Company not found' }, { status: 404 });
+      return createErrorResponse('Company not found', 'COMPANY_NOT_FOUND', 404);
     }
 
     // Get contract with ownership validation
@@ -67,7 +68,7 @@ export async function GET(
     .populate('deliveredContent', 'title type engagement');
 
     if (!contract) {
-      return NextResponse.json({ error: 'Contract not found' }, { status: 404 });
+      return createErrorResponse('Contract not found', 'CONTRACT_NOT_FOUND', 404);
     }
 
     const doc = contract.toObject();
@@ -108,7 +109,7 @@ export async function GET(
     // Generate optimization recommendations
     const recommendations = generateContractRecommendations(doc, calculatedMetrics);
 
-    return NextResponse.json({
+    return createSuccessResponse({
       contract: {
         ...doc,
         calculatedMetrics,
@@ -118,10 +119,7 @@ export async function GET(
 
   } catch (error) {
     console.error('Error fetching influencer contract:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return createErrorResponse('Internal server error', 'INTERNAL_ERROR', 500);
   }
 }
 
@@ -136,7 +134,7 @@ export async function PUT(
   try {
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', 'UNAUTHORIZED', 401);
     }
 
     await connectDB();
@@ -144,7 +142,7 @@ export async function PUT(
     // Get company for the user
     const company = await Company.findOne({ owner: session.user.id });
     if (!company) {
-      return NextResponse.json({ error: 'Company not found' }, { status: 404 });
+      return createErrorResponse('Company not found', 'COMPANY_NOT_FOUND', 404);
     }
 
     const { id } = await params;
@@ -169,7 +167,7 @@ export async function PUT(
     });
 
     if (!contract) {
-      return NextResponse.json({ error: 'Contract not found' }, { status: 404 });
+      return createErrorResponse('Contract not found', 'CONTRACT_NOT_FOUND', 404);
     }
 
     // Update allowed fields
@@ -189,17 +187,14 @@ export async function PUT(
     await contract.populate('influencer', 'name email');
     await contract.populate('deliveredContent', 'title type engagement');
 
-    return NextResponse.json({
+    return createSuccessResponse({
       contract: contract.toObject(),
       message: 'Contract updated successfully'
     });
 
   } catch (error) {
     console.error('Error updating influencer contract:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return createErrorResponse('Internal server error', 'INTERNAL_ERROR', 500);
   }
 }
 
@@ -259,7 +254,7 @@ export async function DELETE(
   try {
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', 'UNAUTHORIZED', 401);
     }
 
     await connectDB();
@@ -267,7 +262,7 @@ export async function DELETE(
     // Get company for the user
     const company = await Company.findOne({ owner: session.user.id });
     if (!company) {
-      return NextResponse.json({ error: 'Company not found' }, { status: 404 });
+      return createErrorResponse('Company not found', 'COMPANY_NOT_FOUND', 404);
     }
 
     const { id } = await params;
@@ -279,19 +274,16 @@ export async function DELETE(
     });
 
     if (!contract) {
-      return NextResponse.json({ error: 'Contract not found' }, { status: 404 });
+      return createErrorResponse('Contract not found', 'CONTRACT_NOT_FOUND', 404);
     }
 
-    return NextResponse.json({
+    return createSuccessResponse({
       message: 'Contract deleted successfully',
       contractId: id
     });
 
   } catch (error) {
     console.error('Error deleting influencer contract:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return createErrorResponse('Internal server error', 'INTERNAL_ERROR', 500);
   }
 }

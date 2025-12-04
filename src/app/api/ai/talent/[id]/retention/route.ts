@@ -122,7 +122,8 @@
  * - Equity/compute/bonus are secondary (boost satisfaction but don't close salary gap)
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+import { createSuccessResponse, createErrorResponse, ErrorCode } from '@/lib/utils/apiResponse';
 import { connectDB } from '@/lib/db';
 import Company from '@/lib/db/models/Company';
 import Employee from '@/lib/db/models/Employee';
@@ -174,20 +175,15 @@ export async function PATCH(
 
     // 3. Validate adjustments (all must be non-negative)
     if (salaryAdjustment < 0 || equityAdjustment < 0 || computeBudgetAdjustment < 0 || bonusAdjustment < 0) {
-      return NextResponse.json(
-        { success: false, error: 'All adjustments must be non-negative (use positive values for increases only).' },
-        { status: 400 }
-      );
+      return createErrorResponse('All adjustments must be non-negative (use positive values for increases only).', ErrorCode.VALIDATION_ERROR, 400);
     }
 
     // 4. Validate at least one adjustment provided
     if (salaryAdjustment === 0 && equityAdjustment === 0 && computeBudgetAdjustment === 0 && bonusAdjustment === 0) {
-      return NextResponse.json(
-        { 
-          success: false, 
-          error: 'At least one compensation adjustment required (salary, equity, compute budget, or bonus).' 
-        },
-        { status: 400 }
+      return createErrorResponse(
+        'At least one compensation adjustment required (salary, equity, compute budget, or bonus).',
+        ErrorCode.VALIDATION_ERROR,
+        400
       );
     }
 
@@ -198,10 +194,7 @@ export async function PATCH(
     const company = await Company.findById(companyId);
 
     if (!company || !['Technology', 'AI'].includes(company.industry)) {
-      return NextResponse.json(
-        { success: false, error: 'No AI/Technology company found for this user.' },
-        { status: 403 }
-      );
+      return createErrorResponse('No AI/Technology company found for this user.', ErrorCode.FORBIDDEN, 403);
     }
 
     // 7. Find employee
@@ -212,10 +205,7 @@ export async function PATCH(
     });
 
     if (!employee) {
-      return NextResponse.json(
-        { success: false, error: 'Employee not found or not employed at your company.' },
-        { status: 404 }
-      );
+      return createErrorResponse('Employee not found or not employed at your company.', ErrorCode.NOT_FOUND, 404);
     }
 
     // 8. Calculate current market rate
@@ -249,10 +239,7 @@ export async function PATCH(
 
     // 12. Validate new values don't exceed limits
     if (employee.salary > 5000000) {
-      return NextResponse.json(
-        { success: false, error: 'Salary adjustment would exceed $5,000,000 maximum.' },
-        { status: 400 }
-      );
+      return createErrorResponse('Salary adjustment would exceed $5,000,000 maximum.', ErrorCode.VALIDATION_ERROR, 400);
     }
 
     // 13. Calculate satisfaction and morale boosts
@@ -332,8 +319,7 @@ export async function PATCH(
     recommendations.push('Monitor for external poaching attempts');
 
     // 19. Return updated employee with comprehensive analysis
-    return NextResponse.json({
-      success: true,
+    return createSuccessResponse({
       employee,
       adjustments: {
         salary: {

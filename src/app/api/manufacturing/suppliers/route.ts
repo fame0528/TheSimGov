@@ -10,7 +10,7 @@
  * @author ECHO v1.3.2
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { auth } from '@/auth';
 import { connectDB } from '@/lib/db';
 import { ManufacturingSupplier } from '@/lib/db/models/manufacturing';
@@ -19,6 +19,7 @@ import {
   createSupplierSchema,
   type SupplierQueryInput 
 } from '@/lib/validations/manufacturing';
+import { createSuccessResponse, createErrorResponse } from '@/lib/utils/apiResponse';
 
 /**
  * GET /api/manufacturing/suppliers
@@ -38,7 +39,7 @@ export async function GET(request: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', 'UNAUTHORIZED', 401);
     }
 
     await connectDB();
@@ -47,7 +48,7 @@ export async function GET(request: NextRequest) {
     const companyId = searchParams.get('company');
 
     if (!companyId) {
-      return NextResponse.json({ error: 'Company ID required' }, { status: 400 });
+      return createErrorResponse('Company ID required', 'BAD_REQUEST', 400);
     }
 
     // Parse and validate query parameters
@@ -56,10 +57,7 @@ export async function GET(request: NextRequest) {
       const obj = Object.fromEntries(searchParams.entries());
       queryParams = supplierQuerySchema.parse(obj);
     } catch (parseError) {
-      return NextResponse.json(
-        { error: 'Invalid query parameters', details: parseError },
-        { status: 400 }
-      );
+      return createErrorResponse('Invalid query parameters', 'BAD_REQUEST', 400);
     }
 
     // Build MongoDB query
@@ -154,7 +152,7 @@ export async function GET(request: NextRequest) {
       { $group: { _id: '$tier', count: { $sum: 1 } } },
     ]);
 
-    return NextResponse.json({
+    return createSuccessResponse({
       suppliers,
       pagination: {
         total: totalCount,
@@ -183,10 +181,7 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('GET /api/manufacturing/suppliers error:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch suppliers' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to fetch suppliers', 'INTERNAL_ERROR', 500);
   }
 }
 
@@ -198,7 +193,7 @@ export async function POST(request: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', 'UNAUTHORIZED', 401);
     }
 
     await connectDB();
@@ -207,7 +202,7 @@ export async function POST(request: NextRequest) {
     const { company } = body;
 
     if (!company) {
-      return NextResponse.json({ error: 'Company ID required' }, { status: 400 });
+      return createErrorResponse('Company ID required', 'BAD_REQUEST', 400);
     }
 
     // Validate request body
@@ -215,10 +210,7 @@ export async function POST(request: NextRequest) {
     try {
       validatedData = createSupplierSchema.parse(body);
     } catch (parseError) {
-      return NextResponse.json(
-        { error: 'Validation failed', details: parseError },
-        { status: 400 }
-      );
+      return createErrorResponse('Validation failed', 'BAD_REQUEST', 400);
     }
 
     // Check for duplicate supplier code
@@ -228,10 +220,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (existingSupplier) {
-      return NextResponse.json(
-        { error: 'Supplier with this code already exists' },
-        { status: 409 }
-      );
+      return createErrorResponse('Supplier with this code already exists', 'CONFLICT', 409);
     }
 
     // Create supplier with validated data
@@ -300,18 +289,12 @@ export async function POST(request: NextRequest) {
       strategicPartner: false,
     });
 
-    return NextResponse.json(
-      { 
-        message: 'Supplier created successfully', 
-        supplier,
-      },
-      { status: 201 }
-    );
+    return createSuccessResponse({ 
+      message: 'Supplier created successfully', 
+      supplier,
+    }, undefined, 201);
   } catch (error) {
     console.error('POST /api/manufacturing/suppliers error:', error);
-    return NextResponse.json(
-      { error: 'Failed to create supplier' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to create supplier', 'INTERNAL_ERROR', 500);
   }
 }

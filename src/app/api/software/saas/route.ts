@@ -10,10 +10,11 @@
  * @author ECHO v1.3.1
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { auth } from '@/auth';
 import { connectDB } from '@/lib/db';
 import { SaaSSubscription } from '@/lib/db/models';
+import { createSuccessResponse, createErrorResponse, ErrorCode } from '@/lib/utils/apiResponse';
 
 /**
  * GET /api/software/saas
@@ -23,7 +24,7 @@ export async function GET(request: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     await connectDB();
@@ -33,7 +34,7 @@ export async function GET(request: NextRequest) {
     const tier = searchParams.get('tier');
 
     if (!companyId) {
-      return NextResponse.json({ error: 'Company ID required' }, { status: 400 });
+      return createErrorResponse('Company ID required', ErrorCode.BAD_REQUEST, 400);
     }
 
     const query: Record<string, unknown> = { company: companyId };
@@ -55,7 +56,7 @@ export async function GET(request: NextRequest) {
       ? subscriptions.reduce((sum, s) => sum + (s.customerLifetimeValue || 0), 0) / subscriptions.length
       : 0;
 
-    return NextResponse.json({
+    return createSuccessResponse({
       subscriptions,
       activeCount: activeSubscriptions.length,
       totalSubscribers,
@@ -67,10 +68,7 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('GET /api/software/saas error:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch subscriptions' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to fetch subscriptions', ErrorCode.INTERNAL_ERROR, 500);
   }
 }
 
@@ -82,7 +80,7 @@ export async function POST(request: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     await connectDB();
@@ -97,10 +95,7 @@ export async function POST(request: NextRequest) {
     } = body;
 
     if (!company || !name || !tier) {
-      return NextResponse.json(
-        { error: 'Company, name, and tier are required' },
-        { status: 400 }
-      );
+      return createErrorResponse('Company, name, and tier are required', ErrorCode.BAD_REQUEST, 400);
     }
 
     const subscription = await SaaSSubscription.create({
@@ -135,15 +130,9 @@ export async function POST(request: NextRequest) {
       profitMargin: 0.85,
     });
 
-    return NextResponse.json(
-      { message: 'Subscription tier created', subscription },
-      { status: 201 }
-    );
+    return createSuccessResponse({ message: 'Subscription tier created', subscription }, undefined, 201);
   } catch (error) {
     console.error('POST /api/software/saas error:', error);
-    return NextResponse.json(
-      { error: 'Failed to create subscription tier' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to create subscription tier', ErrorCode.INTERNAL_ERROR, 500);
   }
 }

@@ -365,3 +365,61 @@ export function getCounterOfferColor(counterOfferCount: number): string {
   if (counterOfferCount <= 4) return '#F59E0B'; // Orange - frequent offers, diminishing credibility
   return '#DC2626'; // Red - many offers, employee skeptical of commitment
 }
+
+// ============================================================================
+// HeroUI Color Scheme Functions
+// ============================================================================
+// These functions return HeroUI color scheme names for Badge/Chip components
+// Use these instead of the hex color functions when working with HeroUI components
+
+/**
+ * HeroUI color scheme type
+ */
+export type HeroUIColor = 'default' | 'primary' | 'secondary' | 'success' | 'warning' | 'danger';
+
+/**
+ * Get HeroUI color scheme for performance rating (1-5 scale)
+ */
+export function getPerformanceRatingScheme(rating: number): HeroUIColor {
+  switch (Math.round(rating)) {
+    case 5: return 'success';
+    case 4: return 'primary';
+    case 3: return 'secondary';
+    case 2: return 'warning';
+    case 1: return 'danger';
+    default: return 'default';
+  }
+}
+
+/**
+ * Get HeroUI color scheme for morale level (0-100)
+ */
+export function getMoraleScheme(morale: number): HeroUIColor {
+  if (morale >= 80) return 'success';
+  if (morale >= 60) return 'primary';
+  if (morale >= 40) return 'warning';
+  return 'danger';
+}
+
+/**
+ * Get HeroUI color scheme for retention risk (0-100)
+ */
+export function getRetentionRiskScheme(risk: number): HeroUIColor {
+  if (risk >= 80) return 'danger';
+  if (risk >= 60) return 'warning';
+  if (risk >= 40) return 'secondary';
+  return 'success';
+}
+
+/**
+ * Get HeroUI color scheme for status
+ */
+export function getStatusScheme(status: 'active' | 'training' | 'onLeave' | 'terminated'): HeroUIColor {
+  switch (status) {
+    case 'active': return 'success';
+    case 'training': return 'primary';
+    case 'onLeave': return 'warning';
+    case 'terminated': return 'default';
+    default: return 'default';
+  }
+}

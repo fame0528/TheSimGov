@@ -17,36 +17,36 @@
  *   }
  */
 
-import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { connectDB } from '@/lib/db';
 import Company from '@/lib/db/models/Company';
 import { POLITICAL_INFLUENCE } from '@/lib/utils/politicalinfluence';
 import type { CompanyLevel } from '@/lib/types/game';
+import { createSuccessResponse, createErrorResponse, ErrorCode } from '@/lib/utils/apiResponse';
 
 export async function GET(request: Request) {
   try {
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+      return createErrorResponse('Authentication required', ErrorCode.UNAUTHORIZED, 401);
     }
 
     const url = new URL(request.url);
     const companyId = url.searchParams.get('companyId');
 
     if (!companyId) {
-      return NextResponse.json({ error: 'Missing companyId parameter' }, { status: 400 });
+      return createErrorResponse('Missing companyId parameter', ErrorCode.BAD_REQUEST, 400);
     }
 
     await connectDB();
     const company = await Company.findById(companyId);
 
     if (!company) {
-      return NextResponse.json({ error: 'Company not found' }, { status: 404 });
+      return createErrorResponse('Company not found', ErrorCode.NOT_FOUND, 404);
     }
 
     if (!company.owner || company.owner.toString() !== session.user.id) {
-      return NextResponse.json({ error: 'Unauthorized - you do not own this company' }, { status: 403 });
+      return createErrorResponse('Unauthorized - you do not own this company', ErrorCode.FORBIDDEN, 403);
     }
 
     const level = company.level as CompanyLevel;
@@ -60,22 +60,20 @@ export async function GET(request: Request) {
     if (influence.governmentContractAccess) allowedActions.push('pursue_government_contracts');
     if (influence.canRunForOffice) allowedActions.push('run_for_office');
 
-    return NextResponse.json(
-      {
-        companyId,
-        level,
-        industry: company.industry,
-        subcategory: company.subcategory ?? null,
-        politicalInfluence: influence,
-        allowedActions,
-      },
-      { status: 200 }
-    );
+    return createSuccessResponse({
+      companyId,
+      level,
+      industry: company.industry,
+      subcategory: company.subcategory ?? null,
+      politicalInfluence: influence,
+      allowedActions,
+    });
   } catch (error) {
     console.error('Error fetching political eligibility:', error);
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to fetch political eligibility' },
-      { status: 500 }
+    return createErrorResponse(
+      error instanceof Error ? error.message : 'Failed to fetch political eligibility',
+      ErrorCode.INTERNAL_ERROR,
+      500
     );
   }
 }

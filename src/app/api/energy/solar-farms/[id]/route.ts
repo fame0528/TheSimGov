@@ -6,8 +6,9 @@
  * @author ECHO v1.3.1
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { auth } from '@/auth';
+import { createSuccessResponse, createErrorResponse, ErrorCode } from '@/lib/utils/apiResponse';
 import { connectDB } from '@/lib/db';
 import { SolarFarm } from '@/lib/db/models';
 
@@ -23,7 +24,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     const { id } = await params;
@@ -31,16 +32,13 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     const farm = await SolarFarm.findById(id).lean();
     if (!farm) {
-      return NextResponse.json({ error: 'Solar farm not found' }, { status: 404 });
+      return createErrorResponse('Solar farm not found', ErrorCode.NOT_FOUND, 404);
     }
 
-    return NextResponse.json({ farm });
+    return createSuccessResponse({ farm });
   } catch (error) {
     console.error('GET /api/energy/solar-farms/[id] error:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch solar farm' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to fetch solar farm', ErrorCode.INTERNAL_ERROR, 500);
   }
 }
 
@@ -52,7 +50,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
   try {
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     const { id } = await params;
@@ -67,16 +65,13 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     );
 
     if (!farm) {
-      return NextResponse.json({ error: 'Solar farm not found' }, { status: 404 });
+      return createErrorResponse('Solar farm not found', ErrorCode.NOT_FOUND, 404);
     }
 
-    return NextResponse.json({ message: 'Solar farm updated', farm });
+    return createSuccessResponse({ message: 'Solar farm updated', farm });
   } catch (error) {
     console.error('PATCH /api/energy/solar-farms/[id] error:', error);
-    return NextResponse.json(
-      { error: 'Failed to update solar farm' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to update solar farm', ErrorCode.INTERNAL_ERROR, 500);
   }
 }
 
@@ -88,7 +83,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     const { id } = await params;
@@ -96,15 +91,12 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
 
     const farm = await SolarFarm.findByIdAndDelete(id);
     if (!farm) {
-      return NextResponse.json({ error: 'Solar farm not found' }, { status: 404 });
+      return createErrorResponse('Solar farm not found', ErrorCode.NOT_FOUND, 404);
     }
 
-    return NextResponse.json({ message: 'Solar farm deleted' });
+    return createSuccessResponse({ message: 'Solar farm deleted' });
   } catch (error) {
     console.error('DELETE /api/energy/solar-farms/[id] error:', error);
-    return NextResponse.json(
-      { error: 'Failed to delete solar farm' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to delete solar farm', ErrorCode.INTERNAL_ERROR, 500);
   }
 }

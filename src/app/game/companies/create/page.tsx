@@ -156,8 +156,10 @@ export default function CreateCompanyPage() {
   const displayError = (() => {
     if (apiError) {
       if (typeof apiError === 'string') return apiError;
-      const maybeMsg = (apiError as any)?.message;
-      if (typeof maybeMsg === 'string') return maybeMsg;
+      if (apiError && typeof apiError === 'object' && 'message' in apiError) {
+        const maybeMsg = (apiError as { message?: unknown }).message;
+        if (typeof maybeMsg === 'string') return maybeMsg;
+      }
       try {
         return JSON.stringify(apiError);
       } catch {

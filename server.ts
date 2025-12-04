@@ -40,7 +40,7 @@ async function start() {
   (global as any).io = io;
 
   server.listen(port, () => {
-    console.log(`\n🚀 TS Server ready at http://${hostname}:${port}\n🔌 Socket.io initialized (TypeScript)\n📊 Environment: ${dev ? 'development' : 'production'}\n🎮 Namespaces: /chat /elections /market (moderation active)\n`);
+    console.log(`\n🚀 TS Server ready at http://${hostname}:${port}\n🔌 Socket.io initialized (TypeScript)\n📊 Environment: ${dev ? 'development' : 'production'}\n🎮 Namespaces: /chat /elections /market /user (moderation active)\n`);
     // Emit a startup system event (ECHO: fast verification of emitter layer)
     broadcastSystemEvent({ type: 'achievement', achievementId: 'startup', userId: 'system', title: 'Server Online', rarity: 'common', timestamp: Date.now(), meta: { startedAt: new Date().toISOString() } }, { persist: false });
   });

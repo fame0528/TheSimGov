@@ -4,10 +4,11 @@
  * Returns public-facing profile fields and owned companies for display.
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { connectDB } from '@/lib/db';
 import User from '@/lib/db/models/User';
 import Company from '@/lib/db/models/Company';
+import { createSuccessResponse, createErrorResponse, handleApiError } from '@/lib/utils/apiResponse';
 
 export async function GET(
   request: NextRequest,
@@ -18,7 +19,7 @@ export async function GET(
     const { username } = await context.params;
     const user = await User.findOne({ username }).lean();
     if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+      return createErrorResponse('User not found', 'NOT_FOUND', 404);
     }
 
     // Fetch companies owned by this user
@@ -39,14 +40,13 @@ export async function GET(
         name: c.name,
         industry: c.industry,
         level: c.level,
-        reputation: (c as any).reputation,
-        logoUrl: (c as any).logoUrl,
+        reputation: c.reputation,
+        logoUrl: c.logoUrl,
       })) ?? [],
     };
 
-    return NextResponse.json({ profile: publicProfile }, { status: 200 });
+    return createSuccessResponse({ profile: publicProfile });
   } catch (err) {
-    console.error('Public profile error:', err);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return handleApiError(err, 'Failed to fetch user profile');
   }
 }

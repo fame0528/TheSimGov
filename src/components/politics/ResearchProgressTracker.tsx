@@ -270,7 +270,7 @@ export default function ResearchProgressTracker({
                   </span>
                   <Chip
                     size="sm"
-                    color={getDiscoveryTierColor(research.discoveryResult?.tier || DiscoveryTier.NOTHING) as any}
+                    color={getDiscoveryTierColor(research.discoveryResult?.tier || DiscoveryTier.NOTHING)}
                     variant="flat"
                   >
                     {getDiscoveryTierName(research.discoveryResult?.tier || DiscoveryTier.NOTHING)}

@@ -10,10 +10,11 @@
  * @author ECHO v1.3.1
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { auth } from '@/auth';
 import { connectDB } from '@/lib/db';
 import { Feature } from '@/lib/db/models';
+import { createSuccessResponse, createErrorResponse, ErrorCode } from '@/lib/utils/apiResponse';
 
 /**
  * GET /api/software/features
@@ -23,7 +24,7 @@ export async function GET(request: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     await connectDB();
@@ -34,7 +35,7 @@ export async function GET(request: NextRequest) {
     const sprint = searchParams.get('sprint');
 
     if (!productId) {
-      return NextResponse.json({ error: 'Product ID required' }, { status: 400 });
+      return createErrorResponse('Product ID required', ErrorCode.BAD_REQUEST, 400);
     }
 
     const query: Record<string, unknown> = { product: productId };
@@ -54,7 +55,7 @@ export async function GET(request: NextRequest) {
       .filter(f => f.status === 'Done')
       .reduce((sum, f) => sum + (f.storyPoints || 0), 0);
 
-    return NextResponse.json({
+    return createSuccessResponse({
       features,
       inProgress,
       completed,
@@ -65,10 +66,7 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('GET /api/software/features error:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch features' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to fetch features', ErrorCode.INTERNAL_ERROR, 500);
   }
 }
 
@@ -80,7 +78,7 @@ export async function POST(request: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     await connectDB();
@@ -97,10 +95,7 @@ export async function POST(request: NextRequest) {
     } = body;
 
     if (!product || !title || !description) {
-      return NextResponse.json(
-        { error: 'Product, title, and description are required' },
-        { status: 400 }
-      );
+      return createErrorResponse('Product, title, and description are required', ErrorCode.BAD_REQUEST, 400);
     }
 
     const feature = await Feature.create({
@@ -117,15 +112,9 @@ export async function POST(request: NextRequest) {
       subtasks: [],
     });
 
-    return NextResponse.json(
-      { message: 'Feature created', feature },
-      { status: 201 }
-    );
+    return createSuccessResponse({ message: 'Feature created', feature }, undefined, 201);
   } catch (error) {
     console.error('POST /api/software/features error:', error);
-    return NextResponse.json(
-      { error: 'Failed to create feature' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to create feature', ErrorCode.INTERNAL_ERROR, 500);
   }
 }

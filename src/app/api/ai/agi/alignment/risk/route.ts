@@ -33,9 +33,10 @@
  * @implementation Phase 6 API Routes Batch 2
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { auth } from '@/auth';
 import { connectDB } from '@/lib/db';
+import { createSuccessResponse, createErrorResponse, ErrorCode } from '@/lib/utils/apiResponse';
 import Company from '@/lib/db/models/Company';
 import AGIMilestone from '@/lib/db/models/AI/AGIMilestone';
 import { simulateCapabilityExplosion } from '@/lib/utils/ai/agi/simulateCapabilityExplosion';
@@ -79,7 +80,7 @@ export async function GET(req: NextRequest) {
     // Authentication - verify user session
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     await connectDB();
@@ -87,15 +88,14 @@ export async function GET(req: NextRequest) {
     // Get user's company
     const company = await Company.findOne({ userId: session.user.id });
     if (!company) {
-      return NextResponse.json({ error: 'Company not found' }, { status: 404 });
+      return createErrorResponse('Company not found', ErrorCode.NOT_FOUND, 404);
     }
 
     // Fetch all milestones for company
     const milestones = await AGIMilestone.find({ company: company._id });
 
     if (milestones.length === 0) {
-      return NextResponse.json({
-        success: true,
+      return createSuccessResponse({
         catastrophicRisk: 0,
         controlProbability: 1.0,
         riskLevel: 'None',
@@ -290,8 +290,7 @@ export async function GET(req: NextRequest) {
       message += ' (Self-improvement active - risk accelerating)';
     }
 
-    return NextResponse.json({
-      success: true,
+    return createSuccessResponse({
       catastrophicRisk,
       controlProbability,
       riskLevel,
@@ -305,12 +304,11 @@ export async function GET(req: NextRequest) {
     });
   } catch (error) {
     console.error('Error assessing catastrophic risk:', error);
-    return NextResponse.json(
-      {
-        error: 'Failed to assess risk',
-        details: error instanceof Error ? error.message : 'Unknown error',
-      },
-      { status: 500 }
+    return createErrorResponse(
+      'Failed to assess risk',
+      ErrorCode.INTERNAL_ERROR,
+      500,
+      { details: error instanceof Error ? error.message : 'Unknown error' }
     );
   }
 }

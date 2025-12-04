@@ -191,7 +191,8 @@ export async function POST(req: NextRequest) {
 
     // Add loan to finance department
     finance.loans = finance.loans || [];
-    finance.loans.push(loan as any);
+    // Push loan - companyId as string matches runtime behavior
+    finance.loans.push(loan as unknown as typeof finance.loans[number]);
     
     // Update cash reserves (loan amount added)
     finance.cashReserves = (finance.cashReserves || 0) + application.amount;

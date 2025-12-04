@@ -9,11 +9,12 @@
  * and price forecasting capabilities.
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { connectDB as dbConnect } from '@/lib/db';
 import { CommodityPrice } from '@/lib/db/models';
 import { auth } from '@/auth';
+import { createSuccessResponse, createErrorResponse } from '@/lib/utils/apiResponse';
 
 // ============================================================================
 // VALIDATION SCHEMAS
@@ -36,7 +37,7 @@ export async function GET(req: NextRequest) {
     // Authentication
     const session = await auth();
     if (!session?.user?.companyId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', 'UNAUTHORIZED', 401);
     }
 
     // Parse query parameters
@@ -52,10 +53,7 @@ export async function GET(req: NextRequest) {
     const validation = HistoricalQuerySchema.safeParse(queryData);
     
     if (!validation.success) {
-      return NextResponse.json(
-        { error: 'Invalid query parameters', details: validation.error.flatten() },
-        { status: 400 }
-      );
+      return createErrorResponse('Invalid query parameters', 'BAD_REQUEST', 400);
     }
 
     const { commodity, symbol, startDate, endDate, limit } = validation.data;
@@ -74,8 +72,7 @@ export async function GET(req: NextRequest) {
       .limit(1)
       .lean();
     if (docs.length === 0) {
-      return NextResponse.json({
-        success: true,
+      return createSuccessResponse({
         count: 0,
         prices: [],
         statistics: null,
@@ -87,8 +84,7 @@ export async function GET(req: NextRequest) {
     const series = (doc.historical || []).slice().sort((a: any, b: any) => b.date.getTime() - a.date.getTime());
     const limitedSeries = series.slice(0, limit);
     if (limitedSeries.length === 0) {
-      return NextResponse.json({
-        success: true,
+      return createSuccessResponse({
         query: { commodity: commodity || 'ALL', symbol: symbol || 'ALL', recordsReturned: 0, limit },
         currentPrice: { value: '$' + (doc.currentPrice ?? 0).toFixed(2), timestamp: null },
         statistics: null,
@@ -123,8 +119,7 @@ export async function GET(req: NextRequest) {
     const sma30 = limitedSeries.slice(0, Math.min(30, limitedSeries.length))
       .reduce((sum: number, r: any) => sum + r.price, 0) / Math.min(30, limitedSeries.length);
 
-    return NextResponse.json({
-      success: true,
+    return createSuccessResponse({
       query: {
         commodity: commodity || doc.commodity,
         symbol: symbol || doc.symbol,
@@ -168,10 +163,7 @@ export async function GET(req: NextRequest) {
 
   } catch (error) {
     console.error('[ENERGY] Historical prices error:', error);
-    return NextResponse.json(
-      { error: 'Failed to retrieve historical prices', details: error instanceof Error ? error.message : 'Unknown error' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to retrieve historical prices', 'INTERNAL_ERROR', 500);
   }
 }
 

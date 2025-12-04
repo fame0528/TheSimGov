@@ -10,10 +10,11 @@
  * @author ECHO v1.3.2
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { auth } from '@/auth';
 import { connectDB } from '@/lib/db';
 import { ManufacturingFacility } from '@/lib/db/models/manufacturing';
+import { createSuccessResponse, createErrorResponse } from '@/lib/utils/apiResponse';
 import { 
   facilityQuerySchema, 
   createFacilitySchema,
@@ -37,7 +38,7 @@ export async function GET(request: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', 'UNAUTHORIZED', 401);
     }
 
     await connectDB();
@@ -46,7 +47,7 @@ export async function GET(request: NextRequest) {
     const companyId = searchParams.get('company');
 
     if (!companyId) {
-      return NextResponse.json({ error: 'Company ID required' }, { status: 400 });
+      return createErrorResponse('Company ID required', 'VALIDATION_ERROR', 400);
     }
 
     // Parse and validate query parameters
@@ -55,10 +56,7 @@ export async function GET(request: NextRequest) {
       const obj = Object.fromEntries(searchParams.entries());
       queryParams = facilityQuerySchema.parse(obj);
     } catch (parseError) {
-      return NextResponse.json(
-        { error: 'Invalid query parameters', details: parseError },
-        { status: 400 }
-      );
+      return createErrorResponse('Invalid query parameters', 'VALIDATION_ERROR', 400, parseError);
     }
 
     // Build MongoDB query
@@ -150,7 +148,7 @@ export async function GET(request: NextRequest) {
       },
     ]);
 
-    return NextResponse.json({
+    return createSuccessResponse({
       facilities,
       pagination: {
         total: totalCount,
@@ -169,10 +167,7 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('GET /api/manufacturing/facilities error:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch facilities' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to fetch facilities', 'INTERNAL_ERROR', 500);
   }
 }
 
@@ -184,7 +179,7 @@ export async function POST(request: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', 'UNAUTHORIZED', 401);
     }
 
     await connectDB();
@@ -193,7 +188,7 @@ export async function POST(request: NextRequest) {
     const { company } = body;
 
     if (!company) {
-      return NextResponse.json({ error: 'Company ID required' }, { status: 400 });
+      return createErrorResponse('Company ID required', 'VALIDATION_ERROR', 400);
     }
 
     // Validate request body
@@ -201,10 +196,7 @@ export async function POST(request: NextRequest) {
     try {
       validatedData = createFacilitySchema.parse(body);
     } catch (parseError) {
-      return NextResponse.json(
-        { error: 'Validation failed', details: parseError },
-        { status: 400 }
-      );
+      return createErrorResponse('Validation failed', 'VALIDATION_ERROR', 400, parseError);
     }
 
     // Check for duplicate facility code
@@ -214,10 +206,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (existingFacility) {
-      return NextResponse.json(
-        { error: 'Facility with this code already exists' },
-        { status: 409 }
-      );
+      return createErrorResponse('Facility with this code already exists', 'CONFLICT', 409);
     }
 
     // Create facility with validated data
@@ -262,18 +251,12 @@ export async function POST(request: NextRequest) {
       active: true,
     });
 
-    return NextResponse.json(
-      { 
-        message: 'Facility created successfully', 
-        facility,
-      },
-      { status: 201 }
-    );
+    return createSuccessResponse({
+      message: 'Facility created successfully',
+      facility,
+    }, undefined, 201);
   } catch (error) {
     console.error('POST /api/manufacturing/facilities error:', error);
-    return NextResponse.json(
-      { error: 'Failed to create facility' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to create facility', 'INTERNAL_ERROR', 500);
   }
 }

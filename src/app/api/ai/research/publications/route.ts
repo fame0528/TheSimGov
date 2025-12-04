@@ -18,13 +18,15 @@
  * @author ECHO v1.3.0
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+import { createSuccessResponse, createErrorResponse } from '@/lib/utils/apiResponse';
 import { authenticateRequest, handleAPIError } from '@/lib/utils/api-helpers';
 import { connectDB } from '@/lib/db';
 import Company from '@/lib/db/models/Company';
 import AIResearchProject from '@/lib/db/models/AIResearchProject';
 import Employee from '@/lib/db/models/Employee';
-import { estimatePublicationImpact } from '@/lib/utils/ai/researchLab';
+import { estimatePublicationImpact, type PublicationVenue } from '@/lib/utils/ai/researchLab';
+import type { BreakthroughArea } from '@/lib/utils/ai/breakthroughCalculations';
 
 /**
  * POST /api/ai/research/publications
@@ -86,27 +88,18 @@ export async function POST(req: NextRequest) {
 
     // 3. Validate required fields
     if (!projectId || breakthroughIndex === undefined || !venue || !venueName) {
-      return NextResponse.json(
-        { success: false, error: 'Missing required fields: projectId, breakthroughIndex, venue, venueName' },
-        { status: 400 }
-      );
+      return createErrorResponse('Missing required fields: projectId, breakthroughIndex, venue, venueName', 'VALIDATION_ERROR', 400);
     }
 
     // 4. Validate venue type
     const validVenues = ['Conference', 'Journal', 'Workshop', 'Preprint'];
     if (!validVenues.includes(venue)) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid venue. Must be: Conference, Journal, Workshop, or Preprint' },
-        { status: 400 }
-      );
+      return createErrorResponse('Invalid venue. Must be: Conference, Journal, Workshop, or Preprint', 'VALIDATION_ERROR', 400);
     }
 
     // 5. Validate breakthrough index
     if (breakthroughIndex < 0) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid breakthrough index (must be >= 0)' },
-        { status: 400 }
-      );
+      return createErrorResponse('Invalid breakthrough index (must be >= 0)', 'VALIDATION_ERROR', 400);
     }
 
     // 6. Connect to database
@@ -116,43 +109,28 @@ export async function POST(req: NextRequest) {
     const company = await Company.findById(companyId);
 
     if (!company) {
-      return NextResponse.json(
-        { success: false, error: 'Company not found' },
-        { status: 404 }
-      );
+      return createErrorResponse('Company not found', 'NOT_FOUND', 404);
     }
 
     if (company.userId !== userId) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized - You do not own this company' },
-        { status: 403 }
-      );
+      return createErrorResponse('Unauthorized - You do not own this company', 'FORBIDDEN', 403);
     }
 
     // 8. Find research project
     const project = await AIResearchProject.findById(projectId);
 
     if (!project) {
-      return NextResponse.json(
-        { success: false, error: 'Research project not found' },
-        { status: 404 }
-      );
+      return createErrorResponse('Research project not found', 'NOT_FOUND', 404);
     }
 
     // 9. Verify project belongs to user's company
     if (project.company.toString() !== companyId) {
-      return NextResponse.json(
-        { success: false, error: 'Research project does not belong to your company' },
-        { status: 403 }
-      );
+      return createErrorResponse('Research project does not belong to your company', 'FORBIDDEN', 403);
     }
 
     // 10. Validate breakthrough exists
     if (breakthroughIndex >= project.breakthroughs.length) {
-      return NextResponse.json(
-        { success: false, error: `Invalid breakthrough index (project has ${project.breakthroughs.length} breakthroughs)` },
-        { status: 400 }
-      );
+      return createErrorResponse(`Invalid breakthrough index (project has ${project.breakthroughs.length} breakthroughs)`, 'VALIDATION_ERROR', 400);
     }
 
     const breakthrough = project.breakthroughs[breakthroughIndex];
@@ -163,14 +141,7 @@ export async function POST(req: NextRequest) {
     );
 
     if (existingPublication) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Publication already created for this breakthrough',
-          existingPublicationId: existingPublication.publicationId,
-        },
-        { status: 400 }
-      );
+      return createErrorResponse(`Publication already created for this breakthrough (ID: ${existingPublication.publicationId})`, 'VALIDATION_ERROR', 400);
     }
 
     // 12. Load researchers for author list
@@ -182,9 +153,9 @@ export async function POST(req: NextRequest) {
 
     // 13. Estimate publication impact
     const impactResult = estimatePublicationImpact(
-      venue as any,
+      venue as PublicationVenue,
       venueName,
-      breakthrough.area as any,
+      breakthrough.area as BreakthroughArea,
       breakthrough.noveltyScore
     );
 
@@ -217,7 +188,7 @@ export async function POST(req: NextRequest) {
     console.log(`[POST /api/ai/research/publications] Publication created: ${publicationId} in ${venueName} (impact score: ${impactResult.impactScore})`);
 
     // 18. Return success response
-    return NextResponse.json({
+    return createSuccessResponse({
       success: true,
       message: `Publication submitted to ${venueName}`,
       publication,

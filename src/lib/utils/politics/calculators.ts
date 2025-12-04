@@ -87,7 +87,8 @@ export function calculateElectionResults(
     return {
       totalVotes,
       turnoutRate: Math.min(100, Math.max(0, turnoutRate)),
-      winner: winner.candidateName,
+      winnerId: winner.playerId || winner.candidateId || '',
+      winnerName: winner.candidateName,
       winnerParty: winner.party,
       margin: winner.votes - secondPlace.votes,
       marginPercentage: winner.votePercentage - secondPlace.votePercentage,

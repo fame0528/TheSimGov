@@ -14,6 +14,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { connectDB, Contract, Company } from '@/lib/db';
+import { createSuccessResponse, createErrorResponse } from '@/lib/utils/apiResponse';
 import { z } from 'zod';
 
 /**
@@ -44,7 +45,7 @@ export async function POST(
     // Authenticate
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', 'UNAUTHORIZED', 401);
     }
 
     // Parse request
@@ -52,10 +53,7 @@ export async function POST(
     const validation = bidSchema.safeParse(body);
     
     if (!validation.success) {
-      return NextResponse.json(
-        { error: 'Invalid request', details: validation.error.errors },
-        { status: 400 }
-      );
+      return createErrorResponse('Invalid request', 'VALIDATION_ERROR', 400, validation.error.errors);
     }
 
     const { companyId, bidAmount } = validation.data;
@@ -65,34 +63,28 @@ export async function POST(
     // Get contract
     const contract = await Contract.findById(id);
     if (!contract) {
-      return NextResponse.json({ error: 'Contract not found' }, { status: 404 });
+      return createErrorResponse('Contract not found', 'CONTRACT_NOT_FOUND', 404);
     }
 
     // Verify contract is in marketplace
     if (contract.status !== 'marketplace') {
-      return NextResponse.json(
-        { error: 'Contract not available for bidding' },
-        { status: 400 }
-      );
+      return createErrorResponse('Contract not available for bidding', 'INVALID_STATUS', 400);
     }
 
     // Check if expired
     if (contract.isExpired) {
-      return NextResponse.json(
-        { error: 'Contract has expired' },
-        { status: 400 }
-      );
+      return createErrorResponse('Contract has expired', 'CONTRACT_EXPIRED', 400);
     }
 
     // Get company
     const company = await Company.findById(companyId);
     if (!company) {
-      return NextResponse.json({ error: 'Company not found' }, { status: 404 });
+      return createErrorResponse('Company not found', 'COMPANY_NOT_FOUND', 404);
     }
 
     // Verify ownership
     if (company.userId.toString() !== session.user.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+      return createErrorResponse('Unauthorized', 'FORBIDDEN', 403);
     }
 
     // Calculate final bid (use bidAmount or baseValue)
@@ -100,18 +92,12 @@ export async function POST(
     
     // Validate bid is not lower than base
     if (bidAmount && bidAmount < contract.baseValue) {
-      return NextResponse.json(
-        { error: 'Bid must be at least base value' },
-        { status: 400 }
-      );
+      return createErrorResponse('Bid must be at least base value', 'VALIDATION_ERROR', 400);
     }
 
     // Check company has enough cash for upfront cost
     if (company.cash < contract.upfrontCost) {
-      return NextResponse.json(
-        { error: 'Insufficient funds for upfront cost' },
-        { status: 400 }
-      );
+      return createErrorResponse('Insufficient funds for upfront cost', 'INSUFFICIENT_FUNDS', 400);
     }
 
     // Deduct upfront cost from company
@@ -123,20 +109,17 @@ export async function POST(
     contract.bidAmount = finalBid;
     await contract.save();
 
-    return NextResponse.json({
+    return createSuccessResponse({
       contract,
       company: {
         id: company._id,
         cash: company.cash,
       },
-    }, { status: 200 });
+    });
 
   } catch (error: any) {
     console.error('Bid submission error:', error);
-    return NextResponse.json(
-      { error: 'Failed to submit bid', details: error.message },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to submit bid', 'INTERNAL_ERROR', 500, error.message);
   }
 }
 

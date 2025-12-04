@@ -26,6 +26,12 @@ export { default as Campaign } from './Campaign';
 export { default as Donor } from './Donor';
 export { default as VoterOutreach } from './VoterOutreach';
 
+// Phase 7 Expansion Models (Player Organizations)
+export { default as Lobby } from './Lobby';
+export { default as PartyModel } from './Party';
+export { default as LeadershipElection } from './LeadershipElection';
+export { default as Proposal } from './Proposal';
+
 // Export document types for convenience
 export type { ICampaignPhaseStateDocument } from './CampaignPhaseState';
 export type { IPollingSnapshotDocument } from './PollingSnapshot';
@@ -40,6 +46,12 @@ export type { IDistrict } from './District';
 export type { ICampaign } from './Campaign';
 export type { IDonor } from './Donor';
 export type { IVoterOutreach } from './VoterOutreach';
+
+// Phase 7 Document Types
+export type { ILobbyDocument } from './Lobby';
+export type { IPartyDocument } from './Party';
+export type { ILeadershipElectionDocument } from './LeadershipElection';
+export type { IProposalDocument } from './Proposal';
 
 // Phase 6 Enums
 // Enum re-exports are sourced from shared domain types to ensure consistency

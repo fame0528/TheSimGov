@@ -11,10 +11,11 @@
  * @author ECHO v1.3.0
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { connectDB } from '@/lib/db';
 import Company from '@/lib/db/models/Company';
 import { authenticateRequest, authorizeCompany, handleAPIError } from '@/lib/utils/api-helpers';
+import { createSuccessResponse, createErrorResponse, ErrorCode } from '@/lib/utils/apiResponse';
 import { generateCandidatePool, type AIRole, type SkillTier } from '@/lib/utils/ai/talentManagement';
 import { IndustryType } from '@/lib/types';
 
@@ -115,21 +116,21 @@ export async function GET(req: NextRequest) {
     // Validate role (required)
     const validRoles: AIRole[] = ['MLEngineer', 'ResearchScientist', 'DataEngineer', 'MLOps', 'ProductManager'];
     if (!role || !validRoles.includes(role)) {
-      return NextResponse.json(
-        {
-          error: 'Invalid or missing role parameter',
-          validRoles,
-        },
-        { status: 400 }
+      return createErrorResponse(
+        'Invalid or missing role parameter',
+        ErrorCode.BAD_REQUEST,
+        400,
+        { validRoles }
       );
     }
 
     // Validate count (1-50, default 10)
     const count = countParam ? parseInt(countParam, 10) : 10;
     if (isNaN(count) || count < 1 || count > 50) {
-      return NextResponse.json(
-        { error: 'Count must be between 1 and 50' },
-        { status: 400 }
+      return createErrorResponse(
+        'Count must be between 1 and 50',
+        ErrorCode.BAD_REQUEST,
+        400
       );
     }
 
@@ -137,12 +138,11 @@ export async function GET(req: NextRequest) {
     if (skillTier) {
       const validTiers: SkillTier[] = ['Junior', 'Mid', 'Senior', 'PhD'];
       if (!validTiers.includes(skillTier)) {
-        return NextResponse.json(
-          {
-            error: 'Invalid skill tier',
-            validTiers,
-          },
-          { status: 400 }
+        return createErrorResponse(
+          'Invalid skill tier',
+          ErrorCode.BAD_REQUEST,
+          400,
+          { validTiers }
         );
       }
     }
@@ -172,26 +172,23 @@ export async function GET(req: NextRequest) {
       candidates.reduce((sum, c) => sum + c.interestLevel, 0) / candidates.length
     );
 
-    return NextResponse.json(
-      {
-        candidates,
-        metadata: {
-          role,
-          count: candidates.length,
-          skillTier: skillTier ?? 'Mixed',
-          companyReputation,
-          phdCount,
-          phdPercentage: Math.round(phdPercentage * 10) / 10,
-          avgExpectedSalary,
-          avgInterestLevel,
-          salaryRange: {
-            min: Math.min(...candidates.map((c) => c.expectedSalary)),
-            max: Math.max(...candidates.map((c) => c.expectedSalary)),
-          },
+    return createSuccessResponse({
+      candidates,
+      metadata: {
+        role,
+        count: candidates.length,
+        skillTier: skillTier ?? 'Mixed',
+        companyReputation,
+        phdCount,
+        phdPercentage: Math.round(phdPercentage * 10) / 10,
+        avgExpectedSalary,
+        avgInterestLevel,
+        salaryRange: {
+          min: Math.min(...candidates.map((c) => c.expectedSalary)),
+          max: Math.max(...candidates.map((c) => c.expectedSalary)),
         },
       },
-      { status: 200 }
-    );
+    });
   } catch (error) {
     return handleAPIError('[GET /api/ai/talent/candidates]', error, 'Failed to generate candidate pool');
   }

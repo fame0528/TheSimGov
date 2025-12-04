@@ -10,10 +10,11 @@
  * @author ECHO v1.3.1
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { auth } from '@/auth';
 import { connectDB } from '@/lib/db';
 import { SoftwareProduct } from '@/lib/db/models';
+import { createSuccessResponse, createErrorResponse, ErrorCode } from '@/lib/utils/apiResponse';
 
 /**
  * GET /api/software/products
@@ -23,7 +24,7 @@ export async function GET(request: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     await connectDB();
@@ -34,7 +35,7 @@ export async function GET(request: NextRequest) {
     const category = searchParams.get('category');
 
     if (!companyId) {
-      return NextResponse.json({ error: 'Company ID required' }, { status: 400 });
+      return createErrorResponse('Company ID required', ErrorCode.VALIDATION_ERROR, 400);
     }
 
     // Build query
@@ -56,7 +57,7 @@ export async function GET(request: NextRequest) {
       : 0;
     const activeProducts = products.filter(p => p.status === 'Active').length;
 
-    return NextResponse.json({
+    return createSuccessResponse({
       products,
       totalRevenue,
       totalMRR,
@@ -66,10 +67,7 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('GET /api/software/products error:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch software products' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to fetch software products', ErrorCode.INTERNAL_ERROR, 500);
   }
 }
 
@@ -81,7 +79,7 @@ export async function POST(request: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     await connectDB();
@@ -96,10 +94,7 @@ export async function POST(request: NextRequest) {
     } = body;
 
     if (!company || !name || !description || !category) {
-      return NextResponse.json(
-        { error: 'Company, name, description, and category are required' },
-        { status: 400 }
-      );
+      return createErrorResponse('Company, name, description, and category are required', ErrorCode.VALIDATION_ERROR, 400);
     }
 
     const product = await SoftwareProduct.create({
@@ -119,15 +114,9 @@ export async function POST(request: NextRequest) {
       releases: [],
     });
 
-    return NextResponse.json(
-      { message: 'Software product created', product },
-      { status: 201 }
-    );
+    return createSuccessResponse({ message: 'Software product created', product }, undefined, 201);
   } catch (error) {
     console.error('POST /api/software/products error:', error);
-    return NextResponse.json(
-      { error: 'Failed to create software product' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to create software product', ErrorCode.INTERNAL_ERROR, 500);
   }
 }

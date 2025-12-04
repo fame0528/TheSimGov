@@ -176,12 +176,12 @@ export function getDiscoveryTierName(tier: DiscoveryTier): string {
 /**
  * Get color code for discovery tier
  */
-export function getDiscoveryTierColor(tier: DiscoveryTier): string {
-  const colors: Record<DiscoveryTier, string> = {
-    [DiscoveryTier.NOTHING]: 'gray',
-    [DiscoveryTier.MINOR]: 'yellow',
-    [DiscoveryTier.MODERATE]: 'orange',
-    [DiscoveryTier.MAJOR]: 'red',
+export function getDiscoveryTierColor(tier: DiscoveryTier): 'default' | 'warning' | 'danger' | 'secondary' {
+  const colors: Record<DiscoveryTier, 'default' | 'warning' | 'danger' | 'secondary'> = {
+    [DiscoveryTier.NOTHING]: 'default',
+    [DiscoveryTier.MINOR]: 'warning',
+    [DiscoveryTier.MODERATE]: 'warning',
+    [DiscoveryTier.MAJOR]: 'danger',
   };
   return colors[tier];
 }

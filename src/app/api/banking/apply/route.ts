@@ -5,9 +5,10 @@
  * @created 2025-11-23
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { auth } from '@/auth';
 import { connectDB, Company, Bank, Loan } from '@/lib/db';
+import { createSuccessResponse, createErrorResponse } from '@/lib/utils/apiResponse';
 import { calculateCreditScore } from '@/lib/utils/banking/creditScoring';
 import { calculateLoanPayment } from '@/lib/utils/banking/loanCalculations';
 import { LoanType } from '@/lib/types/enums';
@@ -32,10 +33,7 @@ export async function POST(request: NextRequest) {
     // Authenticate user
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: 'Authentication required' },
-        { status: 401 }
-      );
+      return createErrorResponse('Authentication required', 'UNAUTHORIZED', 401);
     }
 
     // Parse and validate request body
@@ -43,13 +41,7 @@ export async function POST(request: NextRequest) {
     const validationResult = loanApplicationSchema.safeParse(body);
 
     if (!validationResult.success) {
-      return NextResponse.json(
-        {
-          error: 'Validation failed',
-          details: validationResult.error.issues
-        },
-        { status: 400 }
-      );
+      return createErrorResponse('Validation failed', 'VALIDATION_ERROR', 400, validationResult.error.issues);
     }
 
     const { companyId, bankId, loanType, amount, termMonths, purpose } = validationResult.data;
@@ -64,19 +56,13 @@ export async function POST(request: NextRequest) {
     });
 
     if (!company) {
-      return NextResponse.json(
-        { error: 'Company not found or access denied' },
-        { status: 404 }
-      );
+      return createErrorResponse('Company not found or access denied', 'NOT_FOUND', 404);
     }
 
     // Verify bank exists
     const bank = await Bank.findById(bankId);
     if (!bank) {
-      return NextResponse.json(
-        { error: 'Bank not found' },
-        { status: 404 }
-      );
+      return createErrorResponse('Bank not found', 'NOT_FOUND', 404);
     }
 
     // Calculate credit score
@@ -89,18 +75,12 @@ export async function POST(request: NextRequest) {
     // Check if company can afford the loan
     const maxMonthlyPayment = (company.monthlyRevenue || 0) * 0.3; // 30% of revenue
     if (monthlyPayment > maxMonthlyPayment) {
-      return NextResponse.json(
-        {
-          error: 'Loan amount exceeds affordability threshold',
-          details: {
-            requestedPayment: monthlyPayment,
-            maxAffordable: maxMonthlyPayment,
-            creditScore,
-            suggestedAmount: Math.floor((maxMonthlyPayment * termMonths) / (1 + interestRate / 12))
-          }
-        },
-        { status: 400 }
-      );
+      return createErrorResponse('Loan amount exceeds affordability threshold', 'AFFORDABILITY_ERROR', 400, {
+        requestedPayment: monthlyPayment,
+        maxAffordable: maxMonthlyPayment,
+        creditScore,
+        suggestedAmount: Math.floor((maxMonthlyPayment * termMonths) / (1 + interestRate / 12))
+      });
     }
 
     // Check bank approval
@@ -114,15 +94,11 @@ export async function POST(request: NextRequest) {
     });
 
     if (!approvalResult.approved) {
-      return NextResponse.json(
-        {
-          error: 'Loan application denied',
-          reason: approvalResult.reason,
-          creditScore,
-          suggestions: approvalResult.suggestions
-        },
-        { status: 400 }
-      );
+      return createErrorResponse('Loan application denied', 'LOAN_DENIED', 400, {
+        reason: approvalResult.reason,
+        creditScore,
+        suggestions: approvalResult.suggestions
+      });
     }
 
     // Create the loan
@@ -150,8 +126,7 @@ export async function POST(request: NextRequest) {
     company.totalDebt = (company.totalDebt || 0) + amount;
     await company.save();
 
-    return NextResponse.json({
-      success: true,
+    return createSuccessResponse({
       loan: {
         id: loan._id,
         loanType,
@@ -168,9 +143,6 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Loan application error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return createErrorResponse('Internal server error', 'INTERNAL_ERROR', 500);
   }
 }

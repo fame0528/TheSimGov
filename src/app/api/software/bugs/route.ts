@@ -10,10 +10,11 @@
  * @author ECHO v1.3.1
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { auth } from '@/auth';
 import { connectDB } from '@/lib/db';
 import { Bug } from '@/lib/db/models';
+import { createSuccessResponse, createErrorResponse, ErrorCode } from '@/lib/utils/apiResponse';
 
 /**
  * GET /api/software/bugs
@@ -23,7 +24,7 @@ export async function GET(request: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     await connectDB();
@@ -34,7 +35,7 @@ export async function GET(request: NextRequest) {
     const severity = searchParams.get('severity');
 
     if (!productId) {
-      return NextResponse.json({ error: 'Product ID required' }, { status: 400 });
+      return createErrorResponse('Product ID required', ErrorCode.BAD_REQUEST, 400);
     }
 
     const query: Record<string, unknown> = { product: productId };
@@ -51,7 +52,7 @@ export async function GET(request: NextRequest) {
     const criticalBugs = bugs.filter(b => b.severity === 'Critical' && !['Closed', 'Verified'].includes(b.status as string)).length;
     const avgResolutionTime = calculateAvgResolutionTime(bugs);
 
-    return NextResponse.json({
+    return createSuccessResponse({
       bugs,
       openBugs,
       criticalBugs,
@@ -60,10 +61,7 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('GET /api/software/bugs error:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch bugs' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to fetch bugs', ErrorCode.INTERNAL_ERROR, 500);
   }
 }
 
@@ -91,7 +89,7 @@ export async function POST(request: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     await connectDB();
@@ -108,10 +106,7 @@ export async function POST(request: NextRequest) {
     } = body;
 
     if (!product || !title || !description || !severity) {
-      return NextResponse.json(
-        { error: 'Product, title, description, and severity are required' },
-        { status: 400 }
-      );
+      return createErrorResponse('Product, title, description, and severity are required', ErrorCode.BAD_REQUEST, 400);
     }
 
     // Calculate SLA based on severity
@@ -140,15 +135,9 @@ export async function POST(request: NextRequest) {
       slaViolated: false,
     });
 
-    return NextResponse.json(
-      { message: 'Bug reported', bug },
-      { status: 201 }
-    );
+    return createSuccessResponse({ message: 'Bug reported', bug }, undefined, 201);
   } catch (error) {
     console.error('POST /api/software/bugs error:', error);
-    return NextResponse.json(
-      { error: 'Failed to report bug' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to report bug', ErrorCode.INTERNAL_ERROR, 500);
   }
 }

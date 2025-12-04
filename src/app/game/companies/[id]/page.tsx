@@ -26,6 +26,11 @@ import { useAICompanySummary } from '@/lib/hooks/useAI';
 import { useEnergySummary } from '@/lib/hooks/useEnergy';
 import { useSoftwareProducts } from '@/lib/hooks/useSoftware';
 import { useEcommerceSummary } from '@/lib/hooks/useEcommerce';
+import { useManufacturingSummary } from '@/lib/hooks/useManufacturing';
+import { useConsulting } from '@/hooks/useConsulting';
+import { useCrimeSummary } from '@/hooks/useCrime';
+import { useHealthcareSummary } from '@/lib/hooks/useHealthcare';
+import { useMediaSummary } from '@/lib/hooks/useMedia';
 import { IndustryType, TechnologySubcategory } from '@/lib/types';
 import { COMPANY_LEVELS } from '@/lib/utils/constants';
 import { formatCurrency } from '@/lib/utils';
@@ -35,6 +40,12 @@ import { AICompanyDashboard } from '@/lib/components/ai';
 import { EnergyDashboard } from '@/lib/components/energy';
 import { SoftwareDashboard } from '@/lib/components/software';
 import { EcommerceDashboard } from '@/lib/components/ecommerce';
+import { ManufacturingDashboard } from '@/components/manufacturing';
+import { ConsultingDashboard } from '@/components/consulting';
+import { CrimeDashboard } from '@/components/crime';
+import { HealthcareDashboard } from '@/components/healthcare';
+import { MediaDashboard } from '@/components/media';
+import { BankingDashboard } from '@/components/banking';
 import { EdTechDashboardWrapper } from '@/components/edtech';
 import { EmployeeDashboardWrapper } from '@/components/employee';
 import { Button, Progress } from '@heroui/react';
@@ -112,6 +123,74 @@ function isEdTechCompany(company: ExtendedCompany): boolean {
   
   return industry === 'education' || 
          ((industry === 'technology' || industry === 'tech') && subcategory === 'edtech');
+}
+
+/**
+ * Detect if company should use Manufacturing Dashboard
+ * Matches: Manufacturing industry (any subcategory)
+ */
+function isManufacturingCompany(company: ExtendedCompany): boolean {
+  const industry = String(company.industry).toLowerCase();
+  return industry === 'manufacturing';
+}
+
+/**
+ * Detect if company should use Consulting Dashboard
+ * Matches: Consulting industry OR Professional Services industry
+ */
+function isConsultingCompany(company: ExtendedCompany): boolean {
+  const industry = String(company.industry).toLowerCase();
+  return industry === 'consulting' || industry === 'professional services';
+}
+
+/**
+ * Detect if company should use Crime Dashboard
+ * Matches: Crime industry OR Underworld subcategory
+ */
+function isCrimeCompany(company: ExtendedCompany): boolean {
+  const industry = String(company.industry).toLowerCase();
+  const subcategory = company.subcategory?.toLowerCase();
+  
+  return industry === 'crime' || 
+         industry === 'underworld' || 
+         subcategory === 'crime' || 
+         subcategory === 'underworld';
+}
+
+/**
+ * Detect if company should use Healthcare Dashboard
+ * Matches: Healthcare industry (hospitals, clinics, pharma, devices, insurance)
+ */
+function isHealthcareCompany(company: ExtendedCompany): boolean {
+  const industry = String(company.industry).toLowerCase();
+  return industry === 'healthcare' || 
+         industry === 'medical' || 
+         industry === 'pharmaceutical' ||
+         industry === 'biotech';
+}
+
+/**
+ * Detect if company should use Media Dashboard
+ * Matches: Media industry (entertainment, advertising, content, influencers)
+ */
+function isMediaCompany(company: ExtendedCompany): boolean {
+  const industry = String(company.industry).toLowerCase();
+  return industry === 'media' || 
+         industry === 'entertainment' || 
+         industry === 'advertising' ||
+         industry === 'broadcasting';
+}
+
+/**
+ * Detect if company should use Banking Dashboard
+ * Matches: Banking/Finance industry (banks, lending, investments)
+ */
+function isBankingCompany(company: ExtendedCompany): boolean {
+  const industry = String(company.industry).toLowerCase();
+  return industry === 'banking' || 
+         industry === 'finance' || 
+         industry === 'financial services' ||
+         industry === 'fintech';
 }
 
 /**
@@ -363,6 +442,202 @@ function EcommerceDashboardWrapper({
 }
 
 /**
+ * Manufacturing Company Dashboard Wrapper
+ * Renders ManufacturingDashboard with company context
+ */
+function ManufacturingDashboardWrapper({ 
+  company, 
+  companyId,
+  router 
+}: { 
+  company: ExtendedCompany; 
+  companyId: string;
+  router: ReturnType<typeof useRouter>;
+}) {
+  // ManufacturingDashboard fetches its own data internally via useManufacturing hooks
+  return (
+    <DashboardLayout 
+      title={company.name} 
+      subtitle={`🏭 Manufacturing Company • Level ${company.level}`}
+    >
+      <ManufacturingDashboard
+        companyId={companyId}
+        onFacilityClick={(facilityId) => router.push(`/game/companies/${companyId}/manufacturing/facilities/${facilityId}`)}
+        onProductionLineClick={(lineId) => router.push(`/game/companies/${companyId}/manufacturing/lines/${lineId}`)}
+        onSupplierClick={(supplierId) => router.push(`/game/companies/${companyId}/manufacturing/suppliers/${supplierId}`)}
+        onAddFacility={() => router.push(`/game/companies/${companyId}/manufacturing/facilities/new`)}
+        onAddProductionLine={() => router.push(`/game/companies/${companyId}/manufacturing/lines/new`)}
+        onAddSupplier={() => router.push(`/game/companies/${companyId}/manufacturing/suppliers/new`)}
+      />
+    </DashboardLayout>
+  );
+}
+
+/**
+ * Consulting Company Dashboard Wrapper
+ * Renders ConsultingDashboard with company context
+ */
+function ConsultingDashboardWrapper({ 
+  company, 
+  companyId,
+}: { 
+  company: ExtendedCompany; 
+  companyId: string;
+}) {
+  // ConsultingDashboard fetches its own data internally via useConsulting hooks
+  return (
+    <DashboardLayout 
+      title={company.name} 
+      subtitle={`💼 Consulting Company • Level ${company.level}`}
+    >
+      <ConsultingDashboard companyId={companyId} />
+    </DashboardLayout>
+  );
+}
+
+/**
+ * Crime Company Dashboard Wrapper
+ * Fetches crime-specific data and renders CrimeDashboard
+ */
+function CrimeDashboardWrapper({ 
+  company, 
+  companyId,
+  router 
+}: { 
+  company: ExtendedCompany; 
+  companyId: string;
+  router: ReturnType<typeof useRouter>;
+}) {
+  const [activeTab, setActiveTab] = useState('overview');
+  
+  // Fetch crime summary data - we need userId from session
+  // For now, pass companyId as owner context
+  const { data: crimeSummary, isLoading: crimeLoading, error: crimeError } = useCrimeSummary(companyId, null);
+  
+  if (crimeLoading) {
+    return (
+      <DashboardLayout title={company.name} subtitle="🔫 Underworld Operations • Loading...">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <LoadingSpinner size="lg" />
+        </div>
+      </DashboardLayout>
+    );
+  }
+  
+  if (crimeError || !crimeSummary) {
+    return (
+      <DashboardLayout title={company.name} subtitle="🔫 Underworld Operations">
+        <ErrorMessage error={crimeError || 'Failed to load crime data'} />
+        <Button color="primary" onPress={() => router.push('/game/dashboard')}>
+          Back to Dashboard
+        </Button>
+      </DashboardLayout>
+    );
+  }
+  
+  return (
+    <DashboardLayout 
+      title={company.name} 
+      subtitle={`🔫 Underworld Operations • Level ${company.level}`}
+    >
+      <CrimeDashboard
+        summary={crimeSummary}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        onCreateFacility={() => router.push(`/game/companies/${companyId}/crime/facilities/new`)}
+        onCreateRoute={() => router.push(`/game/companies/${companyId}/crime/routes/new`)}
+        onCreateListing={() => router.push(`/game/companies/${companyId}/crime/marketplace/new`)}
+        onCreateChannel={() => router.push(`/game/companies/${companyId}/crime/laundering/new`)}
+      />
+    </DashboardLayout>
+  );
+}
+
+/**
+ * Healthcare Company Dashboard Wrapper
+ * Renders HealthcareDashboard with company context
+ */
+function HealthcareDashboardWrapper({ 
+  company, 
+  companyId,
+  router 
+}: { 
+  company: ExtendedCompany; 
+  companyId: string;
+  router: ReturnType<typeof useRouter>;
+}) {
+  return (
+    <DashboardLayout 
+      title={company.name} 
+      subtitle={`🏥 Healthcare Company • Level ${company.level}`}
+    >
+      <HealthcareDashboard
+        companyId={companyId}
+        onSectorSelect={(sector) => router.push(`/game/companies/${companyId}/healthcare/${sector}`)}
+      />
+    </DashboardLayout>
+  );
+}
+
+/**
+ * Media Company Dashboard Wrapper
+ * Renders MediaDashboard with company context
+ */
+function MediaDashboardWrapper({ 
+  company, 
+  companyId,
+  router 
+}: { 
+  company: ExtendedCompany; 
+  companyId: string;
+  router: ReturnType<typeof useRouter>;
+}) {
+  return (
+    <DashboardLayout 
+      title={company.name} 
+      subtitle={`📺 Media Company • Level ${company.level}`}
+    >
+      <MediaDashboard
+        companyId={companyId}
+        onNewCampaign={() => router.push(`/game/companies/${companyId}/media/campaigns/new`)}
+        onNewContent={() => router.push(`/game/companies/${companyId}/media/content/new`)}
+        onNewSponsorship={() => router.push(`/game/companies/${companyId}/media/sponsorships/new`)}
+        onViewAnalytics={() => router.push(`/game/companies/${companyId}/media/analytics`)}
+      />
+    </DashboardLayout>
+  );
+}
+
+/**
+ * Banking Company Dashboard Wrapper
+ * Renders BankingDashboard with company context
+ */
+function BankingDashboardWrapper({ 
+  company, 
+  companyId,
+  router 
+}: { 
+  company: ExtendedCompany; 
+  companyId: string;
+  router: ReturnType<typeof useRouter>;
+}) {
+  return (
+    <DashboardLayout 
+      title={company.name} 
+      subtitle={`🏦 Banking & Finance • Level ${company.level}`}
+    >
+      <BankingDashboard
+        companyId={companyId}
+        onApplyLoan={() => router.push(`/game/companies/${companyId}/banking/loans/apply`)}
+        onMakePayment={() => router.push(`/game/companies/${companyId}/banking/payments`)}
+        onViewInvestments={() => router.push(`/game/companies/${companyId}/banking/investments`)}
+        onViewTransactions={() => router.push(`/game/companies/${companyId}/banking/transactions`)}
+      />
+    </DashboardLayout>
+  );
+}
+
+/**
  * Generic Company Dashboard
  * Shows financials, level progression, and quick actions
  */
@@ -441,21 +716,6 @@ function GenericCompanyDashboard({
       subtitle={`${company.industry} • Level ${company.level}`}
     >
       <div className="space-y-6">
-        {/* Owner / CEO Link */}
-        <Card title="Owner" showDivider>
-          <div className="flex items-center gap-3">
-            {company.ownerUsername ? (
-              <button
-                className="text-emerald-400 hover:text-emerald-300 underline"
-                onClick={() => router.push(`/users/${company.ownerUsername}`)}
-              >
-                @{company.ownerUsername}
-              </button>
-            ) : (
-              <span className="text-slate-400">Owner: Unknown</span>
-            )}
-          </div>
-        </Card>
 
         {/* Company Logo */}
         <Card title="Company Logo" showDivider>
@@ -716,6 +976,71 @@ export default function CompanyDashboardPage() {
     );
   }
 
+  // Manufacturing industry dashboard
+  if (isManufacturingCompany(extendedCompany)) {
+    return (
+      <ManufacturingDashboardWrapper
+        company={extendedCompany}
+        companyId={companyId}
+        router={router}
+      />
+    );
+  }
+
+  // Consulting industry dashboard
+  if (isConsultingCompany(extendedCompany)) {
+    return (
+      <ConsultingDashboardWrapper
+        company={extendedCompany}
+        companyId={companyId}
+      />
+    );
+  }
+
+  // Crime/Underworld industry dashboard
+  if (isCrimeCompany(extendedCompany)) {
+    return (
+      <CrimeDashboardWrapper
+        company={extendedCompany}
+        companyId={companyId}
+        router={router}
+      />
+    );
+  }
+
+  // Healthcare industry dashboard
+  if (isHealthcareCompany(extendedCompany)) {
+    return (
+      <HealthcareDashboardWrapper
+        company={extendedCompany}
+        companyId={companyId}
+        router={router}
+      />
+    );
+  }
+
+  // Media industry dashboard
+  if (isMediaCompany(extendedCompany)) {
+    return (
+      <MediaDashboardWrapper
+        company={extendedCompany}
+        companyId={companyId}
+        router={router}
+      />
+    );
+  }
+
+  // Banking/Finance industry dashboard
+  if (isBankingCompany(extendedCompany)) {
+    return (
+      <BankingDashboardWrapper
+        company={extendedCompany}
+        companyId={companyId}
+        router={router}
+      />
+    );
+  }
+
   // Default: Generic dashboard
   return (
     <GenericCompanyDashboard
@@ -736,19 +1061,25 @@ export default function CompanyDashboardPage() {
  * 3. Each dashboard fetches its own domain-specific data
  * 4. Shared components (Card, DashboardLayout) maintain consistency
  * 
- * SUPPORTED INDUSTRIES:
- * - Technology + AI → AICompanyDashboard (13,500+ lines of AI code!)
- * - Technology + Software → SoftwareDashboard (implemented!)
- * - Energy → EnergyDashboard (implemented!)
- * - Retail / Technology + E-Commerce → EcommerceDashboard (implemented!)
- * - Healthcare → HealthcareDashboard (future)
- * - Default → GenericDashboard (current implementation)
+ * SUPPORTED INDUSTRIES (11 total):
+ * - Technology + AI → AICompanyDashboard ✓
+ * - Technology + Software → SoftwareDashboard ✓
+ * - Energy → EnergyDashboard ✓
+ * - Retail / Technology + E-Commerce → EcommerceDashboard ✓
+ * - Education / Technology + EdTech → EdTechDashboard ✓
+ * - Manufacturing → ManufacturingDashboard ✓
+ * - Consulting / Professional Services → ConsultingDashboard ✓
+ * - Crime / Underworld → CrimeDashboard ✓
+ * - Healthcare / Medical / Pharma → HealthcareDashboard ✓
+ * - Media / Entertainment / Advertising → MediaDashboard ✓
+ * - Banking / Finance / Fintech → BankingDashboard ✓
+ * - Default → GenericDashboard
  * 
  * TO ADD NEW INDUSTRY:
- * 1. Create detection function (e.g., isHealthcareCompany)
+ * 1. Create detection function (e.g., isNewIndustryCompany)
  * 2. Create DashboardWrapper that fetches industry data
  * 3. Add conditional render in CompanyDashboardPage
  * 
- * @updated 2025-11-29
- * @author ECHO v1.3.1
+ * @updated 2025-12-05
+ * @author ECHO v1.4.0
  */

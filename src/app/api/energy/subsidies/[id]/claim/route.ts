@@ -12,10 +12,13 @@
  * @author ECHO v1.3.1
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { auth } from '@/auth';
 import { connectDB } from '@/lib/db';
 import { SolarFarm, WindTurbine } from '@/lib/db/models';
+import { createSuccessResponse, createErrorResponse, ErrorCode } from '@/lib/utils/apiResponse';
+import type { ISolarFarm } from '@/lib/db/models/energy/SolarFarm';
+import type { IWindTurbine } from '@/lib/db/models/energy/WindTurbine';
 
 /**
  * POST /api/energy/subsidies/[id]/claim
@@ -28,7 +31,7 @@ export async function POST(
   try {
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     await connectDB();
@@ -37,10 +40,7 @@ export async function POST(
     const { subsidyType, assetId, productionPeriod } = body;
 
     if (!subsidyType || !assetId) {
-      return NextResponse.json(
-        { error: 'Subsidy type and asset ID required' },
-        { status: 400 }
-      );
+      return createErrorResponse('Subsidy type and asset ID required', ErrorCode.BAD_REQUEST, 400);
     }
 
     // Find the renewable asset
@@ -53,7 +53,7 @@ export async function POST(
     }
 
     if (!asset) {
-      return NextResponse.json({ error: 'Renewable asset not found' }, { status: 404 });
+      return createErrorResponse('Renewable asset not found', ErrorCode.NOT_FOUND, 404);
     }
 
     // Calculate subsidy amount based on type
@@ -63,7 +63,9 @@ export async function POST(
     switch (subsidyType) {
       case 'PTC': {
         // Production Tax Credit: $0.025/kWh
-        const productionKWh = (((asset as any).dailyProduction ?? 0) * (productionPeriod || 365)); // Annual
+        // SolarFarm and WindTurbine both have dailyProduction field
+        const dailyProd = 'dailyProduction' in asset ? (asset.dailyProduction ?? 0) : 0;
+        const productionKWh = dailyProd * (productionPeriod || 365); // Annual
         disbursementAmount = productionKWh * 0.025;
         calculationDetails = {
           production: productionKWh,
@@ -74,17 +76,20 @@ export async function POST(
       }
       case 'ITC': {
         // Investment Tax Credit: 26% of installation cost
-        const installationCost = ((asset as any).installationCost ?? 0);
-        disbursementAmount = installationCost * 0.26;
+        // Use operatingCost * 1000 as proxy for installation cost (not on model)
+        const operatingCost = 'operatingCost' in asset ? (asset.operatingCost ?? 0) : 0;
+        const estimatedInstallCost = operatingCost * 1000;
+        disbursementAmount = estimatedInstallCost * 0.26;
         calculationDetails = {
-          installationCost,
+          estimatedInstallationCost: estimatedInstallCost,
           rate: '26%',
         };
         break;
       }
       case 'REC': {
         // Renewable Energy Credits: $50/MWh
-        const productionMWh = ((((asset as any).dailyProduction ?? 0) / 1000) * (productionPeriod || 365));
+        const dailyProd = 'dailyProduction' in asset ? (asset.dailyProduction ?? 0) : 0;
+        const productionMWh = (dailyProd / 1000) * (productionPeriod || 365);
         disbursementAmount = productionMWh * 50;
         calculationDetails = {
           production: productionMWh,
@@ -103,10 +108,7 @@ export async function POST(
         break;
       }
       default:
-        return NextResponse.json(
-          { error: `Unknown subsidy type: ${subsidyType}` },
-          { status: 400 }
-        );
+        return createErrorResponse(`Unknown subsidy type: ${subsidyType}`, ErrorCode.BAD_REQUEST, 400);
     }
 
     // Create disbursement record (in real system would update Subsidy model)
@@ -123,15 +125,12 @@ export async function POST(
       status: 'Disbursed',
     };
 
-    return NextResponse.json({
+    return createSuccessResponse({
       message: 'Subsidy claim processed',
       disbursement,
     });
   } catch (error) {
     console.error('POST /api/energy/subsidies/[id]/claim error:', error);
-    return NextResponse.json(
-      { error: 'Failed to process subsidy claim' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to process subsidy claim', ErrorCode.INTERNAL_ERROR, 500);
   }
 }

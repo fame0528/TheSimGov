@@ -12,19 +12,62 @@
 
 'use client';
 
-import { Button, Card, CardBody, Chip, Divider } from '@heroui/react';
+import { Button, Card, CardBody, Chip, Divider, Skeleton } from '@heroui/react';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useSession } from 'next-auth/react';
+import { useState, useEffect } from 'react';
+import { useSocket } from '@/lib/hooks/useSocket';
 
 export default function LandingPage() {
   const router = useRouter();
+  const { data: session, status } = useSession();
   const [hoveredFeature, setHoveredFeature] = useState<number | null>(null);
+  const [userData, setUserData] = useState<{ cash: number } | null>(null);
+  const [userLoading, setUserLoading] = useState(true);
+
+  // Real-time user data via Socket.io
+  const { isConnected, on, off } = useSocket({
+    namespace: '/user',
+    autoConnect: status === 'authenticated'
+  });
+
+  // Fetch initial user data
+  useEffect(() => {
+    if (status === 'authenticated') {
+      setUserLoading(true);
+      fetch('/api/user/me')
+        .then(res => res.json())
+        .then(data => {
+          setUserData(data);
+          setUserLoading(false);
+        })
+        .catch(() => setUserLoading(false));
+    } else {
+      setUserData(null);
+      setUserLoading(false);
+    }
+  }, [status]);
+
+  // Listen for real-time cash updates
+  useEffect(() => {
+    if (!isConnected) return;
+
+    const handleCashUpdate = (data: { cash: number }) => {
+      setUserData(prev => prev ? { ...prev, cash: data.cash } : { cash: data.cash });
+    };
+
+    on('user:cash:update', handleCashUpdate);
+
+    return () => {
+      off('user:cash:update', handleCashUpdate);
+    };
+  }, [isConnected, on, off]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 overflow-hidden">
       {/* Animated Background Grid */}
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:64px_64px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]" />
-      
+
       {/* Gradient Orbs */}
       <div className="absolute top-0 left-1/4 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl animate-pulse" />
       <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-emerald-500/20 rounded-full blur-3xl animate-pulse delay-1000" />
@@ -48,19 +91,40 @@ export default function LandingPage() {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <Button
-                variant="light"
-                className="text-white hover:bg-white/10"
-                onPress={() => router.push('/login')}
-              >
-                Sign In
-              </Button>
-              <Button
-                className="bg-gradient-to-r from-emerald-600 to-emerald-700 text-white shadow-lg shadow-emerald-500/20"
-                onPress={() => router.push('/register')}
-              >
-                Get Started
-              </Button>
+              {status === 'loading' || userLoading ? (
+                <Skeleton className="rounded-lg w-24 h-10" />
+              ) : status === 'authenticated' ? (
+                <>
+                  <div className="hidden md:flex items-center bg-slate-800/50 px-4 py-2 rounded-xl border border-white/10">
+                    <span className="text-xs text-slate-400 mr-2">Cash:</span>
+                    <span className="text-sm font-bold text-emerald-400">
+                      ${(userData?.cash || 0).toLocaleString()}
+                    </span>
+                  </div>
+                  <Button
+                    className="bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg shadow-blue-500/20"
+                    onPress={() => router.push('/game')}
+                  >
+                    Dashboard
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button
+                    variant="light"
+                    className="text-white hover:bg-white/10"
+                    onPress={() => router.push('/login')}
+                  >
+                    Sign In
+                  </Button>
+                  <Button
+                    className="bg-gradient-to-r from-emerald-600 to-emerald-700 text-white shadow-lg shadow-emerald-500/20"
+                    onPress={() => router.push('/register')}
+                  >
+                    Get Started
+                  </Button>
+                </>
+              )}
             </div>
           </div>
         </nav>
@@ -77,15 +141,15 @@ export default function LandingPage() {
                 Now in Open Beta
               </span>
             </div>
-            
+
             <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold bg-gradient-to-r from-white via-blue-100 to-emerald-200 bg-clip-text text-transparent leading-tight">
               Build Your
               <br />
               Government Empire
             </h1>
-            
+
             <p className="text-xl md:text-2xl text-slate-300 max-w-3xl mx-auto leading-relaxed">
-              Master the art of governance in this immersive multiplayer simulation. 
+              Master the art of governance in this immersive multiplayer simulation.
               Build businesses, manage industries, influence policy, and shape the nation.
             </p>
 
@@ -266,7 +330,7 @@ export default function LandingPage() {
           <div className="grid md:grid-cols-3 gap-8 relative">
             {/* Connection Lines */}
             <div className="hidden md:block absolute top-1/4 left-1/4 right-1/4 h-0.5 bg-gradient-to-r from-emerald-500/50 via-blue-500/50 to-violet-500/50" />
-            
+
             {[
               {
                 step: '01',
@@ -290,11 +354,10 @@ export default function LandingPage() {
               <div key={step.step} className="relative">
                 <Card className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-xl border border-white/10 hover:border-white/20 transition-all duration-300">
                   <CardBody className="p-8 gap-6 text-center">
-                    <div className={`w-20 h-20 mx-auto rounded-full ${
-                      step.color === 'emerald' ? 'bg-gradient-to-br from-emerald-500 to-emerald-600 shadow-emerald-500/30' :
-                      step.color === 'blue' ? 'bg-gradient-to-br from-blue-500 to-blue-600 shadow-blue-500/30' :
-                      'bg-gradient-to-br from-violet-500 to-violet-600 shadow-violet-500/30'
-                    } flex items-center justify-center text-3xl font-bold text-white shadow-lg`}>
+                    <div className={`w-20 h-20 mx-auto rounded-full ${step.color === 'emerald' ? 'bg-gradient-to-br from-emerald-500 to-emerald-600 shadow-emerald-500/30' :
+                        step.color === 'blue' ? 'bg-gradient-to-br from-blue-500 to-blue-600 shadow-blue-500/30' :
+                          'bg-gradient-to-br from-violet-500 to-violet-600 shadow-violet-500/30'
+                      } flex items-center justify-center text-3xl font-bold text-white shadow-lg`}>
                       {step.step}
                     </div>
                     <div>
@@ -318,13 +381,13 @@ export default function LandingPage() {
             <CardBody className="p-12 md:p-16 text-center gap-8 relative">
               {/* Animated background elements */}
               <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808008_1px,transparent_1px),linear-gradient(to_bottom,#80808008_1px,transparent_1px)] bg-[size:40px_40px]" />
-              
+
               <div className="relative z-10 space-y-6">
                 <h2 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-white via-emerald-100 to-white bg-clip-text text-transparent">
                   Ready to Build Your Empire?
                 </h2>
                 <p className="text-xl text-slate-300 max-w-2xl mx-auto">
-                  Join thousands of players building business empires. 
+                  Join thousands of players building business empires.
                   Start your journey today and dominate the market.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
@@ -368,11 +431,11 @@ export default function LandingPage() {
                   </div>
                 </div>
                 <p className="text-slate-400 max-w-md">
-                  Build, manage, and dominate in the ultimate business simulation MMO. 
+                  Build, manage, and dominate in the ultimate business simulation MMO.
                   Create your empire and compete with players worldwide.
                 </p>
               </div>
-              
+
               <div>
                 <h4 className="font-bold text-white mb-4">Game</h4>
                 <ul className="space-y-2 text-slate-400">
@@ -381,7 +444,7 @@ export default function LandingPage() {
                   <li><a href="#" className="hover:text-white transition-colors">Updates</a></li>
                 </ul>
               </div>
-              
+
               <div>
                 <h4 className="font-bold text-white mb-4">Community</h4>
                 <ul className="space-y-2 text-slate-400">
@@ -391,9 +454,9 @@ export default function LandingPage() {
                 </ul>
               </div>
             </div>
-            
+
             <Divider className="my-8 bg-white/10" />
-            
+
             <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-slate-400 text-sm">
               <p>© 2025 Business Empire MMO. All rights reserved.</p>
               <div className="flex gap-6">

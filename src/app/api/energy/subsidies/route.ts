@@ -16,10 +16,12 @@
  * @author ECHO v1.3.1
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { auth } from '@/auth';
 import { connectDB } from '@/lib/db';
 import { SolarFarm, WindTurbine } from '@/lib/db/models';
+import { createSuccessResponse, createErrorResponse, ErrorCode } from '@/lib/utils/apiResponse';
+import type { SolarFarmLean, WindTurbineLean } from '@/lib/types/energy-lean';
 
 /** Subsidy program type */
 type SubsidyType = 'PTC' | 'ITC' | 'Grant' | 'REC';
@@ -35,7 +37,7 @@ export async function GET(request: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     await connectDB();
@@ -45,26 +47,26 @@ export async function GET(request: NextRequest) {
     const subsidyType = searchParams.get('type') as SubsidyType | null;
 
     if (!companyId) {
-      return NextResponse.json({ error: 'Company ID required' }, { status: 400 });
+      return createErrorResponse('Company ID required', ErrorCode.BAD_REQUEST, 400);
     }
 
-    // Fetch renewable assets eligible for subsidies
+    // Fetch renewable assets eligible for subsidies (properly typed)
     const solarFarms = await SolarFarm.find({ company: companyId })
-      .select('name capacity currentProduction installationCost')
-      .lean();
+      .select('name installedCapacity currentOutput dailyProduction operatingCost')
+      .lean<SolarFarmLean[]>();
 
     const windTurbines = await WindTurbine.find({ company: companyId })
-      .select('name capacity currentProduction installationCost')
-      .lean();
+      .select('name ratedCapacity currentOutput dailyProduction operatingCost')
+      .lean<WindTurbineLean[]>();
 
     // Calculate available subsidies
     const subsidies = [];
 
-    // PTC: Production Tax Credit
+    // PTC: Production Tax Credit (uses dailyProduction from model)
     if (!subsidyType || subsidyType === 'PTC') {
       const totalRenewableProduction = 
-        solarFarms.reduce((sum, f) => sum + ((f as any).dailyProduction ?? 0), 0) +
-        windTurbines.reduce((sum, t) => sum + ((t as any).dailyProduction ?? 0), 0);
+        solarFarms.reduce((sum, f) => sum + (f.dailyProduction ?? 0), 0) +
+        windTurbines.reduce((sum, t) => sum + (t.dailyProduction ?? 0), 0);
       
       const ptcValue = totalRenewableProduction * 0.025 * 365; // $0.025/kWh annual
 
@@ -79,11 +81,12 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // ITC: Investment Tax Credit
+    // ITC: Investment Tax Credit (note: installationCost not on model - use operatingCost estimate)
     if (!subsidyType || subsidyType === 'ITC') {
+      // Estimate installation cost: operatingCost * 1000 (rough multiplier for demo)
       const totalInstallationCost = 
-        solarFarms.reduce((sum, f) => sum + (((f as any).installationCost ?? 0)), 0) +
-        windTurbines.reduce((sum, t) => sum + (((t as any).installationCost ?? 0)), 0);
+        solarFarms.reduce((sum, f) => sum + ((f.operatingCost ?? 0) * 1000), 0) +
+        windTurbines.reduce((sum, t) => sum + ((t.operatingCost ?? 0) * 1000), 0);
       
       const itcValue = totalInstallationCost * 0.26; // 26% credit
 
@@ -101,8 +104,8 @@ export async function GET(request: NextRequest) {
     // RECs: Renewable Energy Credits
     if (!subsidyType || subsidyType === 'REC') {
       const totalRenewableProduction = 
-        solarFarms.reduce((sum, f) => sum + ((f as any).dailyProduction ?? 0), 0) +
-        windTurbines.reduce((sum, t) => sum + ((t as any).dailyProduction ?? 0), 0);
+        solarFarms.reduce((sum, f) => sum + (f.dailyProduction ?? 0), 0) +
+        windTurbines.reduce((sum, t) => sum + (t.dailyProduction ?? 0), 0);
       
       const recValue = (totalRenewableProduction / 1000) * 50 * 365; // $50/MWh annual
 
@@ -130,7 +133,7 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    return NextResponse.json({
+    return createSuccessResponse({
       subsidies,
       summary: {
         totalPrograms: subsidies.length,
@@ -140,10 +143,7 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('GET /api/energy/subsidies error:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch subsidies' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to fetch subsidies', ErrorCode.INTERNAL_ERROR, 500);
   }
 }
 
@@ -155,7 +155,7 @@ export async function POST(request: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     await connectDB();
@@ -164,10 +164,7 @@ export async function POST(request: NextRequest) {
     const { company, subsidyType, assetIds, requestedAmount } = body;
 
     if (!company || !subsidyType || !assetIds || assetIds.length === 0) {
-      return NextResponse.json(
-        { error: 'Company, subsidy type, and asset IDs required' },
-        { status: 400 }
-      );
+      return createErrorResponse('Company, subsidy type, and asset IDs required', ErrorCode.BAD_REQUEST, 400);
     }
 
     // Simulate subsidy application (in real system would create Application model)
@@ -182,15 +179,12 @@ export async function POST(request: NextRequest) {
       estimatedApproval: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
     };
 
-    return NextResponse.json({
+    return createSuccessResponse({
       message: 'Subsidy application submitted',
       application,
-    }, { status: 201 });
+    }, undefined, 201);
   } catch (error) {
     console.error('POST /api/energy/subsidies error:', error);
-    return NextResponse.json(
-      { error: 'Failed to apply for subsidy' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to apply for subsidy', ErrorCode.INTERNAL_ERROR, 500);
   }
 }

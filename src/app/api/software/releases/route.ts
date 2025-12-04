@@ -10,10 +10,11 @@
  * @author ECHO v1.3.1
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { auth } from '@/auth';
 import { connectDB } from '@/lib/db';
 import { SoftwareRelease } from '@/lib/db/models';
+import { createSuccessResponse, createErrorResponse, ErrorCode } from '@/lib/utils/apiResponse';
 
 /**
  * GET /api/software/releases
@@ -23,7 +24,7 @@ export async function GET(request: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     await connectDB();
@@ -33,7 +34,7 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get('status');
 
     if (!productId) {
-      return NextResponse.json({ error: 'Product ID required' }, { status: 400 });
+      return createErrorResponse('Product ID required', ErrorCode.VALIDATION_ERROR, 400);
     }
 
     const query: Record<string, unknown> = { product: productId };
@@ -46,7 +47,7 @@ export async function GET(request: NextRequest) {
     const totalDownloads = releases.reduce((sum, r) => sum + (r.downloads || 0), 0);
     const stableReleases = releases.filter(r => (r.stabilityScore || 0) >= 70).length;
 
-    return NextResponse.json({
+    return createSuccessResponse({
       releases,
       totalDownloads,
       stableReleases,
@@ -54,10 +55,7 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('GET /api/software/releases error:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch releases' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to fetch releases', ErrorCode.INTERNAL_ERROR, 500);
   }
 }
 
@@ -69,7 +67,7 @@ export async function POST(request: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     await connectDB();
@@ -85,10 +83,7 @@ export async function POST(request: NextRequest) {
     } = body;
 
     if (!product || !version || !releaseType || !changelog) {
-      return NextResponse.json(
-        { error: 'Product, version, releaseType, and changelog are required' },
-        { status: 400 }
-      );
+      return createErrorResponse('Product, version, releaseType, and changelog are required', ErrorCode.VALIDATION_ERROR, 400);
     }
 
     const release = await SoftwareRelease.create({
@@ -106,15 +101,9 @@ export async function POST(request: NextRequest) {
       releaseDate: new Date(),
     });
 
-    return NextResponse.json(
-      { message: 'Release created', release },
-      { status: 201 }
-    );
+    return createSuccessResponse({ message: 'Release created', release }, undefined, 201);
   } catch (error) {
     console.error('POST /api/software/releases error:', error);
-    return NextResponse.json(
-      { error: 'Failed to create release' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to create release', ErrorCode.INTERNAL_ERROR, 500);
   }
 }

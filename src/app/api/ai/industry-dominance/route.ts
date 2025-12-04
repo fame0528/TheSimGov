@@ -23,9 +23,10 @@
  * @legacy-source old projects/politics/app/api/ai/industry-dominance/route.ts
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { Types } from 'mongoose';
 import { authenticateRequest, handleAPIError } from '@/lib/utils/api-helpers';
+import { createSuccessResponse, createErrorResponse, ErrorCode } from '@/lib/utils/apiResponse';
 import { connectDB } from '@/lib/db/mongoose';
 import IndustryDominance from '@/lib/db/models/IndustryDominance';
 import {
@@ -140,7 +141,7 @@ export async function GET(request: NextRequest) {
       response.marketLeaders = dominanceAnalysis.competitiveIntelligence[0]?.recommendations || [];
     }
 
-    return NextResponse.json(response, { status: 200 });
+    return createSuccessResponse(response);
   } catch (error) {
     return handleAPIError('[GET /api/ai/industry-dominance]', error, 'Failed to fetch industry dominance analysis');
   }
@@ -188,7 +189,7 @@ export async function POST(request: NextRequest) {
     } = body;
 
     if (!industry) {
-      return NextResponse.json({ error: 'Missing required field: industry' }, { status: 422 });
+      return createErrorResponse('Missing required field: industry', ErrorCode.VALIDATION_ERROR, 422);
     }
 
     // Connect to database
@@ -198,10 +199,10 @@ export async function POST(request: NextRequest) {
     if (!forceRecalculation) {
       const existingAnalysis = await IndustryDominance.findOne({ industry, timeframe });
       if (existingAnalysis) {
-        return NextResponse.json({
+        return createSuccessResponse({
           message: 'Analysis already exists. Use forceRecalculation=true to update.',
           analysis: existingAnalysis,
-        }, { status: 200 });
+        });
       }
     }
 
@@ -251,7 +252,7 @@ export async function POST(request: NextRequest) {
       }
     );
 
-    return NextResponse.json({
+    return createSuccessResponse({
       message: 'Industry dominance analysis updated successfully',
       analysis: {
         industry: analysis.industry,
@@ -261,7 +262,7 @@ export async function POST(request: NextRequest) {
         competitiveIntelligence: analysis.competitiveIntelligence,
         lastCalculated: analysis.lastCalculated,
       },
-    }, { status: 200 });
+    });
   } catch (error) {
     return handleAPIError('[POST /api/ai/industry-dominance]', error, 'Failed to calculate industry dominance');
   }
@@ -305,9 +306,11 @@ export async function PUT(request: NextRequest) {
     const { industry, timeframe = 'current', updates } = body;
 
     if (!industry || !updates) {
-      return NextResponse.json({
-        error: 'Missing required fields: industry, updates'
-      }, { status: 422 });
+      return createErrorResponse(
+        'Missing required fields: industry, updates',
+        ErrorCode.VALIDATION_ERROR,
+        422
+      );
     }
 
     // Connect to database
@@ -325,15 +328,15 @@ export async function PUT(request: NextRequest) {
     );
 
     if (!analysis) {
-      return NextResponse.json({ error: 'Industry dominance analysis not found' }, { status: 404 });
+      return createErrorResponse('Industry dominance analysis not found', ErrorCode.NOT_FOUND, 404);
     }
 
     const updatedFields = Object.keys(updates);
 
-    return NextResponse.json({
+    return createSuccessResponse({
       analysis,
       updatedFields,
-    }, { status: 200 });
+    });
   } catch (error) {
     return handleAPIError('[PUT /api/ai/industry-dominance]', error, 'Failed to update industry dominance analysis');
   }

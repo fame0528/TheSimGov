@@ -62,7 +62,7 @@ export function StatusBadge({
   showIcon = false,
   className = '',
 }: StatusBadgeProps) {
-  let color: string;
+  let color: 'default' | 'primary' | 'secondary' | 'success' | 'warning' | 'danger';
   let text: string;
   let icon: string | null = null;
   
@@ -92,7 +92,7 @@ export function StatusBadge({
   
   return (
     <Chip
-      color={color as any}
+      color={color}
       size={size}
       variant="flat"
       className={className}

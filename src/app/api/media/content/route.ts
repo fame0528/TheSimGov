@@ -24,6 +24,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { connectDB } from '@/lib/db/mongoose';
+import { createSuccessResponse, createErrorResponse } from '@/lib/utils/apiResponse';
 import MediaContent from '@/lib/db/models/media/MediaContent';
 import Company from '@/lib/db/models/Company';
 import {
@@ -47,7 +48,7 @@ export async function GET(request: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', 'UNAUTHORIZED', 401);
     }
 
     await connectDB();
@@ -55,7 +56,7 @@ export async function GET(request: NextRequest) {
     // Get company for the user
     const company = await Company.findOne({ owner: session.user.id });
     if (!company) {
-      return NextResponse.json({ error: 'Company not found' }, { status: 404 });
+      return createErrorResponse('Company not found', 'COMPANY_NOT_FOUND', 404);
     }
 
     // Parse query parameters
@@ -157,23 +158,24 @@ export async function GET(request: NextRequest) {
     // Calculate portfolio analytics
     const portfolioAnalytics = calculatePortfolioAnalytics(contentWithAnalytics);
 
-    return NextResponse.json({
-      content: contentWithAnalytics,
-      pagination: {
-        total,
-        limit,
-        offset,
-        hasMore: offset + limit < total
+    return createSuccessResponse(
+      {
+        content: contentWithAnalytics,
+        portfolioAnalytics
       },
-      portfolioAnalytics
-    });
+      {
+        pagination: {
+          total,
+          limit,
+          offset,
+          hasMore: offset + limit < total
+        }
+      }
+    );
 
   } catch (error) {
     console.error('Error fetching media content:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return createErrorResponse('Internal server error', 'INTERNAL_ERROR', 500);
   }
 }
 
@@ -185,7 +187,7 @@ export async function POST(request: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', 'UNAUTHORIZED', 401);
     }
 
     await connectDB();
@@ -193,7 +195,7 @@ export async function POST(request: NextRequest) {
     // Get company for the user
     const company = await Company.findOne({ owner: session.user.id });
     if (!company) {
-      return NextResponse.json({ error: 'Company not found' }, { status: 404 });
+      return createErrorResponse('Company not found', 'COMPANY_NOT_FOUND', 404);
     }
 
     const body = await request.json();
@@ -214,9 +216,10 @@ export async function POST(request: NextRequest) {
 
     // Validate required fields
     if (!title || !type || !platforms || platforms.length === 0) {
-      return NextResponse.json(
-        { error: 'Missing required fields: title, type, platforms' },
-        { status: 400 }
+      return createErrorResponse(
+        'Missing required fields: title, type, platforms',
+        'VALIDATION_ERROR',
+        400
       );
     }
 
@@ -287,19 +290,20 @@ export async function POST(request: NextRequest) {
       ]
     };
 
-    return NextResponse.json({
-      content: {
-        ...content.toObject(),
-        calculatedAnalytics
-      }
-    }, { status: 201 });
+    return createSuccessResponse(
+      {
+        content: {
+          ...content.toObject(),
+          calculatedAnalytics
+        }
+      },
+      undefined,
+      201
+    );
 
   } catch (error) {
     console.error('Error creating media content:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return createErrorResponse('Internal server error', 'INTERNAL_ERROR', 500);
   }
 }
 

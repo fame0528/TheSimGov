@@ -25,8 +25,9 @@
  * @legacy-source old projects/politics/app/api/ai/marketplace/models/route.ts
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { authenticateRequest, handleAPIError } from '@/lib/utils/api-helpers';
+import { createSuccessResponse, createErrorResponse } from '@/lib/utils/apiResponse';
 import { connectDB } from '@/lib/db/mongoose';
 import Company from '@/lib/db/models/Company';
 import AIModel from '@/lib/db/models/AIModel';
@@ -156,7 +157,7 @@ export async function GET(request: NextRequest) {
       totalSales: 0,
     };
 
-    return NextResponse.json({
+    return createSuccessResponse({
       listings,
       pagination: {
         page,
@@ -171,7 +172,7 @@ export async function GET(request: NextRequest) {
         totalListings: marketStats.totalListings,
         totalSales: marketStats.totalSales,
       },
-    }, { status: 200 });
+    });
   } catch (error) {
     return handleAPIError('[GET /api/ai/marketplace/models]', error, 'Failed to browse model marketplace');
   }
@@ -256,7 +257,7 @@ export async function POST(request: NextRequest) {
 
     // Validate required fields
     if (!companyId || !modelId || !title || !description || !licenseType) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 422 });
+      return createErrorResponse('Missing required fields', 'VALIDATION_ERROR', 422);
     }
 
     // Connect to database
@@ -266,24 +267,21 @@ export async function POST(request: NextRequest) {
     const companyQuery = { _id: companyId, owner: userId };
     const company = await Company.findOne(companyQuery);
     if (!company) {
-      return NextResponse.json({ error: 'Company not found or access denied' }, { status: 404 });
+      return createErrorResponse('Company not found or access denied', 'NOT_FOUND', 404);
     }
 
     // Validate model ownership and completion
     const model = await AIModel.findById(modelId);
     if (!model) {
-      return NextResponse.json({ error: 'Model not found' }, { status: 404 });
+      return createErrorResponse('Model not found', 'NOT_FOUND', 404);
     }
 
     if (model.company.toString() !== companyId) {
-      return NextResponse.json({ error: 'Model does not belong to this company' }, { status: 403 });
+      return createErrorResponse('Model does not belong to this company', 'FORBIDDEN', 403);
     }
 
     if (model.status !== 'Completed' && model.status !== 'Deployed') {
-      return NextResponse.json(
-        { error: 'Only completed or deployed models can be listed' },
-        { status: 422 }
-      );
+      return createErrorResponse('Only completed or deployed models can be listed', 'VALIDATION_ERROR', 422);
     }
 
     // Calculate recommended pricing via utility
@@ -364,7 +362,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    return NextResponse.json({
+    return createSuccessResponse({
       listing,
       pricingRecommendation: {
         recommendedPrice,
@@ -380,7 +378,7 @@ export async function POST(request: NextRequest) {
         expectedRevenue: licensingStrategy.expectedRevenue,
         reasoning: licensingStrategy.reasoning,
       },
-    }, { status: 201 });
+    }, undefined, 201);
   } catch (error) {
     return handleAPIError('[POST /api/ai/marketplace/models]', error, 'Failed to create model listing');
   }
@@ -423,7 +421,7 @@ export async function PATCH(request: NextRequest) {
 
     // Validate required fields
     if (!listingId) {
-      return NextResponse.json({ error: 'listingId is required' }, { status: 422 });
+      return createErrorResponse('listingId is required', 'VALIDATION_ERROR', 422);
     }
 
     // Connect to database
@@ -432,13 +430,13 @@ export async function PATCH(request: NextRequest) {
     // Find listing
     const listing = await ModelListing.findById(listingId).populate('seller');
     if (!listing) {
-      return NextResponse.json({ error: 'Listing not found' }, { status: 404 });
+      return createErrorResponse('Listing not found', 'NOT_FOUND', 404);
     }
 
     // Verify seller ownership
-    const seller = listing.seller as any;
-    if (seller.owner.toString() !== userId) {
-      return NextResponse.json({ error: 'Not authorized to update this listing' }, { status: 403 });
+    const seller = listing.seller as unknown as { owner: unknown };
+    if (String(seller.owner) !== String(userId)) {
+      return createErrorResponse('Not authorized to update this listing', 'FORBIDDEN', 403);
     }
 
     // Update pricing
@@ -464,13 +462,13 @@ export async function PATCH(request: NextRequest) {
           listing.unlistedAt = new Date();
         }
       } else {
-        return NextResponse.json({ error: 'Invalid status value' }, { status: 422 });
+        return createErrorResponse('Invalid status value', 'VALIDATION_ERROR', 422);
       }
     }
 
     await listing.save();
 
-    return NextResponse.json({ listing }, { status: 200 });
+    return createSuccessResponse({ listing });
   } catch (error) {
     return handleAPIError('[PATCH /api/ai/marketplace/models]', error, 'Failed to update model listing');
   }

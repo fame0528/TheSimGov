@@ -62,6 +62,9 @@ export { default as TelemetryAggregate } from './TelemetryAggregate';
 export { default as ChatMessage } from './ChatMessage';
 export { default as LeaderboardSnapshot } from './LeaderboardSnapshot';
 
+// Business models
+export { default as Business } from './business/Business';
+
 // Type exports for interfaces
 export type { CompanyDocument as ICompany } from './Company';
 export type { EmployeeDocument as IEmployee } from './Employee';
@@ -90,6 +93,9 @@ export type { ITelemetryEvent } from './TelemetryEvent';
 export type { ITelemetryAggregate } from './TelemetryAggregate';
 export type { IChatMessage } from './ChatMessage';
 export type { ILeaderboardSnapshot, LeaderboardEntryWithTrend, RankingHistoryPoint } from './LeaderboardSnapshot';
+
+// Business model types
+export type { BusinessDocument as IBusiness } from './business/Business';
 
 // Healthcare model types
 export type { HospitalDocument as IHospital } from './healthcare/Hospital';

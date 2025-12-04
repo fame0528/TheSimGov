@@ -9,11 +9,16 @@
  * efficiency, maintenance impact, and identifies underperforming assets.
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { connectDB as dbConnect } from '@/lib/db';
 import { OilWell, GasField, SolarFarm, WindTurbine, PowerPlant, EnergyStorage, TransmissionLine } from '@/lib/db/models';
 import { auth } from '@/auth';
+import { createSuccessResponse, createErrorResponse, ErrorCode } from '@/lib/utils/apiResponse';
+import type { 
+  OilWellLean, GasFieldLean, SolarFarmLean, WindTurbineLean, 
+  PowerPlantLean, EnergyStorageLean, TransmissionLineLean 
+} from '@/lib/types/energy-lean';
 
 // ============================================================================
 // CONSTANTS
@@ -43,7 +48,7 @@ export async function GET(req: NextRequest) {
     // Authentication
     const session = await auth();
     if (!session?.user?.companyId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     // Parse query parameters
@@ -55,10 +60,7 @@ export async function GET(req: NextRequest) {
     const validation = PerformanceQuerySchema.safeParse(queryData);
     
     if (!validation.success) {
-      return NextResponse.json(
-        { error: 'Invalid query parameters', details: validation.error.flatten() },
-        { status: 400 }
-      );
+      return createErrorResponse('Invalid query parameters: ' + JSON.stringify(validation.error.flatten()), ErrorCode.BAD_REQUEST, 400);
     }
 
     const { assetType } = validation.data;
@@ -69,19 +71,19 @@ export async function GET(req: NextRequest) {
     const filter = { company: session.user.companyId };
     const performanceData: any = {};
 
-    // Oil Wells Performance
+    // Oil Wells Performance (uses peakProduction as capacity, currentProduction as output)
     if (assetType === 'all' || assetType === 'oil-wells') {
-      const wells = await OilWell.find(filter).lean();
+      const wells = await OilWell.find(filter).lean<OilWellLean[]>();
       const avgCF = wells.reduce((sum, w) => {
-        const cap = (((w as any).ratedCapacity ?? (w as any).nameplateCapacity) ?? 0);
-        const out = (((w as any).currentOutput ?? (w as any).productionRate ?? 0));
+        const cap = w.peakProduction ?? 0;
+        const out = w.currentProduction ?? 0;
         const cf = cap > 0 ? (out / cap) * 100 : 0;
         return sum + cf;
       }, 0) / Math.max(wells.length, 1);
       const avgCondition = wells.reduce((sum) => sum + 85, 0) / Math.max(wells.length, 1);
       const underPerformers = wells.filter(w => {
-        const cap = (((w as any).ratedCapacity ?? (w as any).nameplateCapacity) ?? 0);
-        const out = (((w as any).currentOutput ?? (w as any).productionRate ?? 0));
+        const cap = w.peakProduction ?? 0;
+        const out = w.currentProduction ?? 0;
         const cf = cap > 0 ? (out / cap) * 100 : 0;
         return cf < PERFORMANCE_THRESHOLDS.fair;
       });
@@ -98,19 +100,19 @@ export async function GET(req: NextRequest) {
       };
     }
 
-    // Gas Fields Performance
+    // Gas Fields Performance (uses peakProduction as capacity, currentProduction as output)
     if (assetType === 'all' || assetType === 'gas-fields') {
-      const fields = await GasField.find(filter).lean();
+      const fields = await GasField.find(filter).lean<GasFieldLean[]>();
       const avgCF = fields.reduce((sum, f) => {
-        const cap = (((f as any).ratedCapacity ?? (f as any).nameplateCapacity) ?? 0);
-        const out = (((f as any).currentOutput ?? (f as any).productionRate ?? 0));
+        const cap = f.peakProduction ?? 0;
+        const out = f.currentProduction ?? 0;
         const cf = cap > 0 ? (out / cap) * 100 : 0;
         return sum + cf;
       }, 0) / Math.max(fields.length, 1);
       const avgCondition = fields.reduce((sum) => sum + 88, 0) / Math.max(fields.length, 1);
       const underPerformers = fields.filter(f => {
-        const cap = (((f as any).ratedCapacity ?? (f as any).nameplateCapacity) ?? 0);
-        const out = (((f as any).currentOutput ?? (f as any).productionRate ?? 0));
+        const cap = f.peakProduction ?? 0;
+        const out = f.currentProduction ?? 0;
         const cf = cap > 0 ? (out / cap) * 100 : 0;
         return cf < PERFORMANCE_THRESHOLDS.fair;
       });
@@ -127,19 +129,19 @@ export async function GET(req: NextRequest) {
       };
     }
 
-    // Solar Farms Performance
+    // Solar Farms Performance (uses installedCapacity and currentOutput)
     if (assetType === 'all' || assetType === 'solar-farms') {
-      const farms = await SolarFarm.find(filter).lean();
+      const farms = await SolarFarm.find(filter).lean<SolarFarmLean[]>();
       const avgCF = farms.reduce((sum, f) => {
-        const cap = (((f as any).nameplateCapacity ?? (f as any).ratedCapacity) ?? 0);
-        const out = (((f as any).currentOutput ?? 0));
+        const cap = f.installedCapacity ?? 0;
+        const out = f.currentOutput ?? 0;
         const cf = cap > 0 ? (out / cap) * 100 : 0;
         return sum + cf;
       }, 0) / Math.max(farms.length, 1);
       const avgCondition = farms.reduce((sum) => sum + 92, 0) / Math.max(farms.length, 1);
       const underPerformers = farms.filter(f => {
-        const cap = (((f as any).nameplateCapacity ?? (f as any).ratedCapacity) ?? 0);
-        const out = (((f as any).currentOutput ?? 0));
+        const cap = f.installedCapacity ?? 0;
+        const out = f.currentOutput ?? 0;
         const cf = cap > 0 ? (out / cap) * 100 : 0;
         return cf < 20;
       });
@@ -156,19 +158,19 @@ export async function GET(req: NextRequest) {
       };
     }
 
-    // Wind Turbines Performance
+    // Wind Turbines Performance (uses ratedCapacity and currentOutput)
     if (assetType === 'all' || assetType === 'wind-turbines') {
-      const turbines = await WindTurbine.find(filter).lean();
+      const turbines = await WindTurbine.find(filter).lean<WindTurbineLean[]>();
       const avgCF = turbines.reduce((sum, t) => {
-        const cap = (((t as any).ratedCapacity ?? (t as any).nameplateCapacity) ?? 0);
-        const out = (((t as any).currentOutput ?? 0));
+        const cap = t.ratedCapacity ?? 0;
+        const out = t.currentOutput ?? 0;
         const cf = cap > 0 ? (out / cap) * 100 : 0;
         return sum + cf;
       }, 0) / Math.max(turbines.length, 1);
       const avgCondition = turbines.reduce((sum) => sum + 90, 0) / Math.max(turbines.length, 1);
       const underPerformers = turbines.filter(t => {
-        const cap = (((t as any).ratedCapacity ?? (t as any).nameplateCapacity) ?? 0);
-        const out = (((t as any).currentOutput ?? 0));
+        const cap = t.ratedCapacity ?? 0;
+        const out = t.currentOutput ?? 0;
         const cf = cap > 0 ? (out / cap) * 100 : 0;
         return cf < 28;
       });
@@ -185,17 +187,17 @@ export async function GET(req: NextRequest) {
       };
     }
 
-    // Power Plants Performance
+    // Power Plants Performance (uses nameplateCapacity and currentOutput)
     if (assetType === 'all' || assetType === 'power-plants') {
-      const plants = await PowerPlant.find(filter).lean();
+      const plants = await PowerPlant.find(filter).lean<PowerPlantLean[]>();
       const avgCF = plants.reduce((sum, p) => {
-        const cap = (((p as any).nameplateCapacity ?? 0));
-        const out = (((p as any).currentOutput ?? 0));
+        const cap = p.nameplateCapacity ?? 0;
+        const out = p.currentOutput ?? 0;
         const cf = cap > 0 ? (out / cap) * 100 : 0;
         return sum + cf;
       }, 0) / Math.max(plants.length, 1);
       const avgCondition = plants.reduce((sum) => sum + 87, 0) / Math.max(plants.length, 1);
-      const underPerformers = plants.filter(p => (p.capacityFactor || 60) < PERFORMANCE_THRESHOLDS.fair);
+      const underPerformers = plants.filter(p => (p.capacityFactor ?? 60) < PERFORMANCE_THRESHOLDS.fair);
 
       performanceData.powerPlants = {
         count: plants.length,
@@ -209,13 +211,17 @@ export async function GET(req: NextRequest) {
       };
     }
 
-    // Energy Storage Performance
+    // Energy Storage Performance (uses totalCapacity, currentCharge, roundTripEfficiency)
     if (assetType === 'all' || assetType === 'storage') {
-      const storage = await EnergyStorage.find(filter).lean();
-      const avgSOC = storage.reduce((sum, s) => sum + (((s as any).stateOfCharge ?? 50)), 0) / Math.max(storage.length, 1);
+      const storage = await EnergyStorage.find(filter).lean<EnergyStorageLean[]>();
+      // Calculate state of charge: (currentCharge / effectiveCapacity) * 100
+      const avgSOC = storage.reduce((sum, s) => {
+        const effectiveCapacity = s.totalCapacity * (1 - (s.degradation ?? 0) / 100);
+        return sum + (effectiveCapacity > 0 ? (s.currentCharge / effectiveCapacity) * 100 : 50);
+      }, 0) / Math.max(storage.length, 1);
       const avgCondition = storage.reduce((sum) => sum + 95, 0) / Math.max(storage.length, 1);
-      const avgRoundTripEff = storage.reduce((sum, s) => sum + (s.roundTripEfficiency || 85), 0) / Math.max(storage.length, 1);
-      const underPerformers = storage.filter(s => (s.roundTripEfficiency || 85) < 80); // <80% round-trip is poor
+      const avgRoundTripEff = storage.reduce((sum, s) => sum + (s.roundTripEfficiency ?? 85), 0) / Math.max(storage.length, 1);
+      const underPerformers = storage.filter(s => (s.roundTripEfficiency ?? 85) < 80); // <80% round-trip is poor
 
       performanceData.storage = {
         count: storage.length,
@@ -230,13 +236,13 @@ export async function GET(req: NextRequest) {
       };
     }
 
-    // Transmission Lines Performance
+    // Transmission Lines Performance (uses capacity and currentLoad)
     if (assetType === 'all' || assetType === 'transmission') {
-      const lines = await TransmissionLine.find(filter).lean();
+      const lines = await TransmissionLine.find(filter).lean<TransmissionLineLean[]>();
       const avgCondition = lines.reduce((sum) => sum + 88, 0) / Math.max(lines.length, 1);
       const avgUtilization = lines.reduce((sum, l) => {
-        const load = ((l as any).currentLoad ?? 0);
-        const cap = ((l as any).capacity ?? 1);
+        const load = l.currentLoad ?? 0;
+        const cap = l.capacity ?? 1;
         return sum + (cap > 0 ? (load / cap) * 100 : 0);
       }, 0) / Math.max(lines.length, 1);
       const underPerformers = lines.filter(() => 88 < PERFORMANCE_THRESHOLDS.fair);
@@ -257,8 +263,7 @@ export async function GET(req: NextRequest) {
     const totalAssets = Object.values(performanceData).reduce((sum: number, data: any) => sum + (data.count || 0), 0);
     const totalUnderPerformers = Object.values(performanceData).reduce((sum: number, data: any) => sum + (data.underPerformers || 0), 0);
 
-    return NextResponse.json({
-      success: true,
+    return createSuccessResponse({
       assetType,
       summary: {
         totalAssets,
@@ -279,10 +284,7 @@ export async function GET(req: NextRequest) {
 
   } catch (error) {
     console.error('[ENERGY] Performance analytics error:', error);
-    return NextResponse.json(
-      { error: 'Failed to retrieve performance analytics', details: error instanceof Error ? error.message : 'Unknown error' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to retrieve performance analytics: ' + (error instanceof Error ? error.message : 'Unknown error'), ErrorCode.INTERNAL_ERROR, 500);
   }
 }
 

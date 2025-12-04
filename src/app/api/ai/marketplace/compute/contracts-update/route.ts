@@ -28,8 +28,9 @@
  * @legacy-source old projects/politics/app/api/ai/marketplace/contracts/route.ts (PATCH)
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { authenticateRequest, handleAPIError } from '@/lib/utils/api-helpers';
+import { createSuccessResponse, createErrorResponse, ErrorCode } from '@/lib/utils/apiResponse';
 import { connectDB } from '@/lib/db/mongoose';
 import Company from '@/lib/db/models/Company';
 import ComputeListing from '@/lib/db/models/ComputeListing';
@@ -88,7 +89,7 @@ export async function PATCH(request: NextRequest) {
 
     // Validate required fields
     if (!contractId || !action) {
-      return NextResponse.json({ error: 'contractId and action are required' }, { status: 422 });
+      return createErrorResponse('contractId and action are required', ErrorCode.VALIDATION_ERROR, 422);
     }
 
     // Connect to database
@@ -101,13 +102,13 @@ export async function PATCH(request: NextRequest) {
       .populate('listing');
 
     if (!contract) {
-      return NextResponse.json({ error: 'Contract not found' }, { status: 404 });
+      return createErrorResponse('Contract not found', ErrorCode.NOT_FOUND, 404);
     }
 
     // Get user's company
     const userCompany = await Company.findOne({ owner: userId });
     if (!userCompany) {
-      return NextResponse.json({ error: 'User company not found' }, { status: 404 });
+      return createErrorResponse('User company not found', ErrorCode.NOT_FOUND, 404);
     }
 
     // Determine if user is buyer or seller
@@ -115,7 +116,7 @@ export async function PATCH(request: NextRequest) {
     const isSeller = contract.seller.toString() === userCompany._id.toString();
 
     if (!isBuyer && !isSeller) {
-      return NextResponse.json({ error: 'Not authorized to update this contract' }, { status: 403 });
+      return createErrorResponse('Not authorized to update this contract', ErrorCode.FORBIDDEN, 403);
     }
 
     // Execute action
@@ -123,10 +124,10 @@ export async function PATCH(request: NextRequest) {
       case 'start':
         // Seller starts contract
         if (!isSeller) {
-          return NextResponse.json({ error: 'Only seller can start contract' }, { status: 403 });
+          return createErrorResponse('Only seller can start contract', ErrorCode.FORBIDDEN, 403);
         }
         if (contract.status !== 'Pending') {
-          return NextResponse.json({ error: 'Contract must be in Pending status to start' }, { status: 422 });
+          return createErrorResponse('Contract must be in Pending status to start', ErrorCode.VALIDATION_ERROR, 422);
         }
         contract.status = 'Active';
         contract.startDate = new Date();
@@ -135,22 +136,22 @@ export async function PATCH(request: NextRequest) {
       case 'recordDowntime':
         // Seller records downtime incident
         if (!isSeller) {
-          return NextResponse.json({ error: 'Only seller can record downtime' }, { status: 403 });
+          return createErrorResponse('Only seller can record downtime', ErrorCode.FORBIDDEN, 403);
         }
         if (!downtimeMinutes || downtimeMinutes <= 0) {
-          return NextResponse.json({ error: 'downtimeMinutes must be positive number' }, { status: 422 });
+          return createErrorResponse('downtimeMinutes must be positive number', ErrorCode.VALIDATION_ERROR, 422);
         }
         contract.recordDowntime(downtimeMinutes, 'API reported downtime');
         break;
 
       case 'recordLatencyBreach':
         // Seller records latency breach - not implemented in current contract model
-        return NextResponse.json({ error: 'Latency breach recording not implemented' }, { status: 501 });
+        return createErrorResponse('Latency breach recording not implemented', ErrorCode.INTERNAL_ERROR, 501);
 
       case 'complete':
         // Either party can complete contract
         if (contract.status !== 'Active') {
-          return NextResponse.json({ error: 'Contract must be Active to complete' }, { status: 422 });
+          return createErrorResponse('Contract must be Active to complete', ErrorCode.VALIDATION_ERROR, 422);
         }
 
         // Complete contract (calculates refunds based on SLA violations)
@@ -164,7 +165,7 @@ export async function PATCH(request: NextRequest) {
         }
 
         // Refund buyer if SLA violations
-        const refundAmount = (contract as any).refundIssued || 0;
+        const refundAmount = contract.paymentRefunded || 0;
         if (refundAmount > 0) {
           const buyer = await Company.findById(contract.buyer);
           if (buyer) {
@@ -177,20 +178,17 @@ export async function PATCH(request: NextRequest) {
       case 'review':
         // Buyer leaves review
         if (!isBuyer) {
-          return NextResponse.json({ error: 'Only buyer can leave review' }, { status: 403 });
+          return createErrorResponse('Only buyer can leave review', ErrorCode.FORBIDDEN, 403);
         }
         if (contract.status !== 'Completed') {
-          return NextResponse.json({ error: 'Contract must be Completed to review' }, { status: 422 });
+          return createErrorResponse('Contract must be Completed to review', ErrorCode.VALIDATION_ERROR, 422);
         }
         if (!rating || rating < 1 || rating > 5) {
-          return NextResponse.json({ error: 'Rating must be between 1 and 5' }, { status: 422 });
+          return createErrorResponse('Rating must be between 1 and 5', ErrorCode.VALIDATION_ERROR, 422);
         }
 
-        (contract as any).buyerReview = {
-          rating,
-          comment: comment || '',
-          reviewedAt: new Date()
-        };
+        contract.buyerRating = rating;
+        contract.buyerFeedback = comment || '';
 
         // Update listing average rating
         const listing = await ComputeListing.findById(contract.listing);
@@ -204,19 +202,19 @@ export async function PATCH(request: NextRequest) {
       case 'dispute':
         // Either party can initiate dispute
         if (!disputeReason) {
-          return NextResponse.json({ error: 'disputeReason is required for dispute' }, { status: 422 });
+          return createErrorResponse('disputeReason is required for dispute', ErrorCode.VALIDATION_ERROR, 422);
         }
         contract.initiateDispute(userCompany._id, disputeReason);
         break;
 
       default:
-        return NextResponse.json({ error: 'Invalid action' }, { status: 422 });
+        return createErrorResponse('Invalid action', ErrorCode.BAD_REQUEST, 422);
     }
 
     // Save contract
     await contract.save();
 
-    return NextResponse.json({ success: true, message: `Action '${action}' completed successfully`, contract }, { status: 200 });
+    return createSuccessResponse({ message: `Action '${action}' completed successfully`, contract });
   } catch (error) {
     return handleAPIError('[PATCH /api/ai/marketplace/compute/contracts-update]', error, 'Failed to update contract');
   }

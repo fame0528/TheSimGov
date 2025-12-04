@@ -10,9 +10,10 @@
  * Part of: Opposition Research System (FID-20251125-001C Phase 5)
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { auth } from '@/auth';
+import { createSuccessResponse, createErrorResponse, ErrorCode } from '@/lib/utils/apiResponse';
 import {
   ResearchType,
   RESEARCH_SPENDING_TIERS,
@@ -47,10 +48,7 @@ export async function POST(request: NextRequest) {
     // Authenticate request
     const session = await auth();
     if (!session || !session.user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     // Parse and validate request body
@@ -58,29 +56,20 @@ export async function POST(request: NextRequest) {
     const validation = InitiateResearchSchema.safeParse(body);
     
     if (!validation.success) {
-      return NextResponse.json(
-        { error: 'Invalid request', details: validation.error.format() },
-        { status: 400 }
-      );
+      return createErrorResponse('Invalid request', ErrorCode.BAD_REQUEST, 400, validation.error.format());
     }
 
     const { playerId, targetId, researchType, amountSpent } = validation.data;
 
     // Verify session matches player ID
     if (session.user.id !== playerId) {
-      return NextResponse.json(
-        { error: 'Forbidden - can only research for your own campaign' },
-        { status: 403 }
-      );
+      return createErrorResponse('Forbidden - can only research for your own campaign', ErrorCode.FORBIDDEN, 403);
     }
 
     // Validate spending tier
     const spendingValidation = validateResearchSpending(amountSpent);
     if (!spendingValidation.isValid) {
-      return NextResponse.json(
-        { error: spendingValidation.error },
-        { status: 400 }
-      );
+      return createErrorResponse(spendingValidation.error || 'Invalid spending amount', ErrorCode.BAD_REQUEST, 400);
     }
 
     // TODO: Implement database checks
@@ -93,10 +82,7 @@ export async function POST(request: NextRequest) {
     // For now, return mock validation success
     const playerBudget = 500000; // Mock budget
     if (playerBudget < amountSpent) {
-      return NextResponse.json(
-        { error: 'Insufficient campaign funds' },
-        { status: 400 }
-      );
+      return createErrorResponse('Insufficient campaign funds', ErrorCode.BAD_REQUEST, 400);
     }
 
     // Calculate completion time (168x time scaling from campaign engine)
@@ -146,8 +132,7 @@ export async function POST(request: NextRequest) {
       usedInAds: false,
     };
 
-    return NextResponse.json({
-      success: true,
+    return createSuccessResponse({
       research: researchRecord,
       timing: {
         realTimeMinutes: timing.realTimeMinutes,
@@ -160,13 +145,10 @@ export async function POST(request: NextRequest) {
         moderate: probabilities[DiscoveryTier.MODERATE],
         major: probabilities[DiscoveryTier.MAJOR],
       },
-    }, { status: 201 });
+    }, undefined, 201);
 
   } catch (error) {
     console.error('Error initiating research:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return createErrorResponse('Internal server error', ErrorCode.INTERNAL_ERROR, 500);
   }
 }

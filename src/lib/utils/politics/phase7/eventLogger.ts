@@ -148,7 +148,7 @@ export class TelemetryEventLogger {
         // Validate final structure prior to persistence
         validateTelemetryEvent(full);
         // Convert to persistence shape (omit id; Mongo will assign _id, retain other fields)
-        const { id: _ignore, schemaVersion, createdEpoch, playerId, type, ...variant } = full as any;
+        const { id: _ignore, schemaVersion, createdEpoch, playerId, type, ...variant } = full as TelemetryEventInput & Record<string, unknown>;
         return {
           playerId, // expecting ObjectId string convertible upstream
           type,

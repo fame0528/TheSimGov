@@ -30,7 +30,6 @@
  * }
  */
 
-import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { connectDB } from '@/lib/db';
 import Company from '@/lib/db/models/Company';
@@ -43,12 +42,13 @@ import {
   getLobbyingSuccessProbability,
   calculateTotalInfluence,
 } from '@/lib/utils/politicalinfluence';
+import { createSuccessResponse, createErrorResponse, ErrorCode } from '@/lib/utils/apiResponse';
 
 export async function POST(request: Request) {
   try {
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+      return createErrorResponse('Authentication required', ErrorCode.UNAUTHORIZED, 401);
     }
 
     await connectDB();
@@ -58,40 +58,28 @@ export async function POST(request: Request) {
 
     // Validate required fields
     if (!companyId || !targetLegislation || !legislationType || !influencePointsCost) {
-      return NextResponse.json(
-        { error: 'Missing required fields' },
-        { status: 400 }
-      );
+      return createErrorResponse('Missing required fields', ErrorCode.BAD_REQUEST, 400);
     }
 
     // Get company
     const company = await Company.findById(companyId);
     if (!company) {
-      return NextResponse.json(
-        { error: 'Company not found' },
-        { status: 404 }
-      );
+      return createErrorResponse('Company not found', ErrorCode.NOT_FOUND, 404);
     }
 
     if (!company.owner || company.owner.toString() !== session.user.id) {
-      return NextResponse.json({ error: 'Unauthorized - you do not own this company' }, { status: 403 });
+      return createErrorResponse('Unauthorized - you do not own this company', ErrorCode.FORBIDDEN, 403);
     }
 
     // Check lobbying eligibility
     if (!canLobby(company.level as CompanyLevel)) {
-      return NextResponse.json(
-        { error: 'Company level too low. Level 3+ required to lobby.' },
-        { status: 403 }
-      );
+      return createErrorResponse('Company level too low. Level 3+ required to lobby.', ErrorCode.FORBIDDEN, 403);
     }
 
     // Check lobbying power
     const maxPower = getLobbyingPower(company.level as CompanyLevel);
     if (influencePointsCost > maxPower) {
-      return NextResponse.json(
-        { error: `Maximum lobbying power for Level ${company.level} is ${maxPower} points` },
-        { status: 400 }
-      );
+      return createErrorResponse(`Maximum lobbying power for Level ${company.level} is ${maxPower} points`, ErrorCode.BAD_REQUEST, 400);
     }
 
     // Calculate total influence from donations
@@ -139,8 +127,7 @@ export async function POST(request: Request) {
       resolvedAt: new Date(),
     });
 
-    return NextResponse.json({
-      success: true,
+    return createSuccessResponse({
       action: {
         id: action._id,
         targetLegislation: action.targetLegislation,
@@ -156,10 +143,7 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     console.error('Lobbying error:', error);
-    return NextResponse.json(
-      { error: 'Failed to process lobbying action' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to process lobbying action', ErrorCode.INTERNAL_ERROR, 500);
   }
 }
 
@@ -167,7 +151,7 @@ export async function GET(request: Request) {
   try {
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+      return createErrorResponse('Authentication required', ErrorCode.UNAUTHORIZED, 401);
     }
 
     await connectDB();
@@ -176,16 +160,13 @@ export async function GET(request: Request) {
     const companyId = searchParams.get('companyId');
 
     if (!companyId) {
-      return NextResponse.json(
-        { error: 'Company ID required' },
-        { status: 400 }
-      );
+      return createErrorResponse('Company ID required', ErrorCode.BAD_REQUEST, 400);
     }
 
     // Verify company ownership
     const company = await Company.findById(companyId);
     if (!company || !company.owner || company.owner.toString() !== session.user.id) {
-      return NextResponse.json({ error: 'Unauthorized - you do not own this company' }, { status: 403 });
+      return createErrorResponse('Unauthorized - you do not own this company', ErrorCode.FORBIDDEN, 403);
     }
 
     // Get company lobbying history
@@ -193,8 +174,7 @@ export async function GET(request: Request) {
       .sort({ initiatedAt: -1 })
       .limit(50);
 
-    return NextResponse.json({
-      success: true,
+    return createSuccessResponse({
       actions: actions.map(a => ({
         id: a._id,
         targetLegislation: a.targetLegislation,
@@ -209,10 +189,7 @@ export async function GET(request: Request) {
     });
   } catch (error) {
     console.error('Get lobbying history error:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch lobbying history' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to fetch lobbying history', ErrorCode.INTERNAL_ERROR, 500);
   }
 }
 

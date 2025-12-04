@@ -74,3 +74,36 @@ export {
 } from './adSpendCycle';
 export * from './debateEngine';
 export * from './electionResolution';
+export * from './demographicsEngine';
+
+// Actions Engine
+export {
+  validateActionEligibility,
+  createPlayerAction,
+  executeAction,
+  createActionQueue,
+  updateQueueAfterAction,
+  checkAndResetActionPoints,
+  processPendingActions,
+  processCompletedActions,
+  getAvailableActions,
+  getTimeUntilReset,
+  estimateQueuedImpact,
+  type ActionValidationResult as ActionsValidationResult,
+} from './actionsEngine';
+
+// Demographic Polling Integration
+export {
+  calculateDemographicSupport,
+  generateStateDemographicPoll,
+  generateNationalDemographicPoll,
+  generateCrosstab,
+  toPollSnapshot,
+  getSwingStates,
+  projectElectoralVotes,
+  generateSwingStatePolls,
+  type CandidateIssueProfile,
+  type DemographicPollBreakdown,
+  type DemographicPollSnapshot,
+  type CrosstabResult,
+} from './demographicPollingIntegration';

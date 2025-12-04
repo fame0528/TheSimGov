@@ -23,6 +23,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { connectDB } from '@/lib/db/mongoose';
+import { createSuccessResponse, createErrorResponse } from '@/lib/utils/apiResponse';
 import Platform from '@/lib/db/models/media/Platform';
 import Company from '@/lib/db/models/Company';
 import {
@@ -42,7 +43,7 @@ export async function GET(request: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', 'UNAUTHORIZED', 401);
     }
 
     await connectDB();
@@ -50,7 +51,7 @@ export async function GET(request: NextRequest) {
     // Get company for the user
     const company = await Company.findOne({ owner: session.user.id });
     if (!company) {
-      return NextResponse.json({ error: 'Company not found' }, { status: 404 });
+      return createErrorResponse('Company not found', 'COMPANY_NOT_FOUND', 404);
     }
 
     // Parse query parameters
@@ -116,23 +117,24 @@ export async function GET(request: NextRequest) {
     // Calculate portfolio insights
     const portfolioInsights = calculatePortfolioInsights(platformsWithMetrics);
 
-    return NextResponse.json({
-      platforms: platformsWithMetrics,
-      portfolioInsights,
-      pagination: {
-        total,
-        limit,
-        offset,
-        hasMore: offset + limit < total
+    return createSuccessResponse(
+      {
+        platforms: platformsWithMetrics,
+        portfolioInsights
+      },
+      {
+        pagination: {
+          total,
+          limit,
+          offset,
+          hasMore: offset + limit < total
+        }
       }
-    });
+    );
 
   } catch (error) {
     console.error('Error fetching platforms:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return createErrorResponse('Internal server error', 'INTERNAL_ERROR', 500);
   }
 }
 
@@ -144,7 +146,7 @@ export async function POST(request: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', 'UNAUTHORIZED', 401);
     }
 
     await connectDB();
@@ -152,7 +154,7 @@ export async function POST(request: NextRequest) {
     // Get company for the user
     const company = await Company.findOne({ owner: session.user.id });
     if (!company) {
-      return NextResponse.json({ error: 'Company not found' }, { status: 404 });
+      return createErrorResponse('Company not found', 'COMPANY_NOT_FOUND', 404);
     }
 
     const body = await request.json();
@@ -169,9 +171,10 @@ export async function POST(request: NextRequest) {
 
     // Validate required fields
     if (!platformType || !platformName) {
-      return NextResponse.json(
-        { error: 'Missing required fields: platformType, platformName' },
-        { status: 400 }
+      return createErrorResponse(
+        'Missing required fields: platformType, platformName',
+        'VALIDATION_ERROR',
+        400
       );
     }
 
@@ -182,9 +185,10 @@ export async function POST(request: NextRequest) {
     });
 
     if (existingPlatform) {
-      return NextResponse.json(
-        { error: 'Platform with this name already exists' },
-        { status: 409 }
+      return createErrorResponse(
+        'Platform with this name already exists',
+        'DUPLICATE_PLATFORM',
+        409
       );
     }
 
@@ -260,19 +264,20 @@ export async function POST(request: NextRequest) {
       overallHealth: 50 // Default for new platforms
     };
 
-    return NextResponse.json({
-      platform: {
-        ...platform.toObject(),
-        calculatedMetrics
-      }
-    }, { status: 201 });
+    return createSuccessResponse(
+      {
+        platform: {
+          ...platform.toObject(),
+          calculatedMetrics
+        }
+      },
+      undefined,
+      201
+    );
 
   } catch (error) {
     console.error('Error creating platform:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return createErrorResponse('Internal server error', 'INTERNAL_ERROR', 500);
   }
 }
 

@@ -10,10 +10,13 @@
  * DELETE /api/politics/fundraising/:id - Delete donor
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { auth } from '@/auth';
 import { connectDB } from '@/lib/db';
+import { createSuccessResponse, createErrorResponse } from '@/lib/utils/apiResponse';
 import Donor from '@/lib/db/models/politics/Donor';
+import type { IDonor } from '@/lib/db/models/politics/Donor';
+import type { DonorLean, DonorContributionLean } from '@/lib/types/politics-lean';
 import { isValidObjectId } from 'mongoose';
 import { z } from 'zod';
 
@@ -54,30 +57,21 @@ export async function GET(
   try {
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return createErrorResponse('Unauthorized', 'UNAUTHORIZED', 401);
     }
 
     const { id } = await params;
 
     if (!isValidObjectId(id)) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid donor ID' },
-        { status: 400 }
-      );
+      return createErrorResponse('Invalid donor ID', 'VALIDATION_ERROR', 400);
     }
 
     await connectDB();
 
-    const donor = await Donor.findById(id).lean();
+    const donor = await Donor.findById(id).lean() as DonorLean | null;
 
     if (!donor) {
-      return NextResponse.json(
-        { success: false, error: 'Donor not found' },
-        { status: 404 }
-      );
+      return createErrorResponse('Donor not found', 'NOT_FOUND', 404);
     }
 
     // Get last contribution date
@@ -85,48 +79,49 @@ export async function GET(
       ? donor.contributions[donor.contributions.length - 1]
       : null;
 
-    return NextResponse.json({
-      success: true,
-      data: {
-        _id: donor._id.toString(),
-        name: (donor as any).name,
-        donorType: donor.donorType,
-        tier: (donor as any).tier,
-        occupation: typeof (donor as any).occupation === 'string' ? undefined : (donor as any).occupation?.occupation,
-        employer: typeof (donor as any).occupation === 'string' ? undefined : (donor as any).occupation?.employer,
-        email: (donor as any).contact?.email,
-        phone: (donor as any).contact?.phone,
-        address: (donor as any).contact ? `${(donor as any).contact.address}, ${(donor as any).contact.city}, ${(donor as any).contact.state} ${(donor as any).contact.zip}` : undefined,
-        maxContribution: donor.maxContribution,
-        remainingCapacity: (donor as any).remainingCapacity,
-        totalContributed: donor.totalContributed,
-        thisElectionCycle: (donor as any).thisElectionCycle ?? 0,
-        contributionCount: (donor as any).contributionCount ?? 0,
-        averageContribution: (donor as any).averageContribution ?? 0,
-        lastContributionDate: lastContribution?.date,
-        contributions: ((donor as any).contributions ?? []).slice(-20).map((c: any) => ({
-          amount: c.amount,
-          date: c.date,
-          type: c.type,
-          campaignId: c.campaignId?.toString(),
-          electionType: c.electionType,
-          receiptId: c.receiptId,
-        })),
-        isBundler: donor.isBundler,
-        bundledAmount: donor.bundledAmount,
-        bundlerNetwork: Array.isArray((donor as any).bundlerNetwork) ? (donor as any).bundlerNetwork.length : 0,
-        preferredParty: (donor as any).preferredParty,
-        issueInterests: (donor as any).issueInterests ?? [],
-        preferredContact: (donor as any).preferredContact,
-        optedOut: (donor as any).optedOut ?? false,
-      },
+    // Format address from contact sub-document
+    const formatAddress = (contact: typeof donor.contact) => {
+      if (!contact) return undefined;
+      const parts = [contact.address, contact.city, contact.state, contact.zip].filter(Boolean);
+      return parts.length > 0 ? parts.join(', ') : undefined;
+    };
+
+    return createSuccessResponse({
+      _id: donor._id.toString(),
+      name: donor.donorName,
+      donorType: donor.donorType,
+      tier: donor.tier,
+      occupation: donor.occupation,
+      employer: donor.employer,
+      email: donor.contact?.email,
+      phone: donor.contact?.phone,
+      address: formatAddress(donor.contact),
+      maxContribution: donor.maxContribution ?? donor.complianceLimit,
+      remainingCapacity: donor.remainingCapacity,
+      totalContributed: donor.totalContributed,
+      thisElectionCycle: donor.thisElectionCycle ?? 0,
+      contributionCount: donor.contributionCount ?? 0,
+      averageContribution: donor.averageContribution ?? 0,
+      lastContributionDate: lastContribution?.date,
+      contributions: (donor.contributions ?? []).slice(-20).map((c: DonorContributionLean) => ({
+        amount: c.amount,
+        date: c.date,
+        type: c.type,
+        campaignId: c.campaignId?.toString(),
+        electionType: c.electionType,
+        receiptId: c.receiptId,
+      })),
+      isBundler: donor.isBundler,
+      bundledAmount: donor.bundledAmount,
+      bundlerNetwork: Array.isArray(donor.bundlerNetwork) ? donor.bundlerNetwork.length : 0,
+      preferredParty: donor.preferredParty,
+      issueInterests: donor.issueInterests ?? [],
+      preferredContact: donor.preferredContact,
+      optedOut: donor.optedOut ?? false,
     });
   } catch (error) {
     console.error('GET /api/politics/fundraising/[id] error:', error);
-    return NextResponse.json(
-      { success: false, error: 'Failed to fetch donor' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to fetch donor', 'INTERNAL_ERROR', 500);
   }
 }
 
@@ -145,30 +140,21 @@ export async function PATCH(
   try {
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return createErrorResponse('Unauthorized', 'UNAUTHORIZED', 401);
     }
 
     const { id } = await params;
 
     if (!isValidObjectId(id)) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid donor ID' },
-        { status: 400 }
-      );
+      return createErrorResponse('Invalid donor ID', 'VALIDATION_ERROR', 400);
     }
 
     await connectDB();
 
-    const donor = await Donor.findById(id);
+    const donor = await Donor.findById(id) as IDonor | null;
 
     if (!donor) {
-      return NextResponse.json(
-        { success: false, error: 'Donor not found' },
-        { status: 404 }
-      );
+      return createErrorResponse('Donor not found', 'NOT_FOUND', 404);
     }
 
     const body = await req.json();
@@ -178,45 +164,36 @@ export async function PATCH(
       const data = recordContributionSchema.parse(body);
 
       // Check contribution limits
-      const remainingCapacity = (donor as any).remainingCapacity ?? ((donor as any).maxContribution ?? 0) - ((donor as any).thisElectionCycle ?? 0);
+      const remainingCapacity = donor.remainingCapacity ?? (donor.maxContribution ?? donor.complianceLimit) - (donor.thisElectionCycle ?? 0);
       if (data.amount > remainingCapacity) {
-        return NextResponse.json(
-          {
-            success: false,
-            error: `Amount exceeds remaining capacity of $${donor.remainingCapacity}`,
-          },
-          { status: 400 }
+        return createErrorResponse(
+          `Amount exceeds remaining capacity of $${remainingCapacity}`,
+          'VALIDATION_ERROR',
+          400
         );
       }
 
       // Add contribution
-      if (!Array.isArray((donor as any).contributions)) (donor as any).contributions = [];
-      (donor as any).contributions.push({
-        campaignId: data.campaignId as unknown as import('mongoose').Types.ObjectId,
+      if (!Array.isArray(donor.contributions)) donor.contributions = [];
+      donor.contributions.push({
         amount: data.amount,
-        type: data.type as any,
+        type: data.type,
         date: new Date(),
-        electionType: data.electionType,
-        receiptId: `RCP-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        earmarked: data.earmarked,
-        isRefund: false,
-        filedWithFEC: false,
       });
 
       // Update aggregates
-      (donor as any).totalContributed = ((donor as any).totalContributed ?? 0) + data.amount;
-      (donor as any).thisElectionCycle = ((donor as any).thisElectionCycle ?? 0) + data.amount;
-      (donor as any).contributionCount = ((donor as any).contributionCount ?? 0) + 1;
-      (donor as any).averageContribution = (donor as any).totalContributed / (donor as any).contributionCount;
-      (donor as any).remainingCapacity = Math.max(0, ((donor as any).maxContribution ?? 0) - (donor as any).thisElectionCycle);
+      donor.totalContributed = (donor.totalContributed ?? 0) + data.amount;
+      donor.thisElectionCycle = (donor.thisElectionCycle ?? 0) + data.amount;
+      donor.contributionCount = (donor.contributionCount ?? 0) + 1;
+      donor.averageContribution = donor.totalContributed / donor.contributionCount;
+      donor.remainingCapacity = Math.max(0, (donor.maxContribution ?? donor.complianceLimit) - donor.thisElectionCycle);
 
       await donor.save();
 
-      return NextResponse.json({
-        success: true,
+      return createSuccessResponse({
         message: `Contribution of $${data.amount} recorded`,
         totalContributed: donor.totalContributed,
-        remainingCapacity: (donor as any).remainingCapacity,
+        remainingCapacity: donor.remainingCapacity,
       });
     }
 
@@ -224,45 +201,33 @@ export async function PATCH(
     if (body.action === 'updateDetails') {
       const data = updateDetailsSchema.parse(body);
 
-      if (data.occupation !== undefined || data.employer !== undefined) {
-        if (!(donor as any).occupation || typeof (donor as any).occupation === 'string') {
-          (donor as any).occupation = { occupation: '', employer: '' };
-        }
-        if (data.occupation !== undefined) (donor as any).occupation.occupation = data.occupation;
-        if (data.employer !== undefined) (donor as any).occupation.employer = data.employer;
-      }
-      if (!(donor as any).contact) (donor as any).contact = {};
-      if (data.email !== undefined) (donor as any).contact.email = data.email;
-      if (data.phone !== undefined) (donor as any).contact.phone = data.phone;
+      // Model has occupation/employer as direct string fields
+      if (data.occupation !== undefined) donor.occupation = data.occupation;
+      if (data.employer !== undefined) donor.employer = data.employer;
+      
+      // Contact is a sub-document
+      if (!donor.contact) donor.contact = {};
+      if (data.email !== undefined) donor.contact.email = data.email;
+      if (data.phone !== undefined) donor.contact.phone = data.phone;
       if (data.issueInterests !== undefined)
         donor.issueInterests = data.issueInterests;
 
       await donor.save();
 
-      return NextResponse.json({
-        success: true,
+      return createSuccessResponse({
         message: 'Donor details updated',
       });
     }
 
-    return NextResponse.json(
-      { success: false, error: 'Unknown action' },
-      { status: 400 }
-    );
+    return createErrorResponse('Unknown action', 'VALIDATION_ERROR', 400);
   } catch (error) {
     console.error('PATCH /api/politics/fundraising/[id] error:', error);
 
     if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid data', details: error.errors },
-        { status: 400 }
-      );
+      return createErrorResponse('Invalid data', 'VALIDATION_ERROR', 400, error.errors);
     }
 
-    return NextResponse.json(
-      { success: false, error: 'Failed to update donor' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to update donor', 'INTERNAL_ERROR', 500);
   }
 }
 
@@ -281,54 +246,39 @@ export async function DELETE(
   try {
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return createErrorResponse('Unauthorized', 'UNAUTHORIZED', 401);
     }
 
     const { id } = await params;
 
     if (!isValidObjectId(id)) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid donor ID' },
-        { status: 400 }
-      );
+      return createErrorResponse('Invalid donor ID', 'VALIDATION_ERROR', 400);
     }
 
     await connectDB();
 
-    const donor = await Donor.findById(id);
+    const donor = await Donor.findById(id) as IDonor | null;
 
     if (!donor) {
-      return NextResponse.json(
-        { success: false, error: 'Donor not found' },
-        { status: 404 }
-      );
+      return createErrorResponse('Donor not found', 'NOT_FOUND', 404);
     }
 
     // Don't allow deleting donors with contributions (legal records)
-    if (((donor as any).contributionCount ?? 0) > 0) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Cannot delete donors with contribution history',
-        },
-        { status: 400 }
+    if ((donor.contributionCount ?? 0) > 0) {
+      return createErrorResponse(
+        'Cannot delete donors with contribution history',
+        'VALIDATION_ERROR',
+        400
       );
     }
 
     await Donor.findByIdAndDelete(id);
 
-    return NextResponse.json({
-      success: true,
+    return createSuccessResponse({
       message: 'Donor deleted',
     });
   } catch (error) {
     console.error('DELETE /api/politics/fundraising/[id] error:', error);
-    return NextResponse.json(
-      { success: false, error: 'Failed to delete donor' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to delete donor', 'INTERNAL_ERROR', 500);
   }
 }

@@ -128,7 +128,7 @@ export async function checkAchievements(
   // Get already-claimed achievements
   const existing = await AchievementEventModel.find({ playerId }).exec();
   const existingSet = new Set(
-    (existing as any[]).map((a) => `${a.category}-${a.criteriaSummary}`)
+    existing.map((a) => `${a.category}-${a.criteriaSummary}`)
   );
 
   // Check each achievement
@@ -202,7 +202,7 @@ export async function getAchievementProgress(
 }> {
   const unlocked = await AchievementEventModel.find({ playerId }).exec();
   const unlockedSet = new Set(
-    (unlocked as any[]).map((a) => `${a.category}-${a.criteriaSummary}`)
+    unlocked.map((a) => `${a.category}-${a.criteriaSummary}`)
   );
 
   const pending = await checkAchievements(playerId, stats);
@@ -269,11 +269,12 @@ export async function getCategorySummary(
   }
 
   // Count unlocked
-  for (const achievement of achievements as any[]) {
-    if (!categoryCounts[achievement.category]) {
-      categoryCounts[achievement.category] = { total: 0, unlocked: 0 };
+  for (const achievement of achievements) {
+    const cat = achievement.category as string;
+    if (!categoryCounts[cat]) {
+      categoryCounts[cat] = { total: 0, unlocked: 0 };
     }
-    categoryCounts[achievement.category].unlocked++;
+    categoryCounts[cat].unlocked++;
   }
 
   return categoryCounts;

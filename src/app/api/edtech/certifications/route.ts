@@ -13,9 +13,10 @@
  * POST /api/edtech/certifications - Create new certification
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { auth } from '@/auth';
 import { connectDB } from '@/lib/db';
+import { createSuccessResponse, createErrorResponse, ErrorCode } from '@/lib/utils/apiResponse';
 import Certification from '@/lib/db/models/edtech/Certification';
 import Company from '@/lib/db/models/Company';
 import { IndustryType } from '@/lib/types';
@@ -35,7 +36,7 @@ export async function GET(req: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     await connectDB();
@@ -77,16 +78,13 @@ export async function GET(req: NextRequest) {
       metrics.byType[cert.type] = (metrics.byType[cert.type] || 0) + 1;
     });
 
-    return NextResponse.json({
+    return createSuccessResponse({
       certifications,
       metrics,
     });
   } catch (error) {
     console.error('GET /api/edtech/certifications error:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch certifications' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to fetch certifications', ErrorCode.INTERNAL_ERROR, 500);
   }
 }
 
@@ -111,7 +109,7 @@ export async function POST(req: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     await connectDB();
@@ -143,23 +141,17 @@ export async function POST(req: NextRequest) {
     // Validate company exists and is Technology/Software industry
     const companyDoc = await Company.findById(company);
     if (!companyDoc) {
-      return NextResponse.json({ error: 'Company not found' }, { status: 404 });
+      return createErrorResponse('Company not found', ErrorCode.NOT_FOUND, 404);
     }
 
     if (companyDoc.industry !== IndustryType.TECH) {
-      return NextResponse.json(
-        { error: 'Certifications only available for Technology companies' },
-        { status: 400 }
-      );
+      return createErrorResponse('Certifications only available for Technology companies', ErrorCode.BAD_REQUEST, 400);
     }
 
     // Check for duplicate certification code
     const existingCert = await Certification.findOne({ code: code.toUpperCase() });
     if (existingCert) {
-      return NextResponse.json(
-        { error: 'Certification code already exists' },
-        { status: 400 }
-      );
+      return createErrorResponse('Certification code already exists', ErrorCode.CONFLICT, 400);
     }
 
     // Create certification
@@ -188,27 +180,18 @@ export async function POST(req: NextRequest) {
       launchedAt: new Date(),
     });
 
-    return NextResponse.json(certification, { status: 201 });
+    return createSuccessResponse(certification, undefined, 201);
   } catch (error) {
     console.error('POST /api/edtech/certifications error:', error);
     
     if ((error as { code?: number }).code === 11000) {
-      return NextResponse.json(
-        { error: 'Duplicate certification code' },
-        { status: 400 }
-      );
+      return createErrorResponse('Duplicate certification code', ErrorCode.CONFLICT, 400);
     }
 
     if ((error as { name?: string }).name === 'ValidationError') {
-      return NextResponse.json(
-        { error: 'Validation error', details: (error as { errors?: unknown }).errors },
-        { status: 400 }
-      );
+      return createErrorResponse('Validation error', ErrorCode.VALIDATION_ERROR, 400, (error as { errors?: unknown }).errors);
     }
 
-    return NextResponse.json(
-      { error: 'Failed to create certification' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to create certification', ErrorCode.INTERNAL_ERROR, 500);
   }
 }

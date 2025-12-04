@@ -9,11 +9,12 @@
  * and infrastructure improvements to increase power transfer capability.
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { connectDB as dbConnect } from '@/lib/db';
 import { TransmissionLine } from '@/lib/db/models';
 import { auth } from '@/auth';
+import { createSuccessResponse, createErrorResponse, ErrorCode } from '@/lib/utils/apiResponse';
 
 // ============================================================================
 // VALIDATION SCHEMAS
@@ -88,7 +89,7 @@ export async function POST(
     // Authentication
     const session = await auth();
     if (!session?.user?.companyId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     // Parse request body
@@ -96,10 +97,7 @@ export async function POST(
     const validation = UpgradeLineSchema.safeParse(body);
     
     if (!validation.success) {
-      return NextResponse.json(
-        { error: 'Invalid input', details: validation.error.flatten() },
-        { status: 400 }
-      );
+      return createErrorResponse('Invalid input', ErrorCode.BAD_REQUEST, 400);
     }
 
     const { upgradeType, targetCapacity, budget, scheduledOutage } = validation.data;
@@ -114,10 +112,7 @@ export async function POST(
     });
 
     if (!line) {
-      return NextResponse.json(
-        { error: 'Transmission line not found or access denied' },
-        { status: 404 }
-      );
+      return createErrorResponse('Transmission line not found or access denied', ErrorCode.NOT_FOUND, 404);
     }
 
     // Get line parameters
@@ -190,9 +185,9 @@ export async function POST(
     const originalVoltage = line.voltageLevel;
     
     line.capacity = newCapacity;
-    // Assign string; model may type as enum, rely on schema casting
-    line.voltageLevel = newVoltage as unknown as any;
-    // No condition/maintenance fields in model; persist voltage only
+    // Cast voltage to the voltageLevel enum type
+    line.voltageLevel = newVoltage as typeof line.voltageLevel;
+    // Note: condition/maintenance fields are computed, not stored
 
     // Save transmission line
     await line.save();
@@ -200,7 +195,7 @@ export async function POST(
     // Log upgrade action
     console.log(`[ENERGY] Transmission upgrade: ${line.name} (${line._id}), Type: ${upgradeType}, Capacity: ${currentCapacity} → ${newCapacity} MW, Cost: $${(totalCost / 1000000).toFixed(2)}M`);
 
-    return NextResponse.json({
+    return createSuccessResponse({
       success: true,
       transmissionLine: {
         id: line._id,
@@ -261,10 +256,7 @@ export async function POST(
 
   } catch (error) {
     console.error('[ENERGY] Transmission upgrade error:', error);
-    return NextResponse.json(
-      { error: 'Failed to upgrade transmission line', details: error instanceof Error ? error.message : 'Unknown error' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to upgrade transmission line', ErrorCode.INTERNAL_ERROR, 500);
   }
 }
 

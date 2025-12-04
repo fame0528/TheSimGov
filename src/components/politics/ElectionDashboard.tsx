@@ -219,7 +219,9 @@ function ElectionDetail({ election, onClose, onRefresh }: ElectionDetailProps) {
                 const result = resultsArr.find(
                   (r) => r.candidateId === candidate.candidateId
                 );
-                const isWinner = (election as any).winner?.candidateId === candidate.candidateId;
+                const isWinner = ui.winner?.candidateId === candidate.candidateId;
+                // Extended candidate properties from API
+                const candidateExt = candidate as typeof candidate & { isIncumbent?: boolean; withdrawnDate?: Date };
                 return (
                   <TableRow key={candidate.candidateId || idx}>
                     <TableCell>
@@ -228,7 +230,7 @@ function ElectionDetail({ election, onClose, onRefresh }: ElectionDetailProps) {
                         <span className={isWinner ? 'font-bold' : ''}>
                           {candidate.candidateName}
                         </span>
-                        {(candidate as any).isIncumbent && (
+                        {candidateExt.isIncumbent && (
                           <Chip size="sm" variant="flat">Inc</Chip>
                         )}
                       </div>
@@ -248,7 +250,7 @@ function ElectionDetail({ election, onClose, onRefresh }: ElectionDetailProps) {
                       </Chip>
                     </TableCell>
                     <TableCell>
-                      {(candidate as any).withdrawnDate ? (
+                      {candidateExt.withdrawnDate ? (
                         <Chip size="sm" color="danger" variant="flat">
                           Withdrawn
                         </Chip>
@@ -277,7 +279,7 @@ function ElectionDetail({ election, onClose, onRefresh }: ElectionDetailProps) {
       </div>
 
       {/* Results Section (if available) */}
-      {(election as any).totalVotes > 0 && (
+      {(ui.totalVotes ?? 0) > 0 && (
         <>
           <Divider />
           <div>
@@ -286,22 +288,22 @@ function ElectionDetail({ election, onClose, onRefresh }: ElectionDetailProps) {
               <div className="text-center">
                 <p className="text-sm text-default-500">Total Votes</p>
                 <p className="text-xl font-bold">
-                  {(election as any).totalVotes?.toLocaleString?.() ?? '0'}
+                  {ui.totalVotes?.toLocaleString?.() ?? '0'}
                 </p>
               </div>
               <div className="text-center">
                 <p className="text-sm text-default-500">Turnout</p>
-                <p className="text-xl font-bold">{(election as any).turnout?.toFixed?.(1) ?? '0%'}%</p>
+                <p className="text-xl font-bold">{ui.turnout?.toFixed?.(1) ?? '0'}%</p>
               </div>
               <div className="text-center">
                 <p className="text-sm text-default-500">Margin</p>
-                <p className="text-xl font-bold">{(election as any).margin?.toFixed?.(1) ?? '0%'}%</p>
+                <p className="text-xl font-bold">{ui.margin?.toFixed?.(1) ?? '0'}%</p>
               </div>
-              {(election as any).winner && (
+              {ui.winner && (
                 <div className="text-center">
                   <p className="text-sm text-default-500">Winner</p>
                   <p className="text-xl font-bold text-success">
-                    {(election as any).winner?.candidateName ?? ''}
+                    {ui.winner?.candidateName ?? ''}
                   </p>
                 </div>
               )}
@@ -310,7 +312,8 @@ function ElectionDetail({ election, onClose, onRefresh }: ElectionDetailProps) {
             {/* Vote Progress Bars */}
             {Array.isArray(election.results) && election.results.length > 0 && (
               <div className="space-y-3">
-                {[...(election.results as any[])]
+                {/* Cast results as array of candidate results for vote bars */}
+                {[...(election.results as unknown as Array<{candidateId: string; votes: number; percentage: number}>)]
                   .sort((a, b) => b.votes - a.votes)
                   .map((result, idx) => {
                     const candidate = election.candidates.find(
@@ -325,7 +328,7 @@ function ElectionDetail({ election, onClose, onRefresh }: ElectionDetailProps) {
                           </span>
                         </div>
                         <Progress
-                          value={(result as any).percentage}
+                          value={result.percentage}
                           color={
                             candidate?.party === PoliticalParty.DEMOCRATIC
                               ? 'primary'

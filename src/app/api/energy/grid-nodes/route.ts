@@ -1,6 +1,6 @@
-import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import type { ApiError, ApiSuccess, GridNode } from '@/types/energy';
+import type { GridNode } from '@/types/energy';
+import { createSuccessResponse, createErrorResponse, ErrorCode } from '@/lib/utils/apiResponse';
 
 const QuerySchema = z.object({
   region: z.string().optional(),
@@ -11,7 +11,7 @@ export async function GET(request: Request) {
   const parse = QuerySchema.safeParse(Object.fromEntries(url.searchParams.entries()));
   if (!parse.success) {
     const message = parse.error.issues.map(i => `${i.path.join('.')}: ${i.message}`).join(', ');
-    return NextResponse.json<ApiError>({ success: false, error: `Invalid query: ${message}` }, { status: 400 });
+    return createErrorResponse(`Invalid query: ${message}`, ErrorCode.BAD_REQUEST, 400);
   }
 
   const { region } = parse.data;
@@ -24,5 +24,5 @@ export async function GET(request: Request) {
     },
   ];
 
-  return NextResponse.json<ApiSuccess<GridNode[]>>({ success: true, data: nodes }, { status: 200 });
+  return createSuccessResponse(nodes);
 }

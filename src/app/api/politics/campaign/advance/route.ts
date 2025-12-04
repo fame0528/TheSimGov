@@ -3,9 +3,8 @@
  * @description Advance the player's campaign to the next phase if eligible
  */
 
-import { NextResponse } from 'next/server';
 import { connectDB } from '@/lib/db';
-import { handleApiError, createErrorResponse } from '@/lib/utils/apiResponse';
+import { handleApiError, createSuccessResponse, createErrorResponse, ErrorCode } from '@/lib/utils/apiResponse';
 import { maybeValidateResponse } from '@/lib/utils/apiResponseSchemas';
 import { AdvancePhaseBodySchema, PhaseTransitionResponseSchema } from '@/lib/validation/politics';
 import { advancePhase } from '@/lib/utils/politics/campaignPhase';
@@ -30,26 +29,20 @@ export async function POST(request: Request) {
       if (!current) return createErrorResponse('Active campaign not found', 'NOT_FOUND', 404);
 
       const payload = {
-        success: true as const,
-        data: {
-          state: current.toJSON(),
-          phaseTransition: { from: current.activePhase, to: current.activePhase },
-        },
+        state: current.toJSON(),
+        phaseTransition: { from: current.activePhase, to: current.activePhase },
       };
-      maybeValidateResponse(PhaseTransitionResponseSchema, payload, 'campaign/advance');
-      return NextResponse.json(payload);
+      maybeValidateResponse(PhaseTransitionResponseSchema, { success: true, data: payload }, 'campaign/advance');
+      return createSuccessResponse(payload);
     }
 
     const payload = {
-      success: true as const,
-      data: {
-        state: updated,
-        phaseTransition: { from: updated.activePhase, to: updated.activePhase },
-      },
+      state: updated,
+      phaseTransition: { from: updated.activePhase, to: updated.activePhase },
     };
 
-    maybeValidateResponse(PhaseTransitionResponseSchema, payload, 'campaign/advance');
-    return NextResponse.json(payload);
+    maybeValidateResponse(PhaseTransitionResponseSchema, { success: true, data: payload }, 'campaign/advance');
+    return createSuccessResponse(payload);
   } catch (error) {
     return handleApiError(error, 'Failed to advance campaign phase');
   }

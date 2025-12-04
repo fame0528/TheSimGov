@@ -22,9 +22,10 @@
  * @legacy-source old projects/politics/app/api/ai/dominance/route.ts
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { Types } from 'mongoose';
 import { authenticateRequest, handleAPIError } from '@/lib/utils/api-helpers';
+import { createSuccessResponse, createErrorResponse, ErrorCode } from '@/lib/utils/apiResponse';
 import { connectDB } from '@/lib/db/mongoose';
 import Company from '@/lib/db/models/Company';
 import {
@@ -71,7 +72,7 @@ export async function GET(request: NextRequest) {
     const subcategory = searchParams.get('subcategory') || 'Artificial Intelligence';
 
     if (!companyId) {
-      return NextResponse.json({ error: 'Missing required parameter: companyId' }, { status: 422 });
+      return createErrorResponse('Missing required parameter: companyId', ErrorCode.VALIDATION_ERROR, 422);
     }
 
     // Connect to database
@@ -80,12 +81,12 @@ export async function GET(request: NextRequest) {
     // Fetch company
     const company = await Company.findById(companyId);
     if (!company) {
-      return NextResponse.json({ error: 'Company not found' }, { status: 404 });
+      return createErrorResponse('Company not found', ErrorCode.NOT_FOUND, 404);
     }
 
     // Authorization: User must own company
     if (company.owner && company.owner.toString() !== userId) {
-      return NextResponse.json({ error: 'Not authorized to view this company' }, { status: 403 });
+      return createErrorResponse('Not authorized to view this company', ErrorCode.FORBIDDEN, 403);
     }
 
     // Calculate dominance metrics
@@ -99,7 +100,7 @@ export async function GET(request: NextRequest) {
       (c) => c.companyId.toString() === companyId
     );
 
-    return NextResponse.json({
+    return createSuccessResponse({
       company: {
         _id: company._id,
         name: company.name,
@@ -115,7 +116,7 @@ export async function GET(request: NextRequest) {
       monopoly,
       antitrustRisk,
       lastUpdated: new Date(),
-    }, { status: 200 });
+    });
   } catch (error) {
     return handleAPIError('[GET /api/ai/dominance]', error, 'Failed to fetch dominance metrics');
   }
@@ -156,7 +157,7 @@ export async function POST(request: NextRequest) {
     const { companyId, industry = 'Technology', subcategory = 'Artificial Intelligence' } = body;
 
     if (!companyId) {
-      return NextResponse.json({ error: 'Missing required field: companyId' }, { status: 422 });
+      return createErrorResponse('Missing required field: companyId', ErrorCode.VALIDATION_ERROR, 422);
     }
 
     // Connect to database
@@ -165,12 +166,12 @@ export async function POST(request: NextRequest) {
     // Fetch company
     const company = await Company.findById(companyId);
     if (!company) {
-      return NextResponse.json({ error: 'Company not found' }, { status: 404 });
+      return createErrorResponse('Company not found', ErrorCode.NOT_FOUND, 404);
     }
 
     // Authorization: User must own company
     if (company.owner && company.owner.toString() !== userId) {
-      return NextResponse.json({ error: 'Not authorized to update this company' }, { status: 403 });
+      return createErrorResponse('Not authorized to update this company', ErrorCode.FORBIDDEN, 403);
     }
 
     // Calculate all dominance metrics
@@ -192,7 +193,7 @@ export async function POST(request: NextRequest) {
 
     await company.save();
 
-    return NextResponse.json({
+    return createSuccessResponse({
       company: {
         _id: company._id,
         name: company.name,
@@ -207,7 +208,7 @@ export async function POST(request: NextRequest) {
         monopoly,
         antitrustRisk,
       },
-    }, { status: 200 });
+    });
   } catch (error) {
     return handleAPIError('[POST /api/ai/dominance]', error, 'Failed to update dominance metrics');
   }

@@ -12,13 +12,18 @@
  * @author ECHO v1.3.1
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { auth } from '@/auth';
 import { connectDB } from '@/lib/db';
 import { OilWell, GasField } from '@/lib/db/models';
+import { createSuccessResponse, createErrorResponse, ErrorCode } from '@/lib/utils/apiResponse';
+import type { OilWellLean, GasFieldLean } from '@/lib/types/energy-lean';
 
 /** SEC Reserve Classifications */
 type ReserveClass = 'Proved' | 'Probable' | 'Possible';
+
+/** Union type for reserve assets with reserveEstimate */
+type ReserveAssetLean = OilWellLean | GasFieldLean;
 
 /**
  * POST /api/energy/reserves/[id]/reclassify
@@ -31,7 +36,7 @@ export async function POST(
   try {
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     await connectDB();
@@ -40,19 +45,13 @@ export async function POST(
     const { fromClass, toClass, percentage, reason } = body;
 
     if (!fromClass || !toClass || !percentage) {
-      return NextResponse.json(
-        { error: 'From class, to class, and percentage required' },
-        { status: 400 }
-      );
+      return createErrorResponse('From class, to class, and percentage required', ErrorCode.BAD_REQUEST, 400);
     }
 
     // Validate classifications
     const validClasses: ReserveClass[] = ['Proved', 'Probable', 'Possible'];
     if (!validClasses.includes(fromClass) || !validClasses.includes(toClass)) {
-      return NextResponse.json(
-        { error: 'Invalid reserve classification' },
-        { status: 400 }
-      );
+      return createErrorResponse('Invalid reserve classification', ErrorCode.BAD_REQUEST, 400);
     }
 
     // Try oil well first
@@ -65,10 +64,12 @@ export async function POST(
     }
 
     if (!asset) {
-      return NextResponse.json({ error: 'Asset not found' }, { status: 404 });
+      return createErrorResponse('Asset not found', ErrorCode.NOT_FOUND, 404);
     }
 
-    const totalReserve = (asset as any).reserveEstimate ?? 0;
+    // Both OilWell and GasField have reserveEstimate field
+    const typedAsset = asset as unknown as ReserveAssetLean;
+    const totalReserve = typedAsset.reserveEstimate ?? 0;
 
     // Calculate current distribution
     const currentDistribution = {
@@ -120,7 +121,7 @@ export async function POST(
       },
     };
 
-    return NextResponse.json({
+    return createSuccessResponse({
       message: 'Reserves reclassified',
       reclassification,
       asset: {
@@ -131,9 +132,6 @@ export async function POST(
     });
   } catch (error) {
     console.error('POST /api/energy/reserves/[id]/reclassify error:', error);
-    return NextResponse.json(
-      { error: 'Failed to reclassify reserves' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to reclassify reserves', ErrorCode.INTERNAL_ERROR, 500);
   }
 }

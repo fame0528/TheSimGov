@@ -30,7 +30,6 @@
  * }
  */
 
-import { NextResponse } from 'next/server';
 import { connectDB } from '@/lib/db';
 import Company from '@/lib/db/models/Company';
 import PoliticalContribution from '@/lib/db/models/PoliticalContribution';
@@ -40,6 +39,7 @@ import {
   getMaxDonation,
   calculateInfluencePoints,
 } from '@/lib/utils/politicalinfluence';
+import { createSuccessResponse, createErrorResponse, ErrorCode } from '@/lib/utils/apiResponse';
 
 export async function POST(request: Request) {
   try {
@@ -50,52 +50,34 @@ export async function POST(request: Request) {
 
     // Validate required fields
     if (!companyId || !candidateName || !officeType || !amount || !electionYear) {
-      return NextResponse.json(
-        { error: 'Missing required fields' },
-        { status: 400 }
-      );
+      return createErrorResponse('Missing required fields', ErrorCode.BAD_REQUEST, 400);
     }
 
     // Validate amount
     if (amount < 100) {
-      return NextResponse.json(
-        { error: 'Minimum donation is $100' },
-        { status: 400 }
-      );
+      return createErrorResponse('Minimum donation is $100', ErrorCode.BAD_REQUEST, 400);
     }
 
     // Get company
     const company = await Company.findById(companyId);
     if (!company) {
-      return NextResponse.json(
-        { error: 'Company not found' },
-        { status: 404 }
-      );
+      return createErrorResponse('Company not found', ErrorCode.NOT_FOUND, 404);
     }
 
     // Check donation eligibility
     if (!canDonate(company.level as CompanyLevel)) {
-      return NextResponse.json(
-        { error: 'Company level too low. Level 2+ required to donate.' },
-        { status: 403 }
-      );
+      return createErrorResponse('Company level too low. Level 2+ required to donate.', ErrorCode.FORBIDDEN, 403);
     }
 
     // Check donation cap
     const maxDonation = getMaxDonation(company.level as CompanyLevel);
     if (amount > maxDonation) {
-      return NextResponse.json(
-        { error: `Maximum donation for Level ${company.level} is $${maxDonation.toLocaleString()}` },
-        { status: 400 }
-      );
+      return createErrorResponse(`Maximum donation for Level ${company.level} is $${maxDonation.toLocaleString()}`, ErrorCode.BAD_REQUEST, 400);
     }
 
     // Check cash availability
     if (company.cash < amount) {
-      return NextResponse.json(
-        { error: 'Insufficient cash for donation' },
-        { status: 400 }
-      );
+      return createErrorResponse('Insufficient cash for donation', ErrorCode.BAD_REQUEST, 400);
     }
 
     // Calculate influence points gained
@@ -124,8 +106,7 @@ export async function POST(request: Request) {
     const allDonations = await PoliticalContribution.find({ company: companyId });
     const totalInfluence = allDonations.reduce((sum, d) => sum + d.influencePoints, 0);
 
-    return NextResponse.json({
-      success: true,
+    return createSuccessResponse({
       donation: {
         id: donation._id,
         candidateName: donation.candidateName,
@@ -140,9 +121,6 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     console.error('Donation error:', error);
-    return NextResponse.json(
-      { error: 'Failed to process donation' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to process donation', ErrorCode.INTERNAL_ERROR, 500);
   }
 }

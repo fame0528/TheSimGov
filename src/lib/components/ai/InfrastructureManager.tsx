@@ -197,7 +197,7 @@ export function InfrastructureManager({
                     <label className="block text-sm font-medium mb-2">GPU Model</label>
                     <Select
                       selectedKeys={[gpuModel]}
-                      onSelectionChange={(keys) => setGpuModel(Array.from(keys)[0] as any)}
+                      onSelectionChange={(keys) => setGpuModel(String(Array.from(keys)[0]) as keyof typeof GPU_SPECS)}
                     >
                       <SelectItem key="A100-40GB">A100-40GB (400W, $10k)</SelectItem>
                       <SelectItem key="A100-80GB">A100-80GB (400W, $15k)</SelectItem>

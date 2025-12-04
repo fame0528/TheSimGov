@@ -11,7 +11,7 @@
  * @author ECHO v1.3.0
  */
 
-import { EndorsementRecord, CampaignPhaseState } from '@/lib/types/politics';
+import { EndorsementRecord, CampaignPhaseState, EndorsementTier } from '@/lib/types/politics';
 import EndorsementRecordModel from '@/lib/db/models/politics/EndorsementRecord';
 import { fnv1a32 } from '@/lib/utils/deterministicHash';
 
@@ -112,7 +112,7 @@ export async function acquireEndorsement(
     playerId,
     sourceCategory: category,
     sourceName: finalSourceName,
-    tier: 'STANDARD' as any, // Default tier
+    tier: EndorsementTier.STANDARD, // Default tier
     acquiredEpoch: now,
     expiryEpoch: expiryEpoch,
     diminishingReturnFactor: diminishingFactor,

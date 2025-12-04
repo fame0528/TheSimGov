@@ -10,9 +10,10 @@
  * Part of: Opposition Research System (FID-20251125-001C Phase 5)
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { auth } from '@/auth';
+import { createSuccessResponse, createErrorResponse, ErrorCode } from '@/lib/utils/apiResponse';
 import {
   validateNegativeAd,
   calculateNegativeAdEffectiveness,
@@ -23,6 +24,7 @@ import {
   calculateVoterFatigue,
   countRecentNegativeAds,
   calculateDaysSinceLastAd,
+  DiscoveryTier,
   type NegativeAd,
   type ResearchQuality,
 } from '@/politics/systems';
@@ -46,10 +48,7 @@ export async function POST(request: NextRequest) {
     // Authenticate request
     const session = await auth();
     if (!session || !session.user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     // Parse and validate request
@@ -57,20 +56,14 @@ export async function POST(request: NextRequest) {
     const validation = LaunchNegativeAdSchema.safeParse(body);
     
     if (!validation.success) {
-      return NextResponse.json(
-        { error: 'Invalid request', details: validation.error.format() },
-        { status: 400 }
-      );
+      return createErrorResponse('Invalid request', ErrorCode.BAD_REQUEST, 400, validation.error.format());
     }
 
     const { playerId, targetId, researchId, amountSpent, campaignPhase } = validation.data;
 
     // Verify session matches player ID
     if (session.user.id !== playerId) {
-      return NextResponse.json(
-        { error: 'Forbidden' },
-        { status: 403 }
-      );
+      return createErrorResponse('Forbidden', ErrorCode.FORBIDDEN, 403);
     }
 
     // Mock budget check
@@ -78,16 +71,13 @@ export async function POST(request: NextRequest) {
     const adValidation = validateNegativeAd(researchId, amountSpent, playerBudget, campaignPhase);
     
     if (!adValidation.isValid) {
-      return NextResponse.json(
-        { error: 'Validation failed', details: adValidation.errors },
-        { status: 400 }
-      );
+      return createErrorResponse('Validation failed', ErrorCode.BAD_REQUEST, 400, adValidation.errors);
     }
 
     // TODO: Load research quality from database if researchId provided
     const researchQuality: ResearchQuality | null = researchId ? {
       score: 75,
-      tier: 'MODERATE' as any,
+      tier: DiscoveryTier.MODERATE,
       findings: ['Sample finding'],
       credibility: 80,
     } : null;
@@ -138,8 +128,7 @@ export async function POST(request: NextRequest) {
       counterEffectiveness: 0,
     };
 
-    return NextResponse.json({
-      success: true,
+    return createSuccessResponse({
       ad: adRecord,
       impact: {
         targetPollingShift: pollingImpact.targetPollingShift,
@@ -152,13 +141,10 @@ export async function POST(request: NextRequest) {
         ethicsPenalty,
         voterFatigue,
       },
-    }, { status: 201 });
+    }, undefined, 201);
 
   } catch (error) {
     console.error('Error launching negative ad:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return createErrorResponse('Internal server error', ErrorCode.INTERNAL_ERROR, 500);
   }
 }

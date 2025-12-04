@@ -9,10 +9,11 @@
  * @author ECHO v1.3.1
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { auth } from '@/auth';
 import { connectDB } from '@/lib/db';
 import { OilWell, GasField } from '@/lib/db/models';
+import { createSuccessResponse, createErrorResponse, ErrorCode } from '@/lib/utils/apiResponse';
 
 /**
  * POST /api/energy/extraction-sites/[id]/drill
@@ -25,7 +26,7 @@ export async function POST(
   try {
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     await connectDB();
@@ -43,17 +44,11 @@ export async function POST(
     }
 
     if (!asset) {
-      return NextResponse.json(
-        { error: 'Extraction site asset not found' },
-        { status: 404 }
-      );
+      return createErrorResponse('Extraction site asset not found', ErrorCode.NOT_FOUND, 404);
     }
 
     if (asset.status !== 'Drilling') {
-      return NextResponse.json(
-        { error: 'Asset must be in Drilling status to drill' },
-        { status: 400 }
-      );
+      return createErrorResponse('Asset must be in Drilling status to drill', ErrorCode.BAD_REQUEST, 400);
     }
 
     // Execute drilling
@@ -76,7 +71,7 @@ export async function POST(
 
     await asset.save();
 
-    return NextResponse.json({
+    return createSuccessResponse({
       message: 'Drilling operation completed',
       asset,
       operation: {
@@ -88,9 +83,6 @@ export async function POST(
     });
   } catch (error) {
     console.error('POST /api/energy/extraction-sites/[id]/drill error:', error);
-    return NextResponse.json(
-      { error: 'Failed to execute drilling operation' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to execute drilling operation', ErrorCode.INTERNAL_ERROR, 500);
   }
 }

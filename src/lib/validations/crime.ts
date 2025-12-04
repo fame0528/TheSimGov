@@ -8,6 +8,7 @@ import {
   type StateCode,
   type FacilityType,
 } from "@/lib/types/crime";
+import { BillCategory } from "@/types/politics";
 
 const substanceNames: SubstanceName[] = SUBSTANCE_CATALOG.map((s) => s.name) as SubstanceName[];
 
@@ -80,6 +81,180 @@ export const launderingChannelCreateSchema = z.object({
   feePercent: z.number().min(0).max(100),
   latencyDays: z.number().int().min(0),
   detectionRisk: z.number().min(0).max(100),
+});
+
+// ========== Phase 2 (Beta) - MMO Social Layer Validations ==========
+
+export const gangCreateSchema = z.object({
+  name: z.string().min(3).max(50).trim(),
+  tag: z.string().min(3).max(6).trim().toUpperCase(),
+  leaderId: z.string().min(1),
+  companyId: z.string().min(1).optional(),
+  color: z.string().regex(/^#[0-9A-F]{6}$/i).optional(),
+});
+
+export const gangUpdateSchema = z.object({
+  name: z.string().min(3).max(50).trim().optional(),
+  tag: z.string().min(3).max(6).trim().toUpperCase().optional(),
+  color: z.string().regex(/^#[0-9A-F]{6}$/i).optional(),
+  bankroll: z.number().min(0).optional(),
+});
+
+export const gangMemberAddSchema = z.object({
+  userId: z.string().min(1),
+  rank: z.enum(["Recruit", "Member", "Officer"]).default("Recruit"),
+  role: z.enum(["Leader", "Enforcer", "Dealer", "Chemist", "Driver", "Accountant"]).optional(),
+});
+
+export const gangMemberUpdateSchema = z.object({
+  userId: z.string().min(1),
+  rank: z.enum(["Recruit", "Member", "Officer", "Founder"]).optional(),
+  role: z.enum(["Leader", "Enforcer", "Dealer", "Chemist", "Driver", "Accountant"]).optional(),
+});
+
+export const territoryCreateSchema = z.object({
+  territoryId: z.string().min(1).trim().toUpperCase(),
+  name: z.string().min(3).max(100).trim(),
+  location: z.object({
+    state: stateCodeSchema,
+    city: z.string().min(1).max(120),
+    district: z.string().min(1).max(120),
+    coordinates: z.object({
+      lat: z.number().min(-90).max(90),
+      lng: z.number().min(-180).max(180),
+    }).optional(),
+  }),
+  demographics: z.object({
+    population: z.number().int().min(100),
+    medianIncome: z.number().min(0),
+    crimeRate: z.number().min(0).max(100),
+    lawEnforcementPresence: z.number().min(0).max(100),
+  }),
+  income: z.number().min(0).default(100),
+  influencePoints: z.number().int().min(100).default(1000),
+});
+
+export const territoryClaimSchema = z.object({
+  territoryId: z.string().min(1),
+  gangId: z.string().min(1),
+  influencePointsSpent: z.number().int().min(100).default(1000),
+});
+
+export const territoryContestSchema = z.object({
+  territoryId: z.string().min(1),
+  challengerGangId: z.string().min(1),
+});
+
+export const turfWarInitiateSchema = z.object({
+  challengerGangId: z.string().min(1),
+  territoryId: z.string().min(1),
+  method: z.enum(["Negotiation", "Violence", "Buyout"]),
+  negotiationOffer: z.number().min(0).optional(), // For Negotiation/Buyout methods
+});
+
+export const turfWarResolveSchema = z.object({
+  warId: z.string().min(1).optional(),
+  outcome: z.enum(["ChallengerVictory", "DefenderVictory", "Stalemate", "Negotiated"]),
+  casualties: z.array(z.object({
+    userId: z.string().min(1),
+    gangId: z.string().min(1),
+    status: z.enum(["Injured", "Arrested", "Killed"]),
+  })).default([]),
+  spoils: z.object({
+    territoryTransfer: z.boolean(),
+    cashSettlement: z.number().min(0).optional(),
+    reputationDelta: z.object({
+      challenger: z.number(),
+      defender: z.number(),
+    }).optional(),
+  }).optional(),
+});
+
+export const statePricingQuerySchema = z.object({
+  state: stateCodeSchema,
+  substance: z.enum([...substanceNames] as [string, ...string[]]).optional(),
+});
+
+export const travelSchema = z.object({
+  userId: z.string().min(1),
+  fromState: stateCodeSchema,
+  toState: stateCodeSchema,
+});
+
+// =======================
+// Phase 3 (Gamma) - Integration Layer Validations
+// =======================
+
+export const legislationStatusQuerySchema = z.object({
+  substance: z.enum([...substanceNames] as [string, ...string[]]).optional(),
+  jurisdiction: z.enum(["Federal", "State"]).optional(),
+  jurisdictionId: z.string().min(1).max(10).optional(), // "USA" or state code
+  status: z.enum(["Illegal", "Decriminalized", "Medical", "Recreational"]).optional(),
+});
+
+export const legislationLobbySchema = z.object({
+  substance: z.enum([...substanceNames] as [string, ...string[]]),
+  jurisdiction: z.enum(["Federal", "State"]),
+  jurisdictionId: z.string().min(1).max(10), // "USA" or state code
+  targetStatus: z.enum(["Decriminalized", "Medical", "Recreational"]),
+  lobbyAmount: z.number().min(1000).max(10000000), // $1K - $10M
+  politicalCapitalSpent: z.number().min(0).max(100).optional(),
+  companyId: z.string().min(1).optional(),
+  bill: z.object({
+    title: z.string().min(5).max(300).optional(),
+    summary: z.string().min(10).max(5000).optional(),
+    sponsor: z.string().min(2).max(100).optional(),
+    category: z.enum(Object.values(BillCategory) as [string, ...string[]]).optional(),
+  }).optional(),
+});
+
+export const legislationBillsQuerySchema = z.object({
+  substance: z.enum([...substanceNames] as [string, ...string[]]).optional(),
+  jurisdiction: z.enum(["Federal", "State"]).optional(),
+  jurisdictionId: z.string().min(1).max(10).optional(), // "USA" or state code
+  onlyLinked: z.coerce.boolean().optional(), // Filter to only bills with linked LegislationStatus
+});
+
+export const blackMarketItemCreateSchema = z.object({
+  sellerId: z.string().min(1),
+  category: z.enum(["Stolen Goods", "Counterfeits", "Weapons", "Restricted Items", "Services"]),
+  itemName: z.string().min(1).max(200),
+  description: z.string().min(10).max(2000),
+  quantity: z.number().int().min(1).max(1000000),
+  pricePerUnit: z.number().min(0.01).max(1000000),
+  location: locationSchema,
+  riskScore: z.number().min(0).max(100).default(50),
+});
+
+export const blackMarketItemUpdateSchema = z.object({
+  quantity: z.number().int().min(0).max(1000000).optional(),
+  pricePerUnit: z.number().min(0.01).max(1000000).optional(),
+  description: z.string().min(10).max(2000).optional(),
+  status: z.enum(["Active", "Sold", "Seized", "Removed"]).optional(),
+});
+
+export const blackMarketPurchaseSchema = z.object({
+  buyerId: z.string().min(1),
+  itemId: z.string().min(1),
+  quantity: z.number().int().min(1),
+  deliveryMethod: z.enum(["Pickup", "Courier", "Shipping"]),
+  meetupLocation: z.object({
+    state: stateCodeSchema,
+    city: z.string().min(1),
+    address: z.string().min(1).optional(),
+  }).optional(),
+});
+
+export const businessConversionSchema = z.object({
+  facilityId: z.string().min(1),
+  substance: z.enum([...substanceNames] as [string, ...string[]]),
+  newBusinessType: z.enum(["Dispensary", "Cultivation Facility", "Distribution Center", "Processing Plant"]),
+  licenseApplicationData: z.object({
+    businessName: z.string().min(1).max(200),
+    owners: z.array(z.string().min(1)),
+    capitalInvestment: z.number().min(0),
+    employeeCount: z.number().int().min(0),
+  }).optional(),
 });
 
 // Shared response envelope for contracts-first approach

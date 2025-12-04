@@ -9,11 +9,12 @@
  * and stop orders for electricity and fuel commodities.
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { connectDB as dbConnect } from '@/lib/db';
 import { EnergyTradeOrder as Order } from '@/lib/db/models';
 import { auth } from '@/auth';
+import { createSuccessResponse, createErrorResponse } from '@/lib/utils/apiResponse';
 
 // ============================================================================
 // VALIDATION SCHEMAS
@@ -55,7 +56,7 @@ export async function POST(req: NextRequest) {
     // Authentication
     const session = await auth();
     if (!session?.user?.companyId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', 'UNAUTHORIZED', 401);
     }
 
     // Parse request body
@@ -63,10 +64,7 @@ export async function POST(req: NextRequest) {
     const validation = CreateOrderSchema.safeParse(body);
     
     if (!validation.success) {
-      return NextResponse.json(
-        { error: 'Invalid input', details: validation.error.flatten() },
-        { status: 400 }
-      );
+      return createErrorResponse('Invalid input', 'BAD_REQUEST', 400);
     }
 
     const { orderType, side, commodityType, quantity, limitPrice, stopPrice, deliveryDate, deliveryHour, timeInForce, notes } = validation.data;
@@ -74,25 +72,16 @@ export async function POST(req: NextRequest) {
     // Validate minimum order size
     const minSize = MIN_ORDER_SIZE[commodityType];
     if (quantity < minSize) {
-      return NextResponse.json(
-        { error: `Order quantity ${quantity} is below minimum ${minSize} for ${commodityType}` },
-        { status: 400 }
-      );
+      return createErrorResponse(`Order quantity ${quantity} is below minimum ${minSize} for ${commodityType}`, 'BAD_REQUEST', 400);
     }
 
     // Validate limit/stop prices based on order type
     if ((orderType === 'LIMIT' || orderType === 'STOP_LIMIT') && !limitPrice) {
-      return NextResponse.json(
-        { error: 'Limit price required for LIMIT and STOP_LIMIT orders' },
-        { status: 400 }
-      );
+      return createErrorResponse('Limit price required for LIMIT and STOP_LIMIT orders', 'BAD_REQUEST', 400);
     }
 
     if ((orderType === 'STOP' || orderType === 'STOP_LIMIT') && !stopPrice) {
-      return NextResponse.json(
-        { error: 'Stop price required for STOP and STOP_LIMIT orders' },
-        { status: 400 }
-      );
+      return createErrorResponse('Stop price required for STOP and STOP_LIMIT orders', 'BAD_REQUEST', 400);
     }
 
     // Database connection
@@ -139,8 +128,7 @@ export async function POST(req: NextRequest) {
     // Log order creation
     console.log(`[ENERGY] Order created: ${side} ${quantity} ${commodityType} @ ${orderType} (ID: ${order._id}), Status: ${status}`);
 
-    return NextResponse.json({
-      success: true,
+    return createSuccessResponse({
       order: {
         id: order._id,
         orderType,
@@ -171,10 +159,7 @@ export async function POST(req: NextRequest) {
 
   } catch (error) {
     console.error('[ENERGY] Order creation error:', error);
-    return NextResponse.json(
-      { error: 'Failed to create order', details: error instanceof Error ? error.message : 'Unknown error' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to create order', 'INTERNAL_ERROR', 500);
   }
 }
 

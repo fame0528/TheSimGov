@@ -21,8 +21,9 @@
  * @author ECHO v1.3.1 - Phase 3.1 Energy Action Endpoints
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { auth } from '@/auth';
+import { createSuccessResponse, createErrorResponse, ErrorCode } from '@/lib/utils/apiResponse';
 import { connectDB } from '@/lib/db';
 import { SolarFarm } from '@/lib/db/models';
 
@@ -45,7 +46,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     // 1. Authentication check
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     // 2. Connect to database
@@ -56,20 +57,17 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const farm = await SolarFarm.findById(id);
     
     if (!farm) {
-      return NextResponse.json({ error: 'Solar farm not found' }, { status: 404 });
+      return createErrorResponse('Solar farm not found', ErrorCode.NOT_FOUND, 404);
     }
 
     // 4. Verify ownership
     if (farm.company.toString() !== session.user.companyId) {
-      return NextResponse.json({ error: 'Unauthorized access to farm' }, { status: 403 });
+      return createErrorResponse('Unauthorized access to farm', ErrorCode.FORBIDDEN, 403);
     }
 
     // 5. Validate operational status
     if (farm.status === 'Decommissioned') {
-      return NextResponse.json(
-        { error: 'Cannot maintain decommissioned farm' },
-        { status: 400 }
-      );
+      return createErrorResponse('Cannot maintain decommissioned farm', ErrorCode.BAD_REQUEST, 400);
     }
 
     // 6. Calculate maintenance costs
@@ -121,7 +119,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     nextMaintenanceDate.setDate(nextMaintenanceDate.getDate() + 60);
 
     // 11. Return maintenance results
-    return NextResponse.json({
+    return createSuccessResponse({
       success: true,
       message: 'Maintenance completed successfully',
       cost: totalCost,
@@ -158,9 +156,6 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
   } catch (error) {
     // Generic error handling
     console.error('POST /api/energy/solar-farms/[id]/maintain error:', error);
-    return NextResponse.json(
-      { error: 'Failed to process maintenance operation' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to process maintenance operation', ErrorCode.INTERNAL_ERROR, 500);
   }
 }

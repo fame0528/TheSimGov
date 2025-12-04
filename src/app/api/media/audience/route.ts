@@ -21,9 +21,10 @@
  * - Cross-platform audience insights
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { auth } from '@/auth';
 import { connectDB } from '@/lib/db/mongoose';
+import { createSuccessResponse, createErrorResponse } from '@/lib/utils/apiResponse';
 import Audience from '@/lib/db/models/media/Audience';
 import Company from '@/lib/db/models/Company';
 import {
@@ -46,7 +47,7 @@ export async function GET(request: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', 'UNAUTHORIZED', 401);
     }
 
     await connectDB();
@@ -54,7 +55,7 @@ export async function GET(request: NextRequest) {
     // Get company for the user
     const company = await Company.findOne({ owner: session.user.id });
     if (!company) {
-      return NextResponse.json({ error: 'Company not found' }, { status: 404 });
+      return createErrorResponse('Company not found', 'NOT_FOUND', 404);
     }
 
     // Parse query parameters
@@ -133,28 +134,29 @@ export async function GET(request: NextRequest) {
     // Get total count for pagination
     const total = await Audience.countDocuments(filter);
 
-    return NextResponse.json({
-      audiences: audiencesWithAnalytics,
-      pagination: {
-        total,
-        limit,
-        offset,
-        hasMore: offset + limit < total
+    return createSuccessResponse(
+      {
+        audiences: audiencesWithAnalytics,
+        summary: {
+          totalAudience: audiencesWithAnalytics.reduce((sum, a) => sum + a.size, 0),
+          averageEngagement: audiencesWithAnalytics.reduce((sum, a) => sum + a.calculatedAnalytics.engagementRate, 0) / audiencesWithAnalytics.length,
+          averageRetention: audiencesWithAnalytics.reduce((sum, a) => sum + a.calculatedAnalytics.retentionRate, 0) / audiencesWithAnalytics.length,
+          totalValue: audiencesWithAnalytics.reduce((sum, a) => sum + a.calculatedAnalytics.audienceValue, 0)
+        }
       },
-      summary: {
-        totalAudience: audiencesWithAnalytics.reduce((sum, a) => sum + a.size, 0),
-        averageEngagement: audiencesWithAnalytics.reduce((sum, a) => sum + a.calculatedAnalytics.engagementRate, 0) / audiencesWithAnalytics.length,
-        averageRetention: audiencesWithAnalytics.reduce((sum, a) => sum + a.calculatedAnalytics.retentionRate, 0) / audiencesWithAnalytics.length,
-        totalValue: audiencesWithAnalytics.reduce((sum, a) => sum + a.calculatedAnalytics.audienceValue, 0)
+      {
+        pagination: {
+          total,
+          limit,
+          offset,
+          hasMore: offset + limit < total
+        }
       }
-    });
+    );
 
   } catch (error) {
     console.error('Error fetching audiences:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return createErrorResponse('Internal server error', 'INTERNAL_ERROR', 500);
   }
 }
 
@@ -166,7 +168,7 @@ export async function POST(request: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', 'UNAUTHORIZED', 401);
     }
 
     await connectDB();
@@ -174,7 +176,7 @@ export async function POST(request: NextRequest) {
     // Get company for the user
     const company = await Company.findOne({ owner: session.user.id });
     if (!company) {
-      return NextResponse.json({ error: 'Company not found' }, { status: 404 });
+      return createErrorResponse('Company not found', 'COMPANY_NOT_FOUND', 404);
     }
 
     const body = await request.json();
@@ -193,9 +195,10 @@ export async function POST(request: NextRequest) {
 
     // Validate required fields
     if (!platform || !segment || !size) {
-      return NextResponse.json(
-        { error: 'Missing required fields: platform, segment, size' },
-        { status: 400 }
+      return createErrorResponse(
+        'Missing required fields: platform, segment, size',
+        'VALIDATION_ERROR',
+        400
       );
     }
 
@@ -237,28 +240,29 @@ export async function POST(request: NextRequest) {
     const diversityScore = calculateDemographicDiversity(audience.ageGroups || {});
     const audienceValue = audience.retentionMetrics?.lifetimeValuePerFollower || 0;
 
-    return NextResponse.json({
-      audience: {
-        ...audience.toObject(),
-        calculatedAnalytics: {
-          growthRate: 0,
-          engagementRate,
-          retentionRate,
-          diversityScore,
-          audienceValue,
-          engagementEfficiency: 0,
-          healthScore: 7.5, // Default healthy score for new audiences
-          growthTrend: 'stable',
-          engagementTrend: 'stable'
+    return createSuccessResponse(
+      {
+        audience: {
+          ...audience.toObject(),
+          calculatedAnalytics: {
+            growthRate: 0,
+            engagementRate,
+            retentionRate,
+            diversityScore,
+            audienceValue,
+            engagementEfficiency: 0,
+            healthScore: 7.5, // Default healthy score for new audiences
+            growthTrend: 'stable',
+            engagementTrend: 'stable'
+          }
         }
-      }
-    }, { status: 201 });
+      },
+      undefined,
+      201
+    );
 
   } catch (error) {
     console.error('Error creating audience:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return createErrorResponse('Internal server error', 'INTERNAL_ERROR', 500);
   }
 }

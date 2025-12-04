@@ -59,6 +59,10 @@ import {
   getMoraleLabel,
   getPerformanceLabel,
   getRetentionRiskLabel,
+  getPerformanceRatingScheme,
+  getMoraleScheme,
+  getRetentionRiskScheme,
+  getStatusScheme,
 } from '@/lib/utils/employee';
 import type { Employee, EmployeeSkills } from '@/lib/types/models';
 
@@ -340,7 +344,7 @@ export default function EmployeeDirectory({ companyId }: EmployeeDirectoryProps)
         return (
           <Badge
             content={perfRating}
-            color={getPerformanceRatingColor(perfScale) as any}
+            color={getPerformanceRatingScheme(perfScale)}
             variant="flat"
           >
             <span className="text-sm">{getPerformanceLabel(perfScale)}</span>
@@ -350,7 +354,7 @@ export default function EmployeeDirectory({ companyId }: EmployeeDirectoryProps)
       case 'morale':
         return (
           <Badge
-            color={getMoraleColor(employee.morale) as any}
+            color={getMoraleScheme(employee.morale)}
             variant="flat"
           >
             <span>{employee.morale}%</span>
@@ -360,7 +364,7 @@ export default function EmployeeDirectory({ companyId }: EmployeeDirectoryProps)
       case 'retentionRisk':
         return (
           <Badge
-            color={getRetentionRiskColor(retentionRiskScore) as any}
+            color={getRetentionRiskScheme(retentionRiskScore)}
             variant="flat"
           >
             <span className="capitalize">{retentionRiskLabel}</span>
@@ -370,7 +374,7 @@ export default function EmployeeDirectory({ companyId }: EmployeeDirectoryProps)
       case 'status':
         return (
           <Badge
-            color={getStatusColor(employee.status) as any}
+            color={getStatusScheme(employee.status)}
             variant="flat"
           >
             <span className="capitalize">{getStatusLabel(employee.status)}</span>

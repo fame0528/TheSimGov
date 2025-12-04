@@ -3,13 +3,13 @@
  * @description Generate a new polling snapshot for a player
  */
 
-import { NextResponse } from 'next/server';
 import { connectDB } from '@/lib/db';
-import { handleApiError, createErrorResponse } from '@/lib/utils/apiResponse';
+import { handleApiError, createSuccessResponse, createErrorResponse, ErrorCode } from '@/lib/utils/apiResponse';
 import { maybeValidateResponse } from '@/lib/utils/apiResponseSchemas';
 import { GeneratePollingSnapshotBodySchema, PollingSnapshotResponseSchema } from '@/lib/validation/politics';
 import CampaignPhaseState from '@/lib/db/models/politics/CampaignPhaseState';
 import { generatePollingSnapshot } from '@/lib/utils/politics/polling';
+import type { CampaignPhaseState as CampaignPhaseStateType } from '@/lib/types/politics';
 
 export async function POST(request: Request) {
   try {
@@ -28,17 +28,14 @@ export async function POST(request: Request) {
       return createErrorResponse('Active campaign not found for player', 'NOT_FOUND', 404);
     }
 
-    const snapshot = await generatePollingSnapshot(playerId, state.toJSON() as any);
+    const snapshot = await generatePollingSnapshot(playerId, state.toJSON() as CampaignPhaseStateType);
 
     const payload = {
-      success: true as const,
-      data: {
-        snapshot,
-      },
+      snapshot,
     };
 
-    maybeValidateResponse(PollingSnapshotResponseSchema, payload, 'polling/generate');
-    return NextResponse.json(payload);
+    maybeValidateResponse(PollingSnapshotResponseSchema, { success: true, data: payload }, 'polling/generate');
+    return createSuccessResponse(payload);
   } catch (error) {
     return handleApiError(error, 'Failed to generate polling snapshot');
   }

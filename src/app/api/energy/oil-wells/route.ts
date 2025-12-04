@@ -10,8 +10,9 @@
  * @author ECHO v1.3.1
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { auth } from '@/auth';
+import { createSuccessResponse, createErrorResponse, ErrorCode } from '@/lib/utils/apiResponse';
 
 import { connectDB } from '@/lib/db';
 import { OilWell } from '@/lib/db/models';
@@ -24,7 +25,7 @@ export async function GET(request: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     await connectDB();
@@ -35,7 +36,7 @@ export async function GET(request: NextRequest) {
     const wellType = searchParams.get('type');
 
     if (!companyId) {
-      return NextResponse.json({ error: 'Company ID required' }, { status: 400 });
+      return createErrorResponse('Company ID required', ErrorCode.BAD_REQUEST, 400);
     }
 
     // Build query
@@ -58,7 +59,7 @@ export async function GET(request: NextRequest) {
       return daysSince > 90;
     }).length;
 
-    return NextResponse.json({
+    return createSuccessResponse({
       wells,
       totalProduction,
       avgDepletion: Math.round(avgDepletion * 100) / 100,
@@ -67,10 +68,7 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('GET /api/energy/oil-wells error:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch oil wells' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to fetch oil wells', ErrorCode.INTERNAL_ERROR, 500);
   }
 }
 
@@ -82,7 +80,7 @@ export async function POST(request: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     await connectDB();
@@ -101,10 +99,7 @@ export async function POST(request: NextRequest) {
     } = body;
 
     if (!company || !name || !location) {
-      return NextResponse.json(
-        { error: 'Company, name, and location are required' },
-        { status: 400 }
-      );
+      return createErrorResponse('Company, name, and location are required', ErrorCode.VALIDATION_ERROR, 400);
     }
 
     const well = await OilWell.create({
@@ -123,16 +118,10 @@ export async function POST(request: NextRequest) {
       equipment: [],
     });
 
-    return NextResponse.json(
-      { message: 'Oil well created', well },
-      { status: 201 }
-    );
+    return createSuccessResponse({ message: 'Oil well created', well }, undefined, 201);
   } catch (error) {
     console.error('POST /api/energy/oil-wells error:', error);
-    return NextResponse.json(
-      { error: 'Failed to create oil well' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to create oil well', ErrorCode.INTERNAL_ERROR, 500);
   }
 }
 

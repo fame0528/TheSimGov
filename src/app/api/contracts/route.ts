@@ -13,6 +13,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { connectDB, Contract } from '@/lib/db';
+import { createSuccessResponse, createErrorResponse } from '@/lib/utils/apiResponse';
 
 /**
  * GET /api/contracts
@@ -33,7 +34,7 @@ export async function GET(request: NextRequest) {
     // Authenticate
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', 'UNAUTHORIZED', 401);
     }
 
     // Get query params
@@ -77,22 +78,21 @@ export async function GET(request: NextRequest) {
       .lean();
 
     // Return with pagination metadata
-    return NextResponse.json({
-      contracts,
-      pagination: {
-        page,
-        limit,
-        total,
-        pages: Math.ceil(total / limit),
-      },
-    }, { status: 200 });
+    return createSuccessResponse(
+      { contracts },
+      {
+        pagination: {
+          page,
+          limit,
+          total,
+          pages: Math.ceil(total / limit),
+        }
+      }
+    );
 
   } catch (error: any) {
     console.error('List contracts error:', error);
-    return NextResponse.json(
-      { error: 'Failed to list contracts', details: error.message },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to list contracts', 'INTERNAL_ERROR', 500, error.message);
   }
 }
 

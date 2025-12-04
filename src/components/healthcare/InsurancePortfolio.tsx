@@ -324,7 +324,7 @@ export default function InsurancePortfolio({ companyId }: InsurancePortfolioProp
               <Select
                 label="Insurance Type"
                 selectedKeys={[formData.insuranceType]}
-                onChange={(e) => setFormData({ ...formData, insuranceType: e.target.value as any })}
+                onChange={(e) => setFormData({ ...formData, insuranceType: e.target.value as typeof formData.insuranceType })}
                 isRequired
               >
                 <SelectItem key="HMO">HMO (Health Maintenance Organization)</SelectItem>
@@ -339,7 +339,7 @@ export default function InsurancePortfolio({ companyId }: InsurancePortfolioProp
               <Select
                 label="Market Segment"
                 selectedKeys={[formData.marketSegment]}
-                onChange={(e) => setFormData({ ...formData, marketSegment: e.target.value as any })}
+                onChange={(e) => setFormData({ ...formData, marketSegment: e.target.value as typeof formData.marketSegment })}
                 isRequired
               >
                 <SelectItem key="individual">Individual</SelectItem>

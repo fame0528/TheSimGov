@@ -14,6 +14,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { connectDB, Company } from '@/lib/db';
 import { ApiError } from '@/lib/api/errors';
+import { createSuccessResponse, createErrorResponse, handleApiError } from '@/lib/utils/apiResponse';
 import { z } from 'zod';
 
 /**
@@ -82,28 +83,29 @@ export async function GET(
     // Verify ownership and fetch company
     const company = await verifyOwnership(id, session.user.id);
 
-    return NextResponse.json({
-      id: company._id.toString(),
-      userId: company.userId,
-      name: company.name,
-      industry: company.industry,
-      level: company.level,
-      revenue: company.revenue,
-      expenses: company.expenses,
-      profit: company.profit,
-      cash: company.cash,
-      employees: company.employees,
-      contracts: company.contracts,
-      loans: company.loans,
-      createdAt: company.createdAt,
-      updatedAt: company.updatedAt,
+    return createSuccessResponse({
+      company: {
+        id: company._id.toString(),
+        userId: company.userId,
+        name: company.name,
+        industry: company.industry,
+        level: company.level,
+        revenue: company.revenue,
+        expenses: company.expenses,
+        profit: company.profit,
+        cash: company.cash,
+        employees: company.employees,
+        contracts: company.contracts,
+        loans: company.loans,
+        createdAt: company.createdAt,
+        updatedAt: company.updatedAt,
+      },
     });
   } catch (error) {
     if (error instanceof ApiError) {
-      return NextResponse.json({ error: error.message }, { status: error.statusCode });
+      return createErrorResponse(error.message, 'API_ERROR', error.statusCode);
     }
-    console.error('GET /api/companies/[id] error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return handleApiError(error, 'Failed to fetch company');
   }
 }
 
@@ -181,29 +183,30 @@ export async function PATCH(
     Object.assign(company, updates);
     await company.save();
 
-    return NextResponse.json({
-      id: company._id.toString(),
-      userId: company.userId,
-      name: company.name,
-      industry: company.industry,
-      level: company.level,
-      revenue: company.revenue,
-      expenses: company.expenses,
-      profit: company.profit,
-      cash: company.cash,
-      employees: company.employees,
-      contracts: company.contracts,
-      loans: company.loans,
-      logoUrl: (company as any).logoUrl || null,
-      createdAt: company.createdAt,
-      updatedAt: company.updatedAt,
+    return createSuccessResponse({
+      company: {
+        id: company._id.toString(),
+        userId: company.userId,
+        name: company.name,
+        industry: company.industry,
+        level: company.level,
+        revenue: company.revenue,
+        expenses: company.expenses,
+        profit: company.profit,
+        cash: company.cash,
+        employees: company.employees,
+        contracts: company.contracts,
+        loans: company.loans,
+        logoUrl: company.logoUrl ?? null,
+        createdAt: company.createdAt,
+        updatedAt: company.updatedAt,
+      },
     });
   } catch (error) {
     if (error instanceof ApiError) {
-      return NextResponse.json({ error: error.message }, { status: error.statusCode });
+      return createErrorResponse(error.message, 'API_ERROR', error.statusCode);
     }
-    console.error('PATCH /api/companies/[id] error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return handleApiError(error, 'Failed to update company');
   }
 }
 
@@ -253,14 +256,13 @@ export async function DELETE(
     // Delete company
     await Company.findByIdAndDelete(id);
 
-    return NextResponse.json({
+    return createSuccessResponse({
       message: 'Company deleted successfully',
     });
   } catch (error) {
     if (error instanceof ApiError) {
-      return NextResponse.json({ error: error.message }, { status: error.statusCode });
+      return createErrorResponse(error.message, 'API_ERROR', error.statusCode);
     }
-    console.error('DELETE /api/companies/[id] error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return handleApiError(error, 'Failed to delete company');
   }
 }

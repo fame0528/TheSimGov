@@ -4,12 +4,13 @@
  * @created 2025-11-29
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { auth } from '@/auth';
 import { connectDB } from '@/lib/db';
 import District from '@/lib/db/models/politics/District';
 import { createDistrictSchema, districtQuerySchema } from '@/lib/validations/politics';
 import { z } from 'zod';
+import { createSuccessResponse, createErrorResponse } from '@/lib/utils/apiResponse';
 
 /**
  * GET /api/politics/districts
@@ -19,7 +20,7 @@ export async function GET(request: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', 'UNAUTHORIZED', 401);
     }
 
     await connectDB();
@@ -60,7 +61,7 @@ export async function GET(request: NextRequest) {
 
     const total = await District.countDocuments(filter);
 
-    return NextResponse.json({
+    return createSuccessResponse({
       districts,
       pagination: {
         total,
@@ -72,10 +73,10 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: 'Invalid query parameters', details: error.errors }, { status: 400 });
+      return createErrorResponse('Invalid query parameters', 'VALIDATION_ERROR', 400, error.errors);
     }
     console.error('[Districts GET] Error:', error);
-    return NextResponse.json({ error: 'Failed to fetch districts' }, { status: 500 });
+    return createErrorResponse('Failed to fetch districts', 'INTERNAL_ERROR', 500);
   }
 }
 
@@ -87,7 +88,7 @@ export async function POST(request: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', 'UNAUTHORIZED', 401);
     }
 
     await connectDB();
@@ -100,13 +101,13 @@ export async function POST(request: NextRequest) {
       company: session.user.companyId,
     });
 
-    return NextResponse.json({ district }, { status: 201 });
+    return createSuccessResponse({ district }, undefined, 201);
 
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: 'Invalid district data', details: error.errors }, { status: 400 });
+      return createErrorResponse('Invalid district data', 'VALIDATION_ERROR', 400);
     }
     console.error('[Districts POST] Error:', error);
-    return NextResponse.json({ error: 'Failed to create district' }, { status: 500 });
+    return createErrorResponse('Failed to create district', 'INTERNAL_ERROR', 500);
   }
 }

@@ -223,7 +223,7 @@ export function EnrollmentTracking({ companyId }: EnrollmentTrackingProps) {
     {
       header: 'Status',
       accessor: (row) => (
-        <Badge color={getStatusColor(row.status as any)}>
+        <Badge color={getStatusColor(row.status)}>
           {row.status}
         </Badge>
       ),
@@ -235,7 +235,7 @@ export function EnrollmentTracking({ companyId }: EnrollmentTrackingProps) {
         <div>
           <div className="w-20 bg-gray-200 rounded-full h-2 mb-1">
             <div
-              className={`h-2 rounded-full bg-${getProgressColor(row.progress as any)}-500`}
+              className={`h-2 rounded-full bg-${getProgressColor(row.progress)}-500`}
               style={{ width: `${row.progress}%` }}
             />
           </div>
@@ -250,7 +250,7 @@ export function EnrollmentTracking({ companyId }: EnrollmentTrackingProps) {
       header: 'Exam Score',
       accessor: (row) =>
         row.examScore !== undefined ? (
-          <Badge color={getExamScoreColor(row.examScore as any)}>
+          <Badge color={getExamScoreColor(row.examScore)}>
             {row.examScore.toFixed(0)}%
           </Badge>
         ) : (
@@ -261,7 +261,7 @@ export function EnrollmentTracking({ companyId }: EnrollmentTrackingProps) {
     {
       header: 'Payment',
       accessor: (row) => (
-        <Badge color={getPaymentColor(row.paymentStatus as any)}>
+        <Badge color={getPaymentColor(row.paymentStatus)}>
           {row.paymentStatus}
         </Badge>
       ),
@@ -273,7 +273,7 @@ export function EnrollmentTracking({ companyId }: EnrollmentTrackingProps) {
         row.dropoutRisk !== undefined ? (
           <div className="flex items-center gap-1">
             {row.dropoutRisk >= 70 && <FiAlertTriangle size={16} className="text-red-500" />}
-            <Badge color={getDropoutRiskColor(row.dropoutRisk as any)}>
+            <Badge color={getDropoutRiskColor(row.dropoutRisk)}>
               {row.dropoutRisk.toFixed(0)}%
             </Badge>
           </div>
@@ -343,7 +343,7 @@ export function EnrollmentTracking({ companyId }: EnrollmentTrackingProps) {
             </div>
             <div>
               <span
-                className={`text-3xl font-bold text-${getProgressColor(metrics.averageProgress as any)}-600`}
+                className={`text-3xl font-bold text-${getProgressColor(metrics.averageProgress)}-600`}
               >
                 {metrics.averageProgress.toFixed(1)}%
               </span>
@@ -453,7 +453,7 @@ export function EnrollmentTracking({ companyId }: EnrollmentTrackingProps) {
                 label="Enrollment Type"
                 selectedKeys={[formData.enrollmentType]}
                 onSelectionChange={(keys) =>
-                  setFormData({ ...formData, enrollmentType: Array.from(keys)[0] as any })
+                  setFormData({ ...formData, enrollmentType: Array.from(keys)[0] as 'course' | 'certification' })
                 }
                 isRequired
               >

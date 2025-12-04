@@ -50,7 +50,7 @@ type OfficeType = 'Senate' | 'House' | 'Governor' | 'President';
  * Donation request body
  */
 interface DonationRequest {
-  companyId: string;
+  companyId?: string;
   candidateName: string;
   officeType: OfficeType;
   amount: number;
@@ -78,8 +78,8 @@ interface DonationResponse {
  * Component props
  */
 interface DonationManagerProps {
-  /** Company ID making the donation */
-  companyId: string;
+  /** Company ID making the donation (optional) */
+  companyId?: string;
   /** Current company cash balance */
   currentCash: number;
   /** Current company level (for validation) */

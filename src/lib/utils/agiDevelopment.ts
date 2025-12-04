@@ -901,12 +901,16 @@ export function validateAGIDevelopmentData(data: unknown): {
     return { isValid: false, errors };
   }
 
+  // Type-safe record access for validation
+  const record = data as Record<string, unknown>;
+
   // Validate CapabilityMetrics
-  if ('currentCapability' in data) {
-    const cap = (data as any).currentCapability;
-    if (typeof cap !== 'object') {
+  if ('currentCapability' in record) {
+    const cap = record.currentCapability;
+    if (typeof cap !== 'object' || cap === null) {
       errors.push('currentCapability must be an object');
     } else {
+      const capRecord = cap as Record<string, unknown>;
       const requiredFields = [
         'reasoningScore',
         'planningCapability',
@@ -917,82 +921,82 @@ export function validateAGIDevelopmentData(data: unknown): {
       ];
 
       for (const field of requiredFields) {
-        if (!(field in cap)) {
+        if (!(field in capRecord)) {
           errors.push(`currentCapability missing required field: ${field}`);
-        } else if (typeof cap[field] !== 'number' || cap[field] < 0 || cap[field] > 100) {
+        } else if (typeof capRecord[field] !== 'number' || (capRecord[field] as number) < 0 || (capRecord[field] as number) > 100) {
           errors.push(`${field} must be a number between 0 and 100`);
         }
       }
 
-      if ('selfImprovementRate' in cap && (cap.selfImprovementRate < 0 || cap.selfImprovementRate > 1)) {
+      if ('selfImprovementRate' in capRecord && ((capRecord.selfImprovementRate as number) < 0 || (capRecord.selfImprovementRate as number) > 1)) {
         errors.push('selfImprovementRate must be between 0 and 1');
       }
     }
   }
 
   // Validate AlignmentMetrics
-  if ('currentAlignment' in data) {
-    const align = (data as any).currentAlignment;
-    if (typeof align !== 'object') {
-      errors.push('currentAlignment must be an object');
-    } else {
-      const requiredFields = [
-        'valueAlignment',
-        'interpretability',
-        'robustness',
-        'corrigibility',
-        'honesty',
-        'helpfulness'
-      ];
+  if ('currentAlignment' in record && typeof record.currentAlignment === 'object' && record.currentAlignment !== null) {
+    const align = record.currentAlignment as Record<string, unknown>;
+    const requiredFields = [
+      'valueAlignment',
+      'interpretability',
+      'robustness',
+      'corrigibility',
+      'honesty',
+      'helpfulness'
+    ];
 
-      for (const field of requiredFields) {
-        if (!(field in align)) {
-          errors.push(`currentAlignment missing required field: ${field}`);
-        } else if (typeof align[field] !== 'number' || align[field] < 0 || align[field] > 100) {
-          errors.push(`${field} must be a number between 0 and 100`);
-        }
+    for (const field of requiredFields) {
+      if (!(field in align)) {
+        errors.push(`currentAlignment missing required field: ${field}`);
+      } else if (typeof align[field] !== 'number' || (align[field] as number) < 0 || (align[field] as number) > 100) {
+        errors.push(`${field} must be a number between 0 and 100`);
       }
     }
+  } else if ('currentAlignment' in record && (typeof record.currentAlignment !== 'object' || record.currentAlignment === null)) {
+    // Handle the case where currentAlignment exists but is not an object - this is checked for numeric type below
+    // The second 'currentAlignment' check below handles the numeric case
   }
 
   // Validate numeric parameters
-  if ('availableResearchPoints' in data) {
-    const rp = (data as any).availableResearchPoints;
+  if ('availableResearchPoints' in record) {
+    const rp = record.availableResearchPoints;
     if (typeof rp !== 'number' || rp < 0) {
       errors.push('availableResearchPoints must be a non-negative number');
     }
   }
 
-  if ('researchBudget' in data) {
-    const rb = (data as any).researchBudget;
+  if ('researchBudget' in record) {
+    const rb = record.researchBudget;
     if (typeof rb !== 'number' || rb < 0) {
       errors.push('researchBudget must be a non-negative number');
     }
   }
 
-  if ('targetAlignment' in data) {
-    const ta = (data as any).targetAlignment;
+  if ('targetAlignment' in record) {
+    const ta = record.targetAlignment;
     if (typeof ta !== 'number' || ta < 0 || ta > 100) {
       errors.push('targetAlignment must be between 0 and 100');
     }
   }
 
-  if ('companyAlignment' in data) {
-    const ca = (data as any).companyAlignment;
+  if ('companyAlignment' in record) {
+    const ca = record.companyAlignment;
     if (typeof ca !== 'number' || ca < 0 || ca > 100) {
       errors.push('companyAlignment must be between 0 and 100');
     }
   }
 
-  if ('currentAlignment' in data) {
-    const ca = (data as any).currentAlignment;
-    if (typeof ca !== 'number' || ca < 0 || ca > 100) {
+  // Check if currentAlignment is a number (legacy format)
+  if ('currentAlignment' in record && typeof record.currentAlignment === 'number') {
+    const ca = record.currentAlignment;
+    if (ca < 0 || ca > 100) {
       errors.push('currentAlignment must be between 0 and 100');
     }
   }
 
-  if ('selfImprovementRate' in data) {
-    const sir = (data as any).selfImprovementRate;
+  if ('selfImprovementRate' in record) {
+    const sir = record.selfImprovementRate;
     if (typeof sir !== 'number' || sir < 0 || sir > 1) {
       errors.push('selfImprovementRate must be between 0 and 1');
     }

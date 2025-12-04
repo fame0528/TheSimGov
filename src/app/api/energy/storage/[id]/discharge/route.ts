@@ -9,11 +9,12 @@
  * and discharging optimization based on grid conditions and electricity prices.
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { connectDB as dbConnect } from '@/lib/db';
 import { EnergyStorage as Storage } from '@/lib/db/models';
 import { auth } from '@/auth';
+import { createSuccessResponse, createErrorResponse, ErrorCode } from '@/lib/utils/apiResponse';
 
 // ============================================================================
 // VALIDATION SCHEMAS
@@ -72,7 +73,7 @@ export async function POST(
     // Authentication
     const session = await auth();
     if (!session?.user?.companyId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     // Parse request body
@@ -80,10 +81,7 @@ export async function POST(
     const validation = DischargeStorageSchema.safeParse(body);
     
     if (!validation.success) {
-      return NextResponse.json(
-        { error: 'Invalid input', details: validation.error.flatten() },
-        { status: 400 }
-      );
+      return createErrorResponse('Invalid input', ErrorCode.BAD_REQUEST, 400);
     }
 
     const { dischargePower, duration, electricityPrice, dischargingMode, minSOC } = validation.data;
@@ -98,18 +96,13 @@ export async function POST(
     });
 
     if (!storage) {
-      return NextResponse.json(
-        { error: 'Storage system not found or access denied' },
-        { status: 404 }
-      );
+      return createErrorResponse('Storage system not found or access denied', ErrorCode.NOT_FOUND, 404);
     }
 
-    // Validate storage is not already discharging (legacy flag not in model)
-    if ((storage as any).isDischarging) {
-      return NextResponse.json(
-        { error: 'Storage system is already discharging' },
-        { status: 400 }
-      );
+    // Validate storage is not already discharging
+    // Note: isDischarging is a runtime state, check status field instead
+    if (storage.status === 'Discharging') {
+      return createErrorResponse('Storage system is already discharging', ErrorCode.BAD_REQUEST, 400);
     }
 
     // Get storage parameters
@@ -120,19 +113,13 @@ export async function POST(
 
     // Check if sufficient energy available
     if (currentSOC <= minSOC) {
-      return NextResponse.json(
-        { error: `Insufficient energy stored. Current SOC ${currentSOC}% is at or below minimum ${minSOC}%` },
-        { status: 400 }
-      );
+      return createErrorResponse(`Insufficient energy stored. Current SOC ${currentSOC}% is at or below minimum ${minSOC}%`, ErrorCode.BAD_REQUEST, 400);
     }
 
     // Validate discharge power within limits
     const maxAllowedPower = maxPower * MAX_DISCHARGE_RATE[dischargingMode];
     if (dischargePower > maxAllowedPower) {
-      return NextResponse.json(
-        { error: `Discharge power ${dischargePower} MW exceeds maximum allowed ${maxAllowedPower.toFixed(2)} MW for ${dischargingMode} mode` },
-        { status: 400 }
-      );
+      return createErrorResponse(`Discharge power ${dischargePower} MW exceeds maximum allowed ${maxAllowedPower.toFixed(2)} MW for ${dischargingMode} mode`, ErrorCode.BAD_REQUEST, 400);
     }
 
     // Apply power reduction if SOC critical
@@ -162,14 +149,7 @@ export async function POST(
       const maxEnergyDelivered = maxEnergyAvailable * efficiency;
       const maxDuration = maxEnergyDelivered / effectivePower;
       
-      return NextResponse.json({
-        warning: 'Discharging would deplete below minimum SOC',
-        recommended: {
-          duration: maxDuration.toFixed(2) + ' hours',
-          energyDelivered: maxEnergyDelivered.toFixed(2) + ' MWh',
-          finalSOC: minSOC + '%'
-        }
-      }, { status: 400 });
+      return createErrorResponse(`Discharging would deplete below minimum SOC. Recommended duration: ${maxDuration.toFixed(2)} hours`, ErrorCode.BAD_REQUEST, 400);
     }
 
     // Calculate revenue
@@ -177,11 +157,12 @@ export async function POST(
     const revenue = actualEnergyDelivered * pricePerMWh;
     const revenuePerMWhStored = revenue / actualEnergyDischarged;
 
-    // Calculate battery degradation
+    // Calculate battery degradation (using model's degradation field)
     const degradationPercent = BATTERY_DEGRADATION_RATE[dischargingMode];
     const cycleDepth = (actualEnergyDischarged / capacity) * 100; // Percentage of full cycle
     const healthDegradation = degradationPercent * (cycleDepth / 100);
-    const currentHealth = ((storage as any).batteryHealth ?? 100);
+    const currentDegradation = storage.degradation ?? 0;
+    const currentHealth = 100 - currentDegradation;
     const newBatteryHealth = Math.max(0, currentHealth - healthDegradation);
 
     // Calculate discharging timeline
@@ -200,7 +181,7 @@ export async function POST(
     // Log discharging action
     console.log(`[ENERGY] Storage discharging: ${storage.name} (${storage._id}), Mode: ${dischargingMode}, Power: ${effectivePower} MW, Duration: ${actualDuration.toFixed(2)}h, SOC: ${currentSOC}% → ${newSOC.toFixed(2)}%`);
 
-    return NextResponse.json({
+    return createSuccessResponse({
       success: true,
       storage: {
         id: storage._id,
@@ -242,7 +223,7 @@ export async function POST(
         revenuePerHour: '$' + (revenue / actualDuration).toFixed(2) + '/hour'
       },
       battery: {
-        previousHealth: (((storage as any).batteryHealth || 100)).toFixed(2) + '%',
+        previousHealth: currentHealth.toFixed(2) + '%',
         newHealth: newBatteryHealth.toFixed(2) + '%',
         degradation: healthDegradation.toFixed(4) + '%',
         cycleDepth: cycleDepth.toFixed(2) + '%',
@@ -253,10 +234,7 @@ export async function POST(
 
   } catch (error) {
     console.error('[ENERGY] Storage discharging error:', error);
-    return NextResponse.json(
-      { error: 'Failed to discharge storage system', details: error instanceof Error ? error.message : 'Unknown error' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to discharge storage system', ErrorCode.INTERNAL_ERROR, 500);
   }
 }
 

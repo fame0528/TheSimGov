@@ -10,7 +10,7 @@
  * @author ECHO v1.3.2
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { auth } from '@/auth';
 import { connectDB } from '@/lib/db';
 import { ManufacturingProductionLine, ManufacturingFacility } from '@/lib/db/models/manufacturing';
@@ -19,6 +19,7 @@ import {
   createProductionLineSchema,
   type ProductionLineQueryInput 
 } from '@/lib/validations/manufacturing';
+import { createSuccessResponse, createErrorResponse } from '@/lib/utils/apiResponse';
 
 /**
  * GET /api/manufacturing/production-lines
@@ -38,7 +39,7 @@ export async function GET(request: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', 'UNAUTHORIZED', 401);
     }
 
     await connectDB();
@@ -48,7 +49,7 @@ export async function GET(request: NextRequest) {
     const facilityId = searchParams.get('facilityId');
 
     if (!companyId) {
-      return NextResponse.json({ error: 'Company ID required' }, { status: 400 });
+      return createErrorResponse('Company ID required', 'BAD_REQUEST', 400);
     }
 
     // Parse and validate query parameters
@@ -57,10 +58,7 @@ export async function GET(request: NextRequest) {
       const obj = Object.fromEntries(searchParams.entries());
       queryParams = productionLineQuerySchema.parse(obj);
     } catch (parseError) {
-      return NextResponse.json(
-        { error: 'Invalid query parameters', details: parseError },
-        { status: 400 }
-      );
+      return createErrorResponse('Invalid query parameters', 'BAD_REQUEST', 400);
     }
 
     // Build MongoDB query
@@ -155,7 +153,7 @@ export async function GET(request: NextRequest) {
       { $group: { _id: '$type', count: { $sum: 1 } } },
     ]);
 
-    return NextResponse.json({
+    return createSuccessResponse({
       productionLines,
       pagination: {
         total: totalCount,
@@ -193,10 +191,7 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('GET /api/manufacturing/production-lines error:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch production lines' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to fetch production lines', 'INTERNAL_ERROR', 500);
   }
 }
 
@@ -208,7 +203,7 @@ export async function POST(request: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', 'UNAUTHORIZED', 401);
     }
 
     await connectDB();
@@ -217,11 +212,11 @@ export async function POST(request: NextRequest) {
     const { company, facility } = body;
 
     if (!company) {
-      return NextResponse.json({ error: 'Company ID required' }, { status: 400 });
+      return createErrorResponse('Company ID required', 'BAD_REQUEST', 400);
     }
 
     if (!facility) {
-      return NextResponse.json({ error: 'Facility ID required' }, { status: 400 });
+      return createErrorResponse('Facility ID required', 'BAD_REQUEST', 400);
     }
 
     // Verify facility exists and belongs to company
@@ -231,10 +226,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (!facilityDoc) {
-      return NextResponse.json(
-        { error: 'Facility not found or does not belong to company' },
-        { status: 404 }
-      );
+      return createErrorResponse('Facility not found or does not belong to company', 'NOT_FOUND', 404);
     }
 
     // Validate request body
@@ -242,10 +234,7 @@ export async function POST(request: NextRequest) {
     try {
       validatedData = createProductionLineSchema.parse(body);
     } catch (parseError) {
-      return NextResponse.json(
-        { error: 'Validation failed', details: parseError },
-        { status: 400 }
-      );
+      return createErrorResponse('Validation failed', 'BAD_REQUEST', 400);
     }
 
     // Check for duplicate line number within facility
@@ -255,10 +244,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (existingLine) {
-      return NextResponse.json(
-        { error: 'Production line with this line number already exists in facility' },
-        { status: 409 }
-      );
+      return createErrorResponse('Production line with this line number already exists in facility', 'CONFLICT', 409);
     }
 
     // Create production line with validated data
@@ -295,18 +281,12 @@ export async function POST(request: NextRequest) {
       $inc: { 'lines.total': 1 },
     });
 
-    return NextResponse.json(
-      { 
-        message: 'Production line created successfully', 
-        productionLine,
-      },
-      { status: 201 }
-    );
+    return createSuccessResponse({ 
+      message: 'Production line created successfully', 
+      productionLine,
+    }, undefined, 201);
   } catch (error) {
     console.error('POST /api/manufacturing/production-lines error:', error);
-    return NextResponse.json(
-      { error: 'Failed to create production line' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to create production line', 'INTERNAL_ERROR', 500);
   }
 }

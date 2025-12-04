@@ -34,7 +34,8 @@
  * ```
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+import { createSuccessResponse, createErrorResponse } from '@/lib/utils/apiResponse';
 import { authenticateRequest, handleAPIError } from '@/lib/utils/api-helpers';
 import { connectDB } from '@/lib/db/mongoose';
 import AIResearchProject from '@/lib/db/models/AIResearchProject';
@@ -81,7 +82,7 @@ interface PatentRequestBody {
 export async function POST(
   request: NextRequest,
   { params }: RouteParams
-): Promise<NextResponse> {
+): Promise<Response> {
   try {
     // ========================================================================
     // Authentication Check
@@ -89,10 +90,7 @@ export async function POST(
     
     const { session, error: authError } = await authenticateRequest();
     if (authError) {
-      return NextResponse.json(
-        { success: false, error: authError },
-        { status: 401 }
-      );
+      return createErrorResponse('Unauthorized', 'UNAUTHORIZED', 401);
     }
 
     // ========================================================================
@@ -115,66 +113,39 @@ export async function POST(
     const { title, description, value } = body;
 
     if (!title || typeof title !== 'string') {
-      return NextResponse.json(
-        { success: false, error: 'Title is required and must be a string' },
-        { status: 400 }
-      );
+      return createErrorResponse('Title is required and must be a string', 'VALIDATION_ERROR', 400);
     }
 
     if (title.length < 10) {
-      return NextResponse.json(
-        { success: false, error: 'Title must be at least 10 characters' },
-        { status: 400 }
-      );
+      return createErrorResponse('Title must be at least 10 characters', 'VALIDATION_ERROR', 400);
     }
 
     if (title.length > 200) {
-      return NextResponse.json(
-        { success: false, error: 'Title cannot exceed 200 characters' },
-        { status: 400 }
-      );
+      return createErrorResponse('Title cannot exceed 200 characters', 'VALIDATION_ERROR', 400);
     }
 
     if (!description || typeof description !== 'string') {
-      return NextResponse.json(
-        { success: false, error: 'Description is required and must be a string' },
-        { status: 400 }
-      );
+      return createErrorResponse('Description is required and must be a string', 'VALIDATION_ERROR', 400);
     }
 
     if (description.length < 50) {
-      return NextResponse.json(
-        { success: false, error: 'Description must be at least 50 characters' },
-        { status: 400 }
-      );
+      return createErrorResponse('Description must be at least 50 characters', 'VALIDATION_ERROR', 400);
     }
 
     if (description.length > 5000) {
-      return NextResponse.json(
-        { success: false, error: 'Description cannot exceed 5000 characters' },
-        { status: 400 }
-      );
+      return createErrorResponse('Description cannot exceed 5000 characters', 'VALIDATION_ERROR', 400);
     }
 
     if (typeof value !== 'number' || isNaN(value)) {
-      return NextResponse.json(
-        { success: false, error: 'Patent value must be a valid number' },
-        { status: 400 }
-      );
+      return createErrorResponse('Patent value must be a valid number', 'VALIDATION_ERROR', 400);
     }
 
     if (value < 500000) {
-      return NextResponse.json(
-        { success: false, error: 'Patent value must be at least $500,000' },
-        { status: 400 }
-      );
+      return createErrorResponse('Patent value must be at least $500,000', 'VALIDATION_ERROR', 400);
     }
 
     if (value > 50000000) {
-      return NextResponse.json(
-        { success: false, error: 'Patent value cannot exceed $50,000,000' },
-        { status: 400 }
-      );
+      return createErrorResponse('Patent value cannot exceed $50,000,000', 'VALIDATION_ERROR', 400);
     }
 
     // ========================================================================
@@ -184,10 +155,7 @@ export async function POST(
     const project = await AIResearchProject.findById(projectId);
     
     if (!project) {
-      return NextResponse.json(
-        { success: false, error: 'Research project not found' },
-        { status: 404 }
-      );
+      return createErrorResponse('Research project not found', 'NOT_FOUND', 404);
     }
 
     // ========================================================================
@@ -200,10 +168,7 @@ export async function POST(
     });
 
     if (!company) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized - You do not own this company' },
-        { status: 403 }
-      );
+      return createErrorResponse('Unauthorized - You do not own this company', 'FORBIDDEN', 403);
     }
 
     // ========================================================================
@@ -223,45 +188,38 @@ export async function POST(
     // Update Project Patents Array
     // ========================================================================
     
-    project.patents.push(patent._id as any);
+    // Push ObjectId - will be populated when needed
+    project.patents.push(patent._id as unknown as typeof project.patents[number]);
     await project.save();
 
     // ========================================================================
     // Success Response
     // ========================================================================
     
-    return NextResponse.json(
+    return createSuccessResponse(
       {
-        success: true,
-        data: {
-          _id: patent._id,
-          title: patent.title,
-          description: patent.description,
-          value: patent.value,
-          status: patent.status,
-          project: patent.project,
-          company: patent.company,
-          filedAt: patent.filedAt,
-        },
+        _id: patent._id,
+        title: patent.title,
+        description: patent.description,
+        value: patent.value,
+        status: patent.status,
+        project: patent.project,
+        company: patent.company,
+        filedAt: patent.filedAt,
       },
-      { status: 201 }
+      undefined,
+      201
     );
   } catch (error: unknown) {
     console.error('Error filing patent:', error);
 
     // Mongoose validation errors
     if (error && typeof error === 'object' && 'name' in error && error.name === 'ValidationError') {
-      return NextResponse.json(
-        { success: false, error: 'Validation error: Invalid patent data' },
-        { status: 400 }
-      );
+      return createErrorResponse('Validation error: Invalid patent data', 'VALIDATION_ERROR', 400);
     }
 
     // Generic error response
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    );
+    return createErrorResponse('Internal server error', 'INTERNAL_ERROR', 500);
   }
 }
 

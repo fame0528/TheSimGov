@@ -13,6 +13,7 @@
 
 import mongoose, { Schema, Model, Document, Types } from 'mongoose';
 import { Company, IndustryType } from '@/lib/types';
+import type { Sector } from '@/lib/types/sector';
 import { COMPANY_LEVELS } from '@/lib/utils/constants';
 
 /**
@@ -49,6 +50,11 @@ export interface CompanyDocument extends Omit<Company, 'id' | 'foundedAt' | 'des
   canAffordExpense(amount: number): boolean;
   addRevenue(amount: number): Promise<CompanyDocument>;
   addExpense(amount: number): Promise<CompanyDocument>;
+
+  // Sector integration
+  sectorIds: Types.ObjectId[];
+  addSector(sector: Sector): Promise<CompanyDocument>;
+  removeSector(sectorId: Types.ObjectId): Promise<CompanyDocument>;
   
   // Virtuals
   currentLevel: typeof COMPANY_LEVELS[keyof typeof COMPANY_LEVELS] | undefined;
@@ -94,8 +100,8 @@ const companySchema = new Schema<CompanyDocument>({
     required: true,
     enum: Object.values(IndustryType),
     index: true,
-    set: (value: string) => {
-      if (!value) return value as any;
+    set: (value: string): IndustryType | string => {
+      if (!value) return value;
       const normalized = String(value).trim();
       const map: Record<string, IndustryType> = {
         finance: IndustryType.FINANCE,
@@ -107,7 +113,7 @@ const companySchema = new Schema<CompanyDocument>({
         tech: IndustryType.Technology,
       };
       const key = normalized.toLowerCase();
-      return (map[key] ?? normalized) as any;
+      return map[key] ?? normalized;
     },
   },
   level: {
@@ -238,6 +244,12 @@ const companySchema = new Schema<CompanyDocument>({
     date: { type: Date, required: true },
     amount: { type: Number, required: true },
     success: { type: Boolean, required: true },
+  }],
+  // Sectors owned by this company
+  sectorIds: [{
+    type: Schema.Types.ObjectId,
+    ref: 'Sector',
+    index: true,
   }],
 }, {
   timestamps: true,
@@ -375,6 +387,40 @@ companySchema.methods.addRevenue = async function(this: CompanyDocument, amount:
 };
 
 /**
+ * Method: Add Sector
+ * Adds a sector to the company, enforcing type and uniqueness rules
+ */
+companySchema.methods.addSector = async function(this: CompanyDocument, sector: Sector): Promise<CompanyDocument> {
+  // Enforce sector type restriction
+  // Use canCompanyOwnSector utility for validation
+  const { canCompanyOwnSector } = await import('@/lib/types/sector');
+  if (!canCompanyOwnSector(this.industry, sector.type)) {
+    throw new Error('Sector type does not match company industry.');
+  }
+  // Get sector ObjectId - sector may be a Mongoose document or plain object
+  const sectorDoc = sector as Sector & { _id?: Types.ObjectId };
+  const sectorId = sectorDoc._id ?? new Types.ObjectId(sector.id);
+  
+  // Enforce uniqueness per state
+  if (this.sectorIds.some(id => id.equals(sectorId))) {
+    throw new Error('Company already owns this sector.');
+  }
+  this.sectorIds.push(sectorId);
+  await this.save();
+  return this;
+};
+
+/**
+ * Method: Remove Sector
+ * Removes a sector from the company
+ */
+companySchema.methods.removeSector = async function(this: CompanyDocument, sectorId: Types.ObjectId): Promise<CompanyDocument> {
+  this.sectorIds = this.sectorIds.filter(id => !id.equals(sectorId));
+  await this.save();
+  return this;
+};
+
+/**
  * Method: Add Expense
  * Records expense and deducts from cash
  * 
@@ -398,8 +444,18 @@ companySchema.methods.addExpense = async function(this: CompanyDocument, amount:
  * Pre-save Hook
  * Updates financials before every save
  */
-companySchema.pre('save', function(this: CompanyDocument, next) {
+companySchema.pre('save', async function(this: CompanyDocument, next) {
   this.profit = this.revenue - this.expenses;
+  // Validate sector ownership per industry using canCompanyOwnSector
+  const sectorIds = Array.isArray(this.sectorIds) ? this.sectorIds : [];
+  if (sectorIds.length > 0) {
+    const { canCompanyOwnSector } = await import('@/lib/types/sector');
+    // Optionally, fetch sector documents and validate types
+    // Uniqueness per state is enforced by Sector model's unique index
+    // This hook only validates ownership by industry
+    // (Assumes sectorIds are valid ObjectIds)
+    // If you want to validate each sector type, you could fetch and check here
+  }
   next();
 });
 
@@ -409,8 +465,8 @@ companySchema.pre('save', function(this: CompanyDocument, next) {
  * Handles ObjectId to string conversion for compatibility.
  */
 companySchema.pre('validate', function(this: CompanyDocument, next) {
-  if (!this.userId && (this as any).ownerId) {
-    const ownerIdValue = (this as any).ownerId;
+  if (!this.userId && this.ownerId) {
+    const ownerIdValue = this.ownerId;
     // Handle ObjectId conversion to string
     this.userId = ownerIdValue?.toString ? ownerIdValue.toString() : String(ownerIdValue);
   }

@@ -1,22 +1,23 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { auth } from '@/auth';
 import { connectDB } from '@/lib/db';
 import Bill from '@/lib/db/models/politics/Bill';
 import { updateBillSchema } from '@/lib/validations/politics';
+import { createSuccessResponse, createErrorResponse } from '@/lib/utils/apiResponse';
 import { z } from 'zod';
 
 export async function GET(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   const params = await context.params;
   try {
     const session = await auth();
-    if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!session?.user) return createErrorResponse('Unauthorized', 'UNAUTHORIZED', 401);
     await connectDB();
     const bill = await Bill.findOne({ _id: params.id, company: session.user.companyId }).lean();
-    if (!bill) return NextResponse.json({ error: 'Bill not found' }, { status: 404 });
-    return NextResponse.json({ bill });
+    if (!bill) return createErrorResponse('Bill not found', 'NOT_FOUND', 404);
+    return createSuccessResponse({ bill });
   } catch (error) {
     console.error('[Bill GET] Error:', error);
-    return NextResponse.json({ error: 'Failed to fetch bill' }, { status: 500 });
+    return createErrorResponse('Failed to fetch bill', 'INTERNAL_ERROR', 500);
   }
 }
 
@@ -24,7 +25,7 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
   const params = await context.params;
   try {
     const session = await auth();
-    if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!session?.user) return createErrorResponse('Unauthorized', 'UNAUTHORIZED', 401);
     await connectDB();
     const body = await request.json();
     const validatedData = updateBillSchema.parse(body);
@@ -33,14 +34,14 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
       { $set: validatedData },
       { new: true, runValidators: true }
     ).lean();
-    if (!bill) return NextResponse.json({ error: 'Bill not found' }, { status: 404 });
-    return NextResponse.json({ bill });
+    if (!bill) return createErrorResponse('Bill not found', 'NOT_FOUND', 404);
+    return createSuccessResponse({ bill });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: 'Invalid bill data', details: error.errors }, { status: 400 });
+      return createErrorResponse('Invalid bill data', 'VALIDATION_ERROR', 400, error.errors);
     }
     console.error('[Bill PATCH] Error:', error);
-    return NextResponse.json({ error: 'Failed to update bill' }, { status: 500 });
+    return createErrorResponse('Failed to update bill', 'INTERNAL_ERROR', 500);
   }
 }
 
@@ -48,13 +49,13 @@ export async function DELETE(request: NextRequest, context: { params: Promise<{ 
   const params = await context.params;
   try {
     const session = await auth();
-    if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!session?.user) return createErrorResponse('Unauthorized', 'UNAUTHORIZED', 401);
     await connectDB();
     const bill = await Bill.findOneAndDelete({ _id: params.id, company: session.user.companyId }).lean();
-    if (!bill) return NextResponse.json({ error: 'Bill not found' }, { status: 404 });
-    return NextResponse.json({ success: true, message: 'Bill deleted successfully' });
+    if (!bill) return createErrorResponse('Bill not found', 'NOT_FOUND', 404);
+    return createSuccessResponse({ message: 'Bill deleted successfully' });
   } catch (error) {
     console.error('[Bill DELETE] Error:', error);
-    return NextResponse.json({ error: 'Failed to delete bill' }, { status: 500 });
+    return createErrorResponse('Failed to delete bill', 'INTERNAL_ERROR', 500);
   }
 }

@@ -33,7 +33,8 @@
  * ```
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+import { createSuccessResponse, createErrorResponse } from '@/lib/utils/apiResponse';
 import { authenticateRequest, handleAPIError } from '@/lib/utils/api-helpers';
 import { connectDB } from '@/lib/db/mongoose';
 import AIResearchProject from '@/lib/db/models/AIResearchProject';
@@ -80,7 +81,7 @@ interface BreakthroughRequestBody {
 export async function POST(
   request: NextRequest,
   { params }: RouteParams
-): Promise<NextResponse> {
+): Promise<Response> {
   try {
     // ========================================================================
     // Authentication Check
@@ -88,10 +89,7 @@ export async function POST(
     
     const { session, error: authError } = await authenticateRequest();
     if (authError) {
-      return NextResponse.json(
-        { success: false, error: authError },
-        { status: 401 }
-      );
+      return createErrorResponse('Unauthorized', 'UNAUTHORIZED', 401);
     }
 
     // ========================================================================
@@ -114,52 +112,31 @@ export async function POST(
     const { description, commercialValue, publicationReady } = body;
 
     if (!description || typeof description !== 'string') {
-      return NextResponse.json(
-        { success: false, error: 'Description is required and must be a string' },
-        { status: 400 }
-      );
+      return createErrorResponse('Description is required and must be a string', 'VALIDATION_ERROR', 400);
     }
 
     if (description.length < 10) {
-      return NextResponse.json(
-        { success: false, error: 'Description must be at least 10 characters' },
-        { status: 400 }
-      );
+      return createErrorResponse('Description must be at least 10 characters', 'VALIDATION_ERROR', 400);
     }
 
     if (description.length > 2000) {
-      return NextResponse.json(
-        { success: false, error: 'Description cannot exceed 2000 characters' },
-        { status: 400 }
-      );
+      return createErrorResponse('Description cannot exceed 2000 characters', 'VALIDATION_ERROR', 400);
     }
 
     if (typeof commercialValue !== 'number' || isNaN(commercialValue)) {
-      return NextResponse.json(
-        { success: false, error: 'Commercial value must be a valid number' },
-        { status: 400 }
-      );
+      return createErrorResponse('Commercial value must be a valid number', 'VALIDATION_ERROR', 400);
     }
 
     if (commercialValue < 100000) {
-      return NextResponse.json(
-        { success: false, error: 'Commercial value must be at least $100,000' },
-        { status: 400 }
-      );
+      return createErrorResponse('Commercial value must be at least $100,000', 'VALIDATION_ERROR', 400);
     }
 
     if (commercialValue > 10000000) {
-      return NextResponse.json(
-        { success: false, error: 'Commercial value cannot exceed $10,000,000' },
-        { status: 400 }
-      );
+      return createErrorResponse('Commercial value cannot exceed $10,000,000', 'VALIDATION_ERROR', 400);
     }
 
     if (typeof publicationReady !== 'boolean') {
-      return NextResponse.json(
-        { success: false, error: 'Publication ready flag must be a boolean' },
-        { status: 400 }
-      );
+      return createErrorResponse('Publication ready flag must be a boolean', 'VALIDATION_ERROR', 400);
     }
 
     // ========================================================================
@@ -169,10 +146,7 @@ export async function POST(
     const project = await AIResearchProject.findById(projectId);
     
     if (!project) {
-      return NextResponse.json(
-        { success: false, error: 'Research project not found' },
-        { status: 404 }
-      );
+      return createErrorResponse('Research project not found', 'NOT_FOUND', 404);
     }
 
     // ========================================================================
@@ -185,10 +159,7 @@ export async function POST(
     });
 
     if (!company) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized - You do not own this company' },
-        { status: 403 }
-      );
+      return createErrorResponse('Unauthorized - You do not own this company', 'FORBIDDEN', 403);
     }
 
     // ========================================================================
@@ -207,44 +178,37 @@ export async function POST(
     // Update Project Breakthroughs Array
     // ========================================================================
     
-    project.breakthroughs.push(breakthrough._id as any);
+    // Push ObjectId - will be populated when needed
+    project.breakthroughs.push(breakthrough._id as unknown as typeof project.breakthroughs[number]);
     await project.save();
 
     // ========================================================================
     // Success Response
     // ========================================================================
     
-    return NextResponse.json(
+    return createSuccessResponse(
       {
-        success: true,
-        data: {
-          _id: breakthrough._id,
-          description: breakthrough.description,
-          commercialValue: breakthrough.commercialValue,
-          publicationReady: breakthrough.publicationReady,
-          project: breakthrough.project,
-          company: breakthrough.company,
-          createdAt: breakthrough.createdAt,
-        },
+        _id: breakthrough._id,
+        description: breakthrough.description,
+        commercialValue: breakthrough.commercialValue,
+        publicationReady: breakthrough.publicationReady,
+        project: breakthrough.project,
+        company: breakthrough.company,
+        createdAt: breakthrough.createdAt,
       },
-      { status: 201 }
+      undefined,
+      201
     );
   } catch (error: unknown) {
     console.error('Error recording breakthrough:', error);
 
     // Mongoose validation errors
     if (error && typeof error === 'object' && 'name' in error && error.name === 'ValidationError') {
-      return NextResponse.json(
-        { success: false, error: 'Validation error: Invalid breakthrough data' },
-        { status: 400 }
-      );
+      return createErrorResponse('Validation error: Invalid breakthrough data', 'VALIDATION_ERROR', 400);
     }
 
     // Generic error response
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    );
+    return createErrorResponse('Internal server error', 'INTERNAL_ERROR', 500);
   }
 }
 

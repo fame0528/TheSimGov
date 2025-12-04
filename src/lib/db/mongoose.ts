@@ -11,6 +11,16 @@
  */
 
 import mongoose from 'mongoose';
+import dns from 'dns';
+
+// Force IPv4 for DNS lookups to prevent ESERVFAIL on some networks (Node 17+)
+try {
+  if (dns.setDefaultResultOrder) {
+    dns.setDefaultResultOrder('ipv4first');
+  }
+} catch (e) {
+  // Ignore if not supported or already set
+}
 
 const MONGODB_URI = process.env.MONGODB_URI;
 
@@ -79,6 +89,7 @@ export async function connectDB(): Promise<typeof mongoose> {
       maxPoolSize: 10,
       minPoolSize: 2,
       autoIndex: false,
+      family: 4, // Force IPv4 to resolve DNS SRV errors
     } as const;
 
     // Reduce dev console noise
@@ -88,8 +99,14 @@ export async function connectDB(): Promise<typeof mongoose> {
 
   try {
     cached.conn = await cached.promise;
-  } catch (error) {
+  } catch (error: any) {
     cached.promise = null;
+    // Enhanced DNS SRV error handling
+    if (error?.code === 'ESERVFAIL' && error?.hostname?.includes('_mongodb._tcp')) {
+      console.error('[MongoDB] DNS SRV error:', error);
+      throw new Error('MongoDB DNS SRV error: Unable to resolve database host. Please check your connection string and DNS configuration.');
+    }
+    console.error('[MongoDB] Connection error:', error);
     throw error;
   }
 

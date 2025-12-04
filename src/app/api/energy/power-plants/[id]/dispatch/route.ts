@@ -9,11 +9,12 @@
  * fuel consumption calculation, and grid demand response. Supports load following and baseload operation.
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { connectDB as dbConnect } from '@/lib/db';
 import { PowerPlant } from '@/lib/db/models';
 import { auth } from '@/auth';
+import { createSuccessResponse, createErrorResponse, ErrorCode } from '@/lib/utils/apiResponse';
 
 // ============================================================================
 // VALIDATION SCHEMAS
@@ -65,7 +66,7 @@ export async function POST(
     // Authentication
     const session = await auth();
     if (!session?.user?.companyId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     // Parse request body
@@ -73,10 +74,7 @@ export async function POST(
     const validation = DispatchPowerPlantSchema.safeParse(body);
     
     if (!validation.success) {
-      return NextResponse.json(
-        { error: 'Invalid input', details: validation.error.flatten() },
-        { status: 400 }
-      );
+      return createErrorResponse('Invalid input', ErrorCode.BAD_REQUEST, 400);
     }
 
     const { targetGeneration, dispatchMode, gridDemand, priority } = validation.data;
@@ -91,23 +89,13 @@ export async function POST(
     });
 
     if (!plant) {
-      return NextResponse.json(
-        { error: 'Power plant not found or access denied' },
-        { status: 404 }
-      );
+      return createErrorResponse('Power plant not found or access denied', ErrorCode.NOT_FOUND, 404);
     }
 
     // Validate target generation against capacity
     const plantCapacity = plant.nameplateCapacity || 100; // MW
     if (targetGeneration > plantCapacity) {
-      return NextResponse.json(
-        {
-          error: 'Target generation exceeds plant capacity',
-          message: `Target ${targetGeneration} MW exceeds capacity ${plantCapacity} MW`,
-          maxGeneration: plantCapacity
-        },
-        { status: 400 }
-      );
+      return createErrorResponse(`Target generation exceeds plant capacity: Target ${targetGeneration} MW exceeds capacity ${plantCapacity} MW`, ErrorCode.BAD_REQUEST, 400);
     }
 
     // Calculate ramp rate based on plant type
@@ -126,10 +114,7 @@ export async function POST(
 
     // Update plant dispatch
     plant.currentOutput = targetGeneration;
-    // Only set if model supports dispatchMode
-    if ((plant as any).dispatchMode !== undefined) {
-      (plant as any).dispatchMode = dispatchMode;
-    }
+    // Note: dispatchMode is a response concept, not stored on the model
     plant.lastMaintenance = plant.lastMaintenance || new Date();
 
     // Save plant
@@ -138,7 +123,7 @@ export async function POST(
     // Log dispatch
     console.log(`[ENERGY] Power plant dispatch: ${plant.name} (${plant._id}), Target: ${targetGeneration} MW, Mode: ${dispatchMode}, Ramp: ${rampTimeMinutes.toFixed(1)} min`);
 
-    return NextResponse.json({
+    return createSuccessResponse({
       success: true,
       plant: {
         id: plant._id,
@@ -171,10 +156,7 @@ export async function POST(
 
   } catch (error) {
     console.error('[ENERGY] Power plant dispatch error:', error);
-    return NextResponse.json(
-      { error: 'Failed to dispatch power plant', details: error instanceof Error ? error.message : 'Unknown error' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to dispatch power plant', ErrorCode.INTERNAL_ERROR, 500);
   }
 }
 

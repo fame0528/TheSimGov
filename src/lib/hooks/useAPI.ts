@@ -127,8 +127,9 @@ export function useAPI<T = unknown>(
       const response = await apiClient.get<{ data: T }>(endpoint);
       
       // Extract data from response.data (API returns { data: T, total, page, etc })
-      const extractedData = (response as any)?.data ?? response ?? null;
-      lastStatusRef.current = (response as any)?.status ?? 200;
+      const responseObj = response as unknown as { data?: T; status?: number } | null;
+      const extractedData = (responseObj?.data ?? null) as T | null;
+      lastStatusRef.current = responseObj?.status ?? 200;
       setData(extractedData);
       setError(null);
       hasFetchedRef.current = true;

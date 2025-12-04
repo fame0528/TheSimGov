@@ -21,8 +21,9 @@
  * @author ECHO v1.3.1 - Phase 3.1 Energy Action Endpoints
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { auth } from '@/auth';
+import { createSuccessResponse, createErrorResponse, ErrorCode } from '@/lib/utils/apiResponse';
 import { connectDB } from '@/lib/db';
 import { OilWell } from '@/lib/db/models';
 import { z } from 'zod';
@@ -67,7 +68,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     // 1. Authentication check
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     // 2. Parse and validate request body
@@ -82,38 +83,29 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const well = await OilWell.findById(id);
     
     if (!well) {
-      return NextResponse.json({ error: 'Oil well not found' }, { status: 404 });
+      return createErrorResponse('Oil well not found', ErrorCode.NOT_FOUND, 404);
     }
 
     // 5. Verify ownership
     if (well.company.toString() !== session.user.companyId) {
-      return NextResponse.json({ error: 'Unauthorized access to well' }, { status: 403 });
+      return createErrorResponse('Unauthorized access to well', ErrorCode.FORBIDDEN, 403);
     }
 
     // 6. Validate operational status
     if (well.status !== 'Active') {
-      return NextResponse.json(
-        { error: `Cannot extract from well with status: ${well.status}` },
-        { status: 400 }
-      );
+      return createErrorResponse(`Cannot extract from well with status: ${well.status}`, ErrorCode.BAD_REQUEST, 400);
     }
 
     // 7. Check maintenance requirement
     if (well.maintenanceOverdue) {
-      return NextResponse.json(
-        { error: 'Well requires maintenance before extraction can continue' },
-        { status: 400 }
-      );
+      return createErrorResponse('Well requires maintenance before extraction can continue', ErrorCode.BAD_REQUEST, 400);
     }
 
     // 8. Calculate production using model method
     const production = well.calculateProduction();
     
     if (production <= 0) {
-      return NextResponse.json(
-        { error: 'Well is depleted (zero production)' },
-        { status: 400 }
-      );
+      return createErrorResponse('Well is depleted (zero production)', ErrorCode.BAD_REQUEST, 400);
     }
 
     // 9. Calculate revenue breakdown
@@ -126,7 +118,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     await well.save();
 
     // 11. Return extraction results
-    return NextResponse.json({
+    return createSuccessResponse({
       success: true,
       production: Math.round(production * 100) / 100,
       revenue: Math.round(netRevenue * 100) / 100,
@@ -151,17 +143,11 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
   } catch (error) {
     // Zod validation errors
     if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: 'Validation failed', details: error.errors },
-        { status: 400 }
-      );
+      return createErrorResponse('Validation failed', ErrorCode.VALIDATION_ERROR, 400, error.errors);
     }
 
     // Generic error handling
     console.error('POST /api/energy/oil-wells/[id]/extract error:', error);
-    return NextResponse.json(
-      { error: 'Failed to process extraction operation' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to process extraction operation', ErrorCode.INTERNAL_ERROR, 500);
   }
 }

@@ -2,6 +2,9 @@
 // Media Components Barrel Export
 // FID-20251127-MEDIA: P1 Core Media Components Export
 
+// Main Dashboard
+export { MediaDashboard, default as MediaDashboardDefault } from './MediaDashboard';
+
 // P1 Core Components
 export { default as InfluencerMarketplace } from './InfluencerMarketplace';
 export { default as SponsorshipDashboard } from './SponsorshipDashboard';

@@ -12,6 +12,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { createSuccessResponse, createErrorResponse } from '@/lib/utils/apiResponse';
 import ContractModel from '@/lib/db/models/Contract';
 import CompanyModel from '@/lib/db/models/Company';
 
@@ -56,14 +57,14 @@ export async function POST(req: NextRequest) {
       processed++;
     }
 
-    return NextResponse.json({
+    return createSuccessResponse({
       ok: true,
       processed,
       penaltyResults,
       message: 'Contract deadline processing complete.'
     });
   } catch (err: any) {
-    return NextResponse.json({ ok: false, error: err.message }, { status: 500 });
+    return createErrorResponse(err.message, 'INTERNAL_ERROR', 500);
   }
 }
 

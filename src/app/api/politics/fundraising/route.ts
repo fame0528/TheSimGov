@@ -9,10 +9,12 @@
  * POST /api/politics/fundraising - Create new donor
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { auth } from '@/auth';
 import { connectDB } from '@/lib/db';
+import { createSuccessResponse, createErrorResponse } from '@/lib/utils/apiResponse';
 import Donor from '@/lib/db/models/politics/Donor';
+import type { IDonor } from '@/lib/db/models/politics/Donor';
 import { DonorType } from '@/types/politics';
 import { z } from 'zod';
 
@@ -66,10 +68,7 @@ export async function GET(req: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return createErrorResponse('Unauthorized', 'UNAUTHORIZED', 401);
     }
 
     await connectDB();
@@ -159,8 +158,7 @@ export async function GET(req: NextRequest) {
       state: d.contact?.state,
     }));
 
-    return NextResponse.json({
-      success: true,
+    return createSuccessResponse({
       donors: donorList,
       summary: summary
         ? {
@@ -179,16 +177,10 @@ export async function GET(req: NextRequest) {
     console.error('GET /api/politics/fundraising error:', error);
 
     if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid query parameters', details: error.errors },
-        { status: 400 }
-      );
+      return createErrorResponse('Invalid query parameters', 'VALIDATION_ERROR', 400, error.errors);
     }
 
-    return NextResponse.json(
-      { success: false, error: 'Failed to fetch donors' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to fetch donors', 'INTERNAL_ERROR', 500);
   }
 }
 
@@ -204,10 +196,7 @@ export async function POST(req: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return createErrorResponse('Unauthorized', 'UNAUTHORIZED', 401);
     }
 
     await connectDB();
@@ -223,11 +212,11 @@ export async function POST(req: NextRequest) {
       maxContribution = Infinity;
     }
 
-    // Create donor
+    // Create donor - using donorName not name
     const donor = new Donor({
-      name: data.name,
+      donorName: data.name,
       donorType: data.type,
-      tier: 'Small' as any, // Will be updated based on contributions
+      tier: 'Small', // Will be updated based on contributions
       contact: {
         email: data.email,
         phone: data.phone,
@@ -235,16 +224,13 @@ export async function POST(req: NextRequest) {
         city: data.address?.city,
         state: data.address?.state?.toUpperCase(),
         zip: data.address?.zip,
-        country: 'USA',
       },
-      occupation: data.occupation && data.employer ? {
-        occupation: data.occupation,
-        employer: data.employer,
-      } : undefined,
+      // Model has occupation/employer as direct string fields
+      occupation: data.occupation,
+      employer: data.employer,
       contributions: [],
       totalContributed: 0,
       thisElectionCycle: 0,
-      cycleStartDate: new Date(),
       maxContribution,
       remainingCapacity: data.maxContributionThisCycle ?? maxContribution,
       averageContribution: 0,
@@ -254,40 +240,34 @@ export async function POST(req: NextRequest) {
       bundlerNetwork: [],
       preferredParty: undefined,
       issueInterests: data.issuePreferences ?? [],
-      preferredContact: data.preferredContactMethod ? data.preferredContactMethod.charAt(0).toUpperCase() + data.preferredContactMethod.slice(1) as any : 'Email',
+      preferredContact: data.preferredContactMethod 
+        ? data.preferredContactMethod.charAt(0).toUpperCase() + data.preferredContactMethod.slice(1) 
+        : 'Email',
       optedOut: false,
       complianceVerified: false,
       flaggedForReview: false,
-    });
+    }) as IDonor;
 
     await donor.save();
 
-    return NextResponse.json(
+    return createSuccessResponse(
       {
-        success: true,
-        data: {
-          _id: donor._id.toString(),
-          name: donor.donorName ?? (donor as any).name,
-          type: donor.donorType,
-          maxContribution: donor.maxContribution,
-          isBundler: donor.isBundler,
-        },
+        _id: donor._id.toString(),
+        name: donor.donorName,
+        type: donor.donorType,
+        maxContribution: donor.maxContribution,
+        isBundler: donor.isBundler,
       },
-      { status: 201 }
+      undefined,
+      201
     );
   } catch (error) {
     console.error('POST /api/politics/fundraising error:', error);
 
     if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid donor data', details: error.errors },
-        { status: 400 }
-      );
+      return createErrorResponse('Invalid donor data', 'VALIDATION_ERROR', 400, error.errors);
     }
 
-    return NextResponse.json(
-      { success: false, error: 'Failed to create donor' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to create donor', 'INTERNAL_ERROR', 500);
   }
 }

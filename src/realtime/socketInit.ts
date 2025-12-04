@@ -71,8 +71,10 @@ function dmRoomFor(userA: string, userB: string): string | null {
 }
 
 function identifyUser(socket: Socket): { userId: string } {
-  const authUserId = (socket.handshake.auth as any)?.userId;
-  const userId = authUserId || (socket.handshake.query as any)?.userId || `anon-${socket.id}`;
+  const auth = socket.handshake.auth as { userId?: string } | undefined;
+  const query = socket.handshake.query as { userId?: string } | undefined;
+  const authUserId = auth?.userId;
+  const userId = authUserId || query?.userId || `anon-${socket.id}`;
   return { userId: String(userId) };
 }
 
@@ -150,7 +152,7 @@ export function initSocket(server: HTTPServer, { dev }: InitOptions) {
         if (summary.length > 0) {
           socket.emit('chat:system', { type: 'unread-summary', summary });
         }
-      } catch {}
+      } catch { }
     })();
     // JOIN
     socket.on('chat:join', (room: string) => {
@@ -231,7 +233,7 @@ export function initSocket(server: HTTPServer, { dev }: InitOptions) {
               chat.to(room).emit('chat:unread:update', { room, userId: uid, unread });
             }
           }
-        } catch {}
+        } catch { }
       } catch (err) {
         console.error('[Chat] Persist error', err);
         socket.emit('chat:error', { code: 'PERSIST_FAILED' });
@@ -313,6 +315,19 @@ export function initSocket(server: HTTPServer, { dev }: InitOptions) {
     socket.on('disconnect', () => console.log(`[Market] Disconnected ${socket.id}`));
   });
 
-  return { io, namespaces: { chat, elections, market } };
+  // USER (real-time user data updates)
+  const user = io.of('/user');
+  user.on('connection', (socket) => {
+    const { userId } = identifyUser(socket);
+    socket.data.userId = userId;
+    console.log(`[User] Connected ${socket.id} user=${userId}`);
+
+    // Join user's personal room for targeted updates
+    socket.join(`user-${userId}`);
+
+    socket.on('disconnect', () => console.log(`[User] Disconnected ${socket.id} user=${userId}`));
+  });
+
+  return { io, namespaces: { chat, elections, market, user } };
 }
 export default initSocket;

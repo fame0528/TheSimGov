@@ -82,10 +82,10 @@ const fetcher = (url: string) => fetch(url).then((res) => res.json());
  * Get rank badge color based on position
  */
 const getRankColor = (rank: number): string => {
-  if (rank === 1) return 'text-warning'; // Gold
-  if (rank === 2) return 'text-default-400'; // Silver
+  if (rank === 1) return 'text-amber-400'; // Gold
+  if (rank === 2) return 'text-slate-300'; // Silver
   if (rank === 3) return 'text-amber-600'; // Bronze
-  return 'text-default-500';
+  return 'text-slate-400';
 };
 
 /**
@@ -175,10 +175,10 @@ export default function LeaderboardDisplay({
       {/* Header with limit selector */}
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
         <div className="flex items-center gap-3">
-          <Trophy className="w-8 h-8 text-warning" />
+          <Trophy className="w-8 h-8 text-amber-400" />
           <div>
-            <h2 className="text-2xl font-bold">Political Influence Leaderboard</h2>
-            <p className="text-default-500 text-sm mt-1">
+            <h2 className="text-2xl font-bold text-white">Political Influence Leaderboard</h2>
+            <p className="text-slate-400 text-sm mt-1">
               Top {leaderboard.length} donors by total influence points
             </p>
           </div>
@@ -203,11 +203,11 @@ export default function LeaderboardDisplay({
 
       {/* Empty state */}
       {leaderboard.length === 0 && (
-        <Card>
+        <Card className="bg-slate-800/50 border border-slate-700/50">
           <CardBody>
-            <div className="text-center py-8 text-default-500">
+            <div className="text-center py-8 text-slate-400">
               <Trophy className="w-12 h-12 mx-auto mb-3 opacity-50" />
-              <p className="font-semibold">No political donations yet</p>
+              <p className="font-semibold text-white">No political donations yet</p>
               <p className="text-sm mt-1">Make your first campaign donation to appear on the leaderboard</p>
             </div>
           </CardBody>
@@ -244,13 +244,13 @@ export default function LeaderboardDisplay({
 
                   {/* Company name */}
                   <TableCell>
-                    <span className="font-semibold text-lg">{entry.companyName}</span>
+                    <span className="font-semibold text-lg text-white">{entry.companyName}</span>
                   </TableCell>
 
                   {/* Animated influence counter */}
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-2">
-                      <TrendingUp className="w-4 h-4 text-success" />
+                      <TrendingUp className="w-4 h-4 text-emerald-400" />
                       <CountUp
                         end={entry.totalInfluence}
                         duration={1.5}
@@ -258,7 +258,7 @@ export default function LeaderboardDisplay({
                         decimals={0}
                         className="text-xl font-bold text-primary"
                       />
-                      <span className="text-xs text-default-500 ml-1">pts</span>
+                      <span className="text-xs text-slate-400 ml-1">pts</span>
                     </div>
                   </TableCell>
                 </TableRow>

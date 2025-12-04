@@ -23,6 +23,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { connectDB } from '@/lib/db/mongoose';
+import { createSuccessResponse, createErrorResponse } from '@/lib/utils/apiResponse';
 import InfluencerContract from '@/lib/db/models/media/InfluencerContract';
 import Company from '@/lib/db/models/Company';
 import {
@@ -40,7 +41,7 @@ export async function GET(request: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', 'UNAUTHORIZED', 401);
     }
 
     await connectDB();
@@ -48,7 +49,7 @@ export async function GET(request: NextRequest) {
     // Get company for the user
     const company = await Company.findOne({ owner: session.user.id });
     if (!company) {
-      return NextResponse.json({ error: 'Company not found' }, { status: 404 });
+      return createErrorResponse('Company not found', 'COMPANY_NOT_FOUND', 404);
     }
 
     // Parse query parameters
@@ -117,22 +118,21 @@ export async function GET(request: NextRequest) {
     // Get total count for pagination
     const total = await InfluencerContract.countDocuments(filter);
 
-    return NextResponse.json({
-      contracts: contractsWithMetrics,
-      pagination: {
-        total,
-        limit,
-        offset,
-        hasMore: offset + limit < total
+    return createSuccessResponse(
+      { contracts: contractsWithMetrics },
+      {
+        pagination: {
+          total,
+          limit,
+          offset,
+          hasMore: offset + limit < total
+        }
       }
-    });
+    );
 
   } catch (error) {
     console.error('Error fetching influencer contracts:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return createErrorResponse('Internal server error', 'INTERNAL_ERROR', 500);
   }
 }
 
@@ -144,7 +144,7 @@ export async function POST(request: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', 'UNAUTHORIZED', 401);
     }
 
     await connectDB();
@@ -152,7 +152,7 @@ export async function POST(request: NextRequest) {
     // Get company for the user
     const company = await Company.findOne({ owner: session.user.id });
     if (!company) {
-      return NextResponse.json({ error: 'Company not found' }, { status: 404 });
+      return createErrorResponse('Company not found', 'COMPANY_NOT_FOUND', 404);
     }
 
     const body = await request.json();
@@ -184,9 +184,10 @@ export async function POST(request: NextRequest) {
 
     // Validate required fields
     if (!influencer || !dealType || !compensation || !requiredContent || !influencerFollowers || !influencerEngagementRate || !influencerNiche) {
-      return NextResponse.json(
-        { error: 'Missing required fields: influencer, dealType, compensation, requiredContent, influencerFollowers, influencerEngagementRate, influencerNiche' },
-        { status: 400 }
+      return createErrorResponse(
+        'Missing required fields: influencer, dealType, compensation, requiredContent, influencerFollowers, influencerEngagementRate, influencerNiche',
+        'VALIDATION_ERROR',
+        400
       );
     }
 
@@ -234,28 +235,29 @@ export async function POST(request: NextRequest) {
     await contract.populate('influencer', 'name email');
     await contract.populate('deliveredContent', 'title type engagement');
 
-    return NextResponse.json({
-      contract: {
-        ...contract.toObject(),
-        calculatedMetrics: {
-          engagementRate: 0,
-          roas: 0,
-          ctr: 0,
-          cpa: 0,
-          efficiency: 0,
-          deliveryProgress: 0,
-          averageEngagementRate: 0,
-          costPerImpression: 0,
-          costPerEngagement: 0
+    return createSuccessResponse(
+      {
+        contract: {
+          ...contract.toObject(),
+          calculatedMetrics: {
+            engagementRate: 0,
+            roas: 0,
+            ctr: 0,
+            cpa: 0,
+            efficiency: 0,
+            deliveryProgress: 0,
+            averageEngagementRate: 0,
+            costPerImpression: 0,
+            costPerEngagement: 0
+          }
         }
-      }
-    }, { status: 201 });
+      },
+      undefined,
+      201
+    );
 
   } catch (error) {
     console.error('Error creating influencer contract:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return createErrorResponse('Internal server error', 'INTERNAL_ERROR', 500);
   }
 }

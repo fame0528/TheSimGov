@@ -12,10 +12,11 @@
  * @author ECHO v1.3.1
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { auth } from '@/auth';
 import { connectDB } from '@/lib/db';
 import { EnergyTradeOrder } from '@/lib/db/models';
+import { createSuccessResponse, createErrorResponse, ErrorCode } from '@/lib/utils/apiResponse';
 
 /**
  * POST /api/energy/futures/[id]/settle
@@ -28,7 +29,7 @@ export async function POST(
   try {
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     await connectDB();
@@ -40,21 +41,15 @@ export async function POST(
     const contract = await EnergyTradeOrder.findById(id);
 
     if (!contract) {
-      return NextResponse.json({ error: 'Futures contract not found' }, { status: 404 });
+      return createErrorResponse('Futures contract not found', ErrorCode.NOT_FOUND, 404);
     }
 
     if (contract.status === 'Filled' && contract.settlementDate) {
-      return NextResponse.json(
-        { error: 'Contract already settled' },
-        { status: 400 }
-      );
+      return createErrorResponse('Contract already settled', ErrorCode.BAD_REQUEST, 400);
     }
 
     if (!spotPrice) {
-      return NextResponse.json(
-        { error: 'Spot price required for settlement' },
-        { status: 400 }
-      );
+      return createErrorResponse('Spot price required for settlement', ErrorCode.BAD_REQUEST, 400);
     }
 
     // Calculate settlement P&L
@@ -72,7 +67,7 @@ export async function POST(
       await contract.finalizeSettlement();
     }
 
-    return NextResponse.json({
+    return createSuccessResponse({
       message: 'Futures contract settled',
       contract,
       settlement: {
@@ -86,9 +81,6 @@ export async function POST(
     });
   } catch (error) {
     console.error('POST /api/energy/futures/[id]/settle error:', error);
-    return NextResponse.json(
-      { error: 'Failed to settle futures contract' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to settle futures contract', ErrorCode.INTERNAL_ERROR, 500);
   }
 }

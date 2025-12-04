@@ -126,10 +126,11 @@
  * - Interest level and loyalty affect decision (future enhancement)
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+import { createSuccessResponse, createErrorResponse, ErrorCode } from '@/lib/utils/apiResponse';
 import { connectDB } from '@/lib/db';
 import Company from '@/lib/db/models/Company';
-import Employee from '@/lib/db/models/Employee';
+import Employee, { type DomainExpertise } from '@/lib/db/models/Employee';
 import { 
   calculateCompetitiveSalary,
   type AIRole 
@@ -208,47 +209,29 @@ export async function POST(
 
     // 3. Validate candidate data
     if (!candidate) {
-      return NextResponse.json(
-        { success: false, error: 'Candidate profile required. Include full candidate object from /api/ai/talent/candidates.' },
-        { status: 400 }
-      );
+      return createErrorResponse('Candidate profile required. Include full candidate object from /api/ai/talent/candidates.', ErrorCode.VALIDATION_ERROR, 400);
     }
 
     if (candidate.id !== id) {
-      return NextResponse.json(
-        { success: false, error: 'Candidate ID mismatch. URL parameter must match candidate.id in body.' },
-        { status: 400 }
-      );
+      return createErrorResponse('Candidate ID mismatch. URL parameter must match candidate.id in body.', ErrorCode.VALIDATION_ERROR, 400);
     }
 
     // 4. Validate salary range
     if (!baseSalary || baseSalary < 20000 || baseSalary > 5000000) {
-      return NextResponse.json(
-        { success: false, error: 'Base salary must be between $20,000 and $5,000,000.' },
-        { status: 400 }
-      );
+      return createErrorResponse('Base salary must be between $20,000 and $5,000,000.', ErrorCode.VALIDATION_ERROR, 400);
     }
 
     // 5. Validate optional fields
     if (equity < 0 || equity > 10) {
-      return NextResponse.json(
-        { success: false, error: 'Equity must be between 0% and 10%.' },
-        { status: 400 }
-      );
+      return createErrorResponse('Equity must be between 0% and 10%.', ErrorCode.VALIDATION_ERROR, 400);
     }
 
     if (computeBudget < 0 || computeBudget > 10000) {
-      return NextResponse.json(
-        { success: false, error: 'Compute budget must be between $0 and $10,000/month.' },
-        { status: 400 }
-      );
+      return createErrorResponse('Compute budget must be between $0 and $10,000/month.', ErrorCode.VALIDATION_ERROR, 400);
     }
 
     if (bonus < 0 || bonus > 100) {
-      return NextResponse.json(
-        { success: false, error: 'Bonus must be between 0% and 100%.' },
-        { status: 400 }
-      );
+      return createErrorResponse('Bonus must be between 0% and 100%.', ErrorCode.VALIDATION_ERROR, 400);
     }
 
     // 6. Connect to database
@@ -258,10 +241,7 @@ export async function POST(
     const company = await Company.findById(companyId);
 
     if (!company || !['Technology', 'AI'].includes(company.industry)) {
-      return NextResponse.json(
-        { success: false, error: 'No AI/Technology company found for this user.' },
-        { status: 403 }
-      );
+      return createErrorResponse('No AI/Technology company found for this user.', ErrorCode.FORBIDDEN, 403);
     }
 
     // 8. Calculate market competitiveness
@@ -334,8 +314,7 @@ export async function POST(
 
     // 11. If rejected, return analysis without creating employee
     if (!offerAccepted) {
-      return NextResponse.json({
-        success: true,
+      return createSuccessResponse({
         offerAccepted: false,
         decision: {
           accepted: false,
@@ -391,7 +370,7 @@ export async function POST(
       hIndex: 0,
       researchAbility: candidate.researchAbility,
       codingSkill: candidate.codingSkill,
-      domainExpertise: candidate.domainExpertise as any,
+      domainExpertise: candidate.domainExpertise as DomainExpertise,
       computeBudget,
       
       // Compensation & Performance
@@ -403,8 +382,7 @@ export async function POST(
     });
 
     // 13. Return success with employee record
-    return NextResponse.json({
-      success: true,
+    return createSuccessResponse({
       offerAccepted: true,
       employee: newEmployee,
       decision: {

@@ -15,6 +15,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { connectDB, Contract, Company, Employee } from '@/lib/db';
+import { createSuccessResponse, createErrorResponse } from '@/lib/utils/apiResponse';
 import { z } from 'zod';
 
 /**
@@ -45,7 +46,7 @@ export async function POST(
     // Authenticate
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', 'UNAUTHORIZED', 401);
     }
 
     // Parse request
@@ -53,10 +54,7 @@ export async function POST(
     const validation = completeSchema.safeParse(body);
     
     if (!validation.success) {
-      return NextResponse.json(
-        { error: 'Invalid request', details: validation.error.errors },
-        { status: 400 }
-      );
+      return createErrorResponse('Invalid request', 'VALIDATION_ERROR', 400, validation.error.errors);
     }
 
     const { companyId, progressPercent = 100 } = validation.data;
@@ -66,34 +64,28 @@ export async function POST(
     // Get contract
     const contract = await Contract.findById(id);
     if (!contract) {
-      return NextResponse.json({ error: 'Contract not found' }, { status: 404 });
+      return createErrorResponse('Contract not found', 'CONTRACT_NOT_FOUND', 404);
     }
 
     // Verify contract is in progress
     if (contract.status !== 'in_progress') {
-      return NextResponse.json(
-        { error: 'Contract is not in progress' },
-        { status: 400 }
-      );
+      return createErrorResponse('Contract is not in progress', 'INVALID_STATUS', 400);
     }
 
     // Get company
     const company = await Company.findById(companyId);
     if (!company) {
-      return NextResponse.json({ error: 'Company not found' }, { status: 404 });
+      return createErrorResponse('Company not found', 'COMPANY_NOT_FOUND', 404);
     }
 
     // Verify ownership
     if (company.userId.toString() !== session.user.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+      return createErrorResponse('Unauthorized', 'FORBIDDEN', 403);
     }
 
     // Verify contract belongs to company
     if (contract.companyId?.toString() !== companyId) {
-      return NextResponse.json(
-        { error: 'Contract does not belong to this company' },
-        { status: 403 }
-      );
+      return createErrorResponse('Contract does not belong to this company', 'FORBIDDEN', 403);
     }
 
     // Get assigned employees with full data
@@ -102,10 +94,7 @@ export async function POST(
     });
 
     if (employees.length === 0) {
-      return NextResponse.json(
-        { error: 'No employees assigned to contract' },
-        { status: 400 }
-      );
+      return createErrorResponse('No employees assigned to contract', 'VALIDATION_ERROR', 400);
     }
 
     // Update progress before completion
@@ -117,7 +106,7 @@ export async function POST(
     // Get updated company data (complete() modifies and saves company)
     const updatedCompany = await Company.findById(companyId);
 
-    return NextResponse.json({
+    return createSuccessResponse({
       contract,
       result: {
         successScore: result.successScore,
@@ -132,14 +121,11 @@ export async function POST(
         revenue: updatedCompany?.revenue,
       },
       message: 'Contract completed successfully',
-    }, { status: 200 });
+    });
 
   } catch (error: any) {
     console.error('Contract completion error:', error);
-    return NextResponse.json(
-      { error: 'Failed to complete contract', details: error.message },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to complete contract', 'INTERNAL_ERROR', 500, error.message);
   }
 }
 

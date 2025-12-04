@@ -19,9 +19,10 @@
  * @author ECHO v1.3.0
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { authenticateRequest, handleAPIError } from '@/lib/utils/api-helpers';
 import { connectDB } from '@/lib/db';
+import { createSuccessResponse, createErrorResponse, ErrorCode } from '@/lib/utils/apiResponse';
 import DataCenter from '@/lib/db/models/DataCenter';
 import Company from '@/lib/db/models/Company';
 import { analyzeTierUpgrade } from '@/lib/utils/ai/infrastructure';
@@ -75,17 +76,19 @@ export async function POST(request: NextRequest) {
 
     // 3. Validate required fields
     if (!dataCenterId || currentMonthlyRevenue === undefined) {
-      return NextResponse.json(
-        { success: false, error: 'Missing required fields: dataCenterId, currentMonthlyRevenue' },
-        { status: 400 }
+      return createErrorResponse(
+        'Missing required fields: dataCenterId, currentMonthlyRevenue',
+        ErrorCode.BAD_REQUEST,
+        400
       );
     }
 
     // 4. Validate input ranges
     if (typeof currentMonthlyRevenue !== 'number' || currentMonthlyRevenue <= 0) {
-      return NextResponse.json(
-        { success: false, error: 'currentMonthlyRevenue must be positive' },
-        { status: 400 }
+      return createErrorResponse(
+        'currentMonthlyRevenue must be positive',
+        ErrorCode.VALIDATION_ERROR,
+        400
       );
     }
 
@@ -94,26 +97,29 @@ export async function POST(request: NextRequest) {
     // 5. Find user's company
     const company = await Company.findById(companyId);
     if (!company) {
-      return NextResponse.json(
-        { success: false, error: 'Company not found' },
-        { status: 404 }
+      return createErrorResponse(
+        'Company not found',
+        ErrorCode.NOT_FOUND,
+        404
       );
     }
 
     // 6. Load data center with ownership verification
     const dataCenter = await DataCenter.findById(dataCenterId);
     if (!dataCenter) {
-      return NextResponse.json(
-        { success: false, error: 'Data center not found' },
-        { status: 404 }
+      return createErrorResponse(
+        'Data center not found',
+        ErrorCode.NOT_FOUND,
+        404
       );
     }
 
     // Verify ownership
     if (dataCenter.company.toString() !== companyId) {
-      return NextResponse.json(
-        { success: false, error: 'Data center does not belong to your company' },
-        { status: 403 }
+      return createErrorResponse(
+        'Data center does not belong to your company',
+        ErrorCode.FORBIDDEN,
+        403
       );
     }
 
@@ -121,8 +127,7 @@ export async function POST(request: NextRequest) {
     const analysis = analyzeTierUpgrade(dataCenter, currentMonthlyRevenue);
 
     // 8. Return tier upgrade analysis
-    return NextResponse.json({
-      success: true,
+    return createSuccessResponse({
       dataCenterId: dataCenter._id,
       dataCenterName: dataCenter.name,
       analysis,

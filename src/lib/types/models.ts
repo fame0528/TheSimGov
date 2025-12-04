@@ -33,6 +33,7 @@ export interface User {
   createdAt: Date;
   lastLogin?: Date;
   companies: string[]; // Company IDs
+  cash: number; // Player's liquid cash
 }
 
 /**
@@ -63,7 +64,7 @@ export interface Company {
   loans: string[]; // Loan IDs
   creditScore: number;
   payrollHistory?: PayrollEntry[];
-  
+
   // Finance metrics for credit score calculation
   debtToEquity?: number;
   monthsInBusiness?: number;
@@ -144,34 +145,34 @@ export interface Employee {
   role: string;
   salary: number;
   hiredAt: Date;
-  
+
   // 12 Skills (not generic array)
   skills: EmployeeSkills;
-  
+
   // Performance Tracking
   performance: EmployeePerformance;
-  
+
   // Morale & Retention
   morale: number; // 1-100
   lastMoraleUpdate: Date;
-  
+
   // Training
   trainingRecords: TrainingRecord[];
   currentTraining?: TrainingRecord;
-  
+
   // Reviews
   reviews: PerformanceReview[];
   lastReviewDate?: Date;
-  
+
   // Employment Status
   status: 'active' | 'training' | 'onLeave' | 'terminated';
   terminatedAt?: Date;
   terminationReason?: string;
-  
+
   // Timestamps
   createdAt: Date;
   updatedAt: Date;
-  
+
   // Computed Fields (from virtuals)
   skillAverage?: number;
   retentionRisk?: 'minimal' | 'low' | 'moderate' | 'high' | 'critical';
@@ -192,34 +193,34 @@ export interface ContractClient {
 /**
  * Contract Requirements (12-skill system)
  */
-export interface ContractRequirements extends EmployeeSkills {}
+export interface ContractRequirements extends EmployeeSkills { }
 
 /**
  * Contract model
  */
 export interface Contract {
   id: string;
-  
+
   // Ownership
   companyId: string | null;  // null = marketplace, string = accepted
   userId: string;
-  
+
   // Client
   clientName: string;
   clientIndustry: string;
   clientCompanySize: 'startup' | 'small' | 'medium' | 'large' | 'enterprise';
-  
+
   // Contract Details
   title: string;
   description: string;
   difficulty: 1 | 2 | 3 | 4 | 5;
-  
+
   // Financial
   baseValue: number;
   actualPayout: number;
   upfrontCost: number;
   bidAmount: number | null;
-  
+
   // Timeline
   createdAt: Date;
   acceptedAt: Date | null;
@@ -227,25 +228,25 @@ export interface Contract {
   deadline: Date | null;
   completedAt: Date | null;
   durationDays: number;
-  
+
   // Requirements
   requirements: ContractRequirements;
   requiredEmployeeCount: number;
-  
+
   // Execution
   status: 'marketplace' | 'bidding' | 'active' | 'in_progress' | 'completed' | 'failed' | 'cancelled';
   assignedEmployees: string[];
   progressPercent: number;
-  
+
   // Results
   successScore: number | null;
   clientSatisfaction: number | null;
   bonusEarned: number;
-  
+
   // Metadata
   updatedAt: Date;
   expiresAt: Date;
-  
+
   // Computed (from virtuals)
   isExpired?: boolean;
   daysRemaining?: number | null;
@@ -272,7 +273,7 @@ export interface Loan {
   approvedAt?: Date;
   dueDate?: Date;
   paidOffAt?: Date;
-  
+
   // Additional properties for UI components
   principal: number; // Original loan amount
   amountPaid: number; // Total amount paid so far
@@ -290,7 +291,7 @@ export interface Bank {
   maxLoanAmount: number;
   baseInterestRate: number;
   processingTime: number; // Hours
-  
+
   // Additional properties for UI components
   personality?: string; // NPC bank personality description
   capital?: number; // Bank's available capital
@@ -318,7 +319,7 @@ export interface Investment {
   lastUpdated: Date;
   dividendsPaid: number; // Total dividends received
   expectedReturn: number; // Annual expected return
-  
+
   // Additional properties for UI components
   currentValue: number; // units * currentPrice
   quantity: number; // Alias for units
@@ -337,7 +338,7 @@ export interface InvestmentPortfolio {
   investments: Investment[]; // Full investment objects for UI
   lastRebalanced?: Date;
   riskTolerance: number; // 1-10 scale
-  
+
   // Additional properties for UI components
   name: string;
   totalReturn: number; // Total return percentage

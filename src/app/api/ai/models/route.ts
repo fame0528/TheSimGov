@@ -11,9 +11,10 @@
  * @author ECHO v1.3.0
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { connectDB } from '@/lib/db';
 import AIModel from '@/lib/db/models/AIModel';
+import { createSuccessResponse, createErrorResponse } from '@/lib/utils/apiResponse';
 import { CreateAIModelSchema, type CreateAIModel } from '@/lib/validations/ai';
 import { validateSizeParameterMapping } from '@/lib/utils/ai/validation';
 import { authenticateRequest, authorizeCompany, validateRequestBody, handleAPIError } from '@/lib/utils/api-helpers';
@@ -63,7 +64,7 @@ export async function GET(req: NextRequest) {
     // Retrieve all AI models for company
     const models = await AIModel.find({ company: companyId }).sort({ createdAt: -1 });
 
-    return NextResponse.json(models, { status: 200 });
+    return createSuccessResponse(models);
   } catch (error) {
     return handleAPIError('[GET /api/ai/models]', error, 'Failed to retrieve AI models');
   }
@@ -115,9 +116,10 @@ export async function POST(req: NextRequest) {
 
     // Verify company ownership
     if (modelData!.companyId !== companyId) {
-      return NextResponse.json(
-        { error: 'Cannot create AI model for another company' },
-        { status: 403 }
+      return createErrorResponse(
+        'Cannot create AI model for another company',
+        'FORBIDDEN',
+        403
       );
     }
 
@@ -149,12 +151,13 @@ export async function POST(req: NextRequest) {
       trainingCost: 0,
     });
 
-    return NextResponse.json(
+    return createSuccessResponse(
       {
         model,
         message: `AI model '${model.name}' created successfully`,
       },
-      { status: 201 }
+      undefined,
+      201
     );
   } catch (error) {
     return handleAPIError('[POST /api/ai/models]', error, 'Failed to create AI model');

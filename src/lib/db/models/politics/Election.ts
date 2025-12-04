@@ -52,6 +52,7 @@ import {
  * Election candidate interface
  */
 export interface ElectionCandidate {
+  playerId: string;
   candidateName: string;
   party: PoliticalParty;
   votes: number;
@@ -67,7 +68,8 @@ export interface ElectionCandidate {
 export interface ElectionResults {
   totalVotes: number;
   turnoutRate: number;
-  winner: string;
+  winnerId: string;
+  winnerName: string;
   winnerParty: PoliticalParty;
   margin: number;
   marginPercentage: number;
@@ -115,6 +117,11 @@ export interface IElection extends Document {
  */
 const ElectionCandidateSchema = new Schema<ElectionCandidate>(
   {
+    playerId: {
+      type: String,
+      required: true,
+      index: true,
+    },
     candidateName: {
       type: String,
       required: true,
@@ -176,7 +183,12 @@ const ElectionResultsSchema = new Schema<ElectionResults>(
       min: [0, 'Turnout rate cannot be negative'],
       max: [100, 'Turnout rate cannot exceed 100%'],
     },
-    winner: {
+    winnerId: {
+      type: String,
+      required: true,
+      index: true,
+    },
+    winnerName: {
       type: String,
       required: true,
       trim: true,
@@ -358,9 +370,9 @@ ElectionSchema.methods.addCandidate = function (
  */
 ElectionSchema.methods.removeCandidate = function (
   this: IElection,
-  candidateName: string
+  playerId: string
 ): void {
-  this.candidates = this.candidates.filter((c) => c.candidateName !== candidateName);
+  this.candidates = this.candidates.filter((c) => c.playerId !== playerId);
 };
 
 /**
@@ -426,7 +438,7 @@ ElectionSchema.pre<IElection>('save', function (next) {
 
     // Find second place
     const secondPlace = this.candidates
-      .filter((c) => c.candidateName !== winner.candidateName)
+      .filter((c) => c.playerId !== winner.playerId)
       .reduce((prev, current) => (current.votes > prev.votes ? current : prev), this.candidates[0]);
 
     // Calculate margin
@@ -443,7 +455,8 @@ ElectionSchema.pre<IElection>('save', function (next) {
       this.results = {
         totalVotes,
         turnoutRate,
-        winner: winner.candidateName,
+        winnerId: winner.playerId,
+        winnerName: winner.candidateName,
         winnerParty: winner.party,
         margin,
         marginPercentage,

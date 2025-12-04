@@ -9,11 +9,12 @@
  * procurement with fixed or variable pricing structures.
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { connectDB as dbConnect } from '@/lib/db';
 import { PPA } from '@/lib/db/models';
 import { auth } from '@/auth';
+import { createSuccessResponse, createErrorResponse, ErrorCode } from '@/lib/utils/apiResponse';
 
 // ============================================================================
 // VALIDATION SCHEMAS
@@ -63,7 +64,7 @@ export async function POST(req: NextRequest) {
     // Authentication
     const session = await auth();
     if (!session?.user?.companyId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     // Parse request body
@@ -71,10 +72,7 @@ export async function POST(req: NextRequest) {
     const validation = CreatePPASchema.safeParse(body);
     
     if (!validation.success) {
-      return NextResponse.json(
-        { error: 'Invalid input', details: validation.error.flatten() },
-        { status: 400 }
-      );
+      return createErrorResponse('Invalid input: ' + JSON.stringify(validation.error.flatten()), ErrorCode.BAD_REQUEST, 400);
     }
 
     const { contractId, energySource, startDate, endDate, contractedAnnualMWh, basePricePerMWh, escalationPercentAnnual, performanceGuaranteePercent, penaltyRatePerMWh, bonusRatePerMWh } = validation.data;
@@ -88,10 +86,7 @@ export async function POST(req: NextRequest) {
     const durationYears = (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24 * 365.25);
     
     if (durationYears < 1) {
-      return NextResponse.json(
-        { error: 'PPA duration must be at least 1 year' },
-        { status: 400 }
-      );
+      return createErrorResponse('PPA duration must be at least 1 year', ErrorCode.BAD_REQUEST, 400);
     }
 
     // Calculate total contract value (approximate with base price and escalation)
@@ -123,8 +118,7 @@ export async function POST(req: NextRequest) {
     // Log PPA creation
     console.log(`[ENERGY] PPA created: ${contractId}, ${energySource}, ${durationYears.toFixed(1)} years, ID: ${ppa._id}`);
 
-    return NextResponse.json({
-      success: true,
+    return createSuccessResponse({
       ppa: {
         id: ppa._id,
         contractId,
@@ -146,14 +140,11 @@ export async function POST(req: NextRequest) {
         totalContractValue: '$' + (totalValue / 1000000).toFixed(2) + 'M',
         annualRevenue: '$' + ((totalValue / durationYears) / 1000000).toFixed(2) + 'M/year'
       }
-    });
+    }, undefined, 201);
 
   } catch (error) {
     console.error('[ENERGY] PPA creation error:', error);
-    return NextResponse.json(
-      { error: 'Failed to create PPA', details: error instanceof Error ? error.message : 'Unknown error' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to create PPA: ' + (error instanceof Error ? error.message : 'Unknown error'), ErrorCode.INTERNAL_ERROR, 500);
   }
 }
 

@@ -21,9 +21,10 @@
  * @author ECHO v1.3.0
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { authenticateRequest, handleAPIError } from '@/lib/utils/api-helpers';
 import { connectDB } from '@/lib/db';
+import { createSuccessResponse, createErrorResponse, ErrorCode } from '@/lib/utils/apiResponse';
 import DataCenter from '@/lib/db/models/DataCenter';
 import Company from '@/lib/db/models/Company';
 
@@ -106,9 +107,10 @@ export async function GET(request: NextRequest) {
     // 3. Validate severity if provided
     const validSeverities: AlertSeverity[] = ['Critical', 'High', 'Medium', 'Low'];
     if (severity && !validSeverities.includes(severity)) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid severity. Must be: Critical, High, Medium, or Low' },
-        { status: 400 }
+      return createErrorResponse(
+        'Invalid severity. Must be: Critical, High, Medium, or Low',
+        ErrorCode.BAD_REQUEST,
+        400
       );
     }
 
@@ -117,9 +119,10 @@ export async function GET(request: NextRequest) {
     // 4. Find user's company
     const company = await Company.findById(companyId);
     if (!company) {
-      return NextResponse.json(
-        { success: false, error: 'Company not found' },
-        { status: 404 }
+      return createErrorResponse(
+        'Company not found',
+        ErrorCode.NOT_FOUND,
+        404
       );
     }
 
@@ -266,8 +269,7 @@ export async function GET(request: NextRequest) {
     };
 
     // 11. Return alerts with summary
-    return NextResponse.json({
-      success: true,
+    return createSuccessResponse({
       alerts: filteredAlerts,
       criticalCount: summary.Critical,
       summary,

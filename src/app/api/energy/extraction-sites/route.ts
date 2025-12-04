@@ -13,10 +13,12 @@
  * @author ECHO v1.3.1
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { auth } from '@/auth';
 import { connectDB } from '@/lib/db';
 import { OilWell, GasField } from '@/lib/db/models';
+import { createSuccessResponse, createErrorResponse, ErrorCode } from '@/lib/utils/apiResponse';
+import type { OilWellLean, GasFieldLean } from '@/lib/types/energy-lean';
 
 /**
  * GET /api/energy/extraction-sites
@@ -26,7 +28,7 @@ export async function GET(request: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     await connectDB();
@@ -35,17 +37,17 @@ export async function GET(request: NextRequest) {
     const companyId = searchParams.get('company');
 
     if (!companyId) {
-      return NextResponse.json({ error: 'Company ID required' }, { status: 400 });
+      return createErrorResponse('Company ID required', ErrorCode.BAD_REQUEST, 400);
     }
 
-    // Aggregate oil wells and gas fields by location/region
+    // Aggregate oil wells and gas fields by location/region (properly typed)
     const oilWells = await OilWell.find({ company: companyId })
       .select('name location status currentProduction reserveEstimate wellType')
-      .lean();
+      .lean<OilWellLean[]>();
 
     const gasFields = await GasField.find({ company: companyId })
-      .select('name location status currentProduction reserves gasQuality')
-      .lean();
+      .select('name location status currentProduction reserveEstimate quality')
+      .lean<GasFieldLean[]>();
 
     // Group by region to create "sites"
     const siteMap = new Map<string, {
@@ -99,7 +101,7 @@ export async function GET(request: NextRequest) {
       const site = siteMap.get(region)!;
       site.gasFields.push(field);
       site.totalGasProduction += field.currentProduction || 0;
-      site.totalGasReserves += ((field as any).reserveEstimate ?? 0);
+      site.totalGasReserves += (field.reserveEstimate ?? 0);
       site.assetCount += 1;
     });
 
@@ -109,7 +111,7 @@ export async function GET(request: NextRequest) {
     const totalOilProduction = sites.reduce((sum, s) => sum + s.totalOilProduction, 0);
     const totalGasProduction = sites.reduce((sum, s) => sum + s.totalGasProduction, 0);
 
-    return NextResponse.json({
+    return createSuccessResponse({
       sites,
       summary: {
         siteCount: sites.length,
@@ -122,10 +124,7 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('GET /api/energy/extraction-sites error:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch extraction sites' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to fetch extraction sites', ErrorCode.INTERNAL_ERROR, 500);
   }
 }
 
@@ -137,7 +136,7 @@ export async function POST(request: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     await connectDB();
@@ -146,10 +145,7 @@ export async function POST(request: NextRequest) {
     const { company, region, latitude, longitude, siteType } = body;
 
     if (!company || !region || !latitude || !longitude) {
-      return NextResponse.json(
-        { error: 'Company, region, and location coordinates required' },
-        { status: 400 }
-      );
+      return createErrorResponse('Company, region, and location coordinates required', ErrorCode.BAD_REQUEST, 400);
     }
 
     // Create initial well/field based on site type
@@ -187,7 +183,7 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    return NextResponse.json(
+    return createSuccessResponse(
       {
         message: 'Extraction site created',
         site: {
@@ -197,13 +193,11 @@ export async function POST(request: NextRequest) {
           initialAsset: asset,
         },
       },
-      { status: 201 }
+      undefined,
+      201
     );
   } catch (error) {
     console.error('POST /api/energy/extraction-sites error:', error);
-    return NextResponse.json(
-      { error: 'Failed to create extraction site' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to create extraction site', ErrorCode.INTERNAL_ERROR, 500);
   }
 }

@@ -151,7 +151,7 @@ export default function NegativeAdManager({
   };
 
   // Risk level for backfire
-  const getRiskLevel = (probability: number): { color: string; label: string } => {
+  const getRiskLevel = (probability: number): { color: 'danger' | 'warning' | 'success'; label: string } => {
     if (probability > 0.4) return { color: 'danger', label: 'HIGH RISK' };
     if (probability > 0.2) return { color: 'warning', label: 'MODERATE RISK' };
     return { color: 'success', label: 'LOW RISK' };
@@ -263,7 +263,7 @@ export default function NegativeAdManager({
                   <p className={`text-lg font-bold text-${getEffectivenessColor(effectiveness)}-400`}>
                     {formatEffectiveness(effectiveness)}
                   </p>
-                  <Chip size="sm" color={getEffectivenessColor(effectiveness) as any} variant="flat">
+                  <Chip size="sm" color={getEffectivenessColor(effectiveness)} variant="flat">
                     {getEffectivenessTierName(effectiveness)}
                   </Chip>
                 </div>
@@ -274,7 +274,7 @@ export default function NegativeAdManager({
                   <p className="text-lg font-bold text-yellow-400">
                     {(backfireProb * 100).toFixed(1)}%
                   </p>
-                  <Chip size="sm" color={riskLevel.color as any} variant="flat">
+                  <Chip size="sm" color={riskLevel.color} variant="flat">
                     {riskLevel.label}
                   </Chip>
                 </div>

@@ -8,9 +8,10 @@
  * Idempotent: returns applied=false if already claimed.
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { auth } from '@/auth';
 import { connectDB } from '@/lib/db';
+import { createSuccessResponse, createErrorResponse } from '@/lib/utils/apiResponse';
 import { redeemBodySchema } from '@/lib/schemas/politicsPhase7Api';
 import { applyAchievementReward } from '@/lib/utils/politics/phase7/achievementEngine';
 import AchievementUnlockModel from '@/lib/db/models/AchievementUnlock';
@@ -22,13 +23,13 @@ export async function POST(req: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', 'UNAUTHORIZED', 401);
     }
     await connectDB();
     const json = await req.json();
     const parsed = redeemBodySchema.safeParse(json);
     if (!parsed.success) {
-      return NextResponse.json({ error: 'Invalid body', details: parsed.error.flatten() }, { status: 400 });
+      return createErrorResponse('Invalid body', 'VALIDATION_ERROR', 400, parsed.error.flatten());
     }
     const { achievementId, repeatIndex = 0 } = parsed.data;
     const playerId = session.user.id;
@@ -36,17 +37,17 @@ export async function POST(req: NextRequest) {
     // Ensure unlock exists
     const exists = await AchievementUnlockModel.findOne({ playerId, achievementId, repeatIndex }).lean();
     if (!exists) {
-      return NextResponse.json({ error: 'Achievement not unlocked' }, { status: 404 });
+      return createErrorResponse('Achievement not unlocked', 'NOT_FOUND', 404);
     }
 
     if (exists.rewardApplied) {
-      return NextResponse.json({ ok: true, applied: false }, { status: 200 });
+      return createSuccessResponse({ ok: true, applied: false });
     }
 
     const applied = await applyAchievementReward(playerId, achievementId, repeatIndex);
-    return NextResponse.json({ ok: true, applied }, { status: 200 });
+    return createSuccessResponse({ ok: true, applied });
   } catch (err: any) {
     logger.error('Redeem failed', { error: err });
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return createErrorResponse('Internal server error', 'INTERNAL_ERROR', 500);
   }
 }

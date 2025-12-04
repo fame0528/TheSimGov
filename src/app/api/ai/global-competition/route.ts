@@ -21,8 +21,9 @@
  * @legacy-source old projects/politics/app/api/ai/global-competition/route.ts
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { authenticateRequest, handleAPIError } from '@/lib/utils/api-helpers';
+import { createSuccessResponse, createErrorResponse, ErrorCode } from '@/lib/utils/apiResponse';
 import { connectDB } from '@/lib/db/mongoose';
 import { analyzeInternationalCompetition } from '@/lib/utils/ai/globalImpact';
 
@@ -146,7 +147,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    return NextResponse.json(responseData, { status: 200 });
+    return createSuccessResponse(responseData);
   } catch (error) {
     return handleAPIError('[GET /api/ai/global-competition]', error, 'Failed to fetch global competition analysis');
   }

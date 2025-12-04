@@ -6,10 +6,11 @@
  * @author ECHO v1.3.1
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { auth } from '@/auth';
 import { connectDB } from '@/lib/db';
 import { SoftwareRelease } from '@/lib/db/models';
+import { createSuccessResponse, createErrorResponse, ErrorCode } from '@/lib/utils/apiResponse';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -19,7 +20,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     const { id } = await params;
@@ -31,13 +32,13 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       .lean();
       
     if (!release) {
-      return NextResponse.json({ error: 'Release not found' }, { status: 404 });
+      return createErrorResponse('Release not found', ErrorCode.NOT_FOUND, 404);
     }
 
-    return NextResponse.json({ release });
+    return createSuccessResponse({ release });
   } catch (error) {
     console.error('GET /api/software/releases/[id] error:', error);
-    return NextResponse.json({ error: 'Failed to fetch release' }, { status: 500 });
+    return createErrorResponse('Failed to fetch release', ErrorCode.INTERNAL_ERROR, 500);
   }
 }
 
@@ -45,7 +46,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
   try {
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     const { id } = await params;
@@ -60,13 +61,13 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     );
 
     if (!release) {
-      return NextResponse.json({ error: 'Release not found' }, { status: 404 });
+      return createErrorResponse('Release not found', ErrorCode.NOT_FOUND, 404);
     }
 
-    return NextResponse.json({ message: 'Release updated', release });
+    return createSuccessResponse({ message: 'Release updated', release });
   } catch (error) {
     console.error('PATCH /api/software/releases/[id] error:', error);
-    return NextResponse.json({ error: 'Failed to update release' }, { status: 500 });
+    return createErrorResponse('Failed to update release', ErrorCode.INTERNAL_ERROR, 500);
   }
 }
 
@@ -74,7 +75,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     const { id } = await params;
@@ -82,12 +83,12 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
 
     const release = await SoftwareRelease.findByIdAndDelete(id);
     if (!release) {
-      return NextResponse.json({ error: 'Release not found' }, { status: 404 });
+      return createErrorResponse('Release not found', ErrorCode.NOT_FOUND, 404);
     }
 
-    return NextResponse.json({ message: 'Release deleted' });
+    return createSuccessResponse({ message: 'Release deleted' });
   } catch (error) {
     console.error('DELETE /api/software/releases/[id] error:', error);
-    return NextResponse.json({ error: 'Failed to delete release' }, { status: 500 });
+    return createErrorResponse('Failed to delete release', ErrorCode.INTERNAL_ERROR, 500);
   }
 }

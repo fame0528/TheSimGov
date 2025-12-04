@@ -4,11 +4,12 @@
  * @created 2025-11-29
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { auth } from '@/auth';
 import { connectDB } from '@/lib/db';
 import Election from '@/lib/db/models/politics/Election';
 import { createElectionSchema, electionQuerySchema } from '@/lib/validations/politics';
+import { createSuccessResponse, createErrorResponse } from '@/lib/utils/apiResponse';
 import { z } from 'zod';
 
 /**
@@ -20,7 +21,7 @@ export async function GET(request: NextRequest) {
     // Auth check
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', 'UNAUTHORIZED', 401);
     }
 
     await connectDB();
@@ -69,22 +70,19 @@ export async function GET(request: NextRequest) {
 
     const total = await Election.countDocuments(filter);
 
-    return NextResponse.json({
-      elections,
-      pagination: {
-        total,
-        page: query.page,
-        limit: query.limit,
-        pages: Math.ceil(total / query.limit),
-      },
+    return createSuccessResponse({ elections }, {
+      total,
+      page: query.page,
+      limit: query.limit,
+      pages: Math.ceil(total / query.limit),
     });
 
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: 'Invalid query parameters', details: error.errors }, { status: 400 });
+      return createErrorResponse('Invalid query parameters', 'VALIDATION_ERROR', 400, error.errors);
     }
     console.error('[Elections GET] Error:', error);
-    return NextResponse.json({ error: 'Failed to fetch elections' }, { status: 500 });
+    return createErrorResponse('Failed to fetch elections', 'INTERNAL_ERROR', 500);
   }
 }
 
@@ -96,7 +94,7 @@ export async function POST(request: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', 'UNAUTHORIZED', 401);
     }
 
     await connectDB();
@@ -109,13 +107,13 @@ export async function POST(request: NextRequest) {
       company: session.user.companyId,
     });
 
-    return NextResponse.json({ election }, { status: 201 });
+    return createSuccessResponse({ election }, undefined, 201);
 
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: 'Invalid election data', details: error.errors }, { status: 400 });
+      return createErrorResponse('Invalid election data', 'VALIDATION_ERROR', 400, error.errors);
     }
     console.error('[Elections POST] Error:', error);
-    return NextResponse.json({ error: 'Failed to create election' }, { status: 500 });
+    return createErrorResponse('Failed to create election', 'INTERNAL_ERROR', 500);
   }
 }

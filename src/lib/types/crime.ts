@@ -78,7 +78,7 @@ export interface ProductionFacilityBase {
   location: Location;
   capacity: number;
   quality: number; // 0-100
-  status: "Active" | "Raided" | "Abandoned" | "Seized";
+  status: "Active" | "Raided" | "Abandoned" | "Seized" | "Converted";
 }
 
 export interface InventoryItem {
@@ -138,6 +138,77 @@ export interface LaunderingChannelBase {
   feePercent: number;
   latencyDays: number;
   detectionRisk: number; // 0-100
+}
+
+// =======================
+// Phase 3 (Gamma) - Integration Layer Types
+// =======================
+
+export type Jurisdiction = "Federal" | "State";
+
+export interface PenaltyStructureDTO {
+  possession: string;
+  distribution: string;
+  manufacturing: string;
+  fineMin: number;
+  fineMax: number;
+}
+
+export interface LegislationStatusDTO {
+  id: string;
+  substance: SubstanceName;
+  jurisdiction: Jurisdiction;
+  jurisdictionId: string; // "USA" or state code
+  status: LegalStatus;
+  effectiveDate: string; // ISO date
+  sunsetDate?: string; // ISO date
+  penalties: PenaltyStructureDTO;
+  taxRate: number; // 0-100
+  regulations: string[];
+  relatedBillId?: string;
+  isLegal: boolean; // Computed
+  canConvert: boolean; // Computed
+}
+
+export type BlackMarketCategory = 
+  | "Stolen Goods"
+  | "Counterfeits"
+  | "Weapons"
+  | "Restricted Items"
+  | "Services";
+
+export type BlackMarketItemStatus = "Active" | "Sold" | "Seized" | "Removed";
+
+export interface BlackMarketItemDTO {
+  id: string;
+  companyId: string;
+  sellerId: string;
+  category: BlackMarketCategory;
+  itemName: string;
+  description: string;
+  quantity: number;
+  pricePerUnit: number;
+  location: {
+    state: StateCode;
+    city: string;
+  };
+  riskScore: number; // 0-100 (likelihood of sting/seizure)
+  status: BlackMarketItemStatus;
+  sellerReputation: number; // 0-100
+  postedAt: string; // ISO date
+}
+
+export interface BusinessConversionDTO {
+  facilityId: string;
+  substance: SubstanceName;
+  originalType: string; // "Lab" | "Farm" | "Warehouse"
+  newBusinessType: string; // "Dispensary" | "Cultivation Facility" | "Distribution Center"
+  conversionDate: string; // ISO date
+  taxRate: number;
+  licenseNumber: string;
+  regulations: string[];
+  employeesRetained: number;
+  inventoryValue: number;
 }
 
 // Implementation Notes:

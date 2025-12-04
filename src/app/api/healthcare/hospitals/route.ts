@@ -8,8 +8,9 @@
  * @author ECHO v1.3.0 Healthcare Implementation
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { auth } from '@/auth';
+import { createSuccessResponse, createErrorResponse, ErrorCode } from '@/lib/utils/apiResponse';
 import { connectDB } from '@/lib/db/mongoose';
 import { Hospital, Company } from '@/lib/db/models';
 import {
@@ -100,7 +101,7 @@ export async function GET(request: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     const { searchParams } = new URL(request.url);
@@ -199,7 +200,7 @@ export async function GET(request: NextRequest) {
     // Get total count for pagination
     const totalCount = await Hospital.countDocuments(mongoQuery);
 
-    return NextResponse.json({
+    return createSuccessResponse({
       hospitals: hospitalsWithMetrics,
       pagination: {
         total: totalCount,
@@ -213,15 +214,9 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Error fetching hospitals:', error);
     if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: 'Invalid query parameters', details: error.errors },
-        { status: 400 }
-      );
+      return createErrorResponse('Invalid query parameters', ErrorCode.BAD_REQUEST, 400);
     }
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return createErrorResponse('Internal server error', ErrorCode.INTERNAL_ERROR, 500);
   }
 }
 
@@ -233,7 +228,7 @@ export async function POST(request: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     const body = await request.json();
@@ -242,12 +237,12 @@ export async function POST(request: NextRequest) {
     // Verify company ownership
     const company = await Company.findById(validatedData.ownedBy);
     if (!company) {
-      return NextResponse.json({ error: 'Company not found' }, { status: 404 });
+      return createErrorResponse('Company not found', ErrorCode.NOT_FOUND, 404);
     }
 
     // Check if user owns the company
     if (company.owner?.toString() !== session.user.id) {
-      return NextResponse.json({ error: 'Unauthorized - Company not owned by user' }, { status: 403 });
+      return createErrorResponse('Unauthorized - Company not owned by user', ErrorCode.FORBIDDEN, 403);
     }
 
     // Calculate initial metrics
@@ -287,10 +282,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (!metricsValidation.isValid) {
-      return NextResponse.json({
-        error: 'Hospital metrics validation failed',
-        details: metricsValidation.errors
-      }, { status: 400 });
+      return createErrorResponse('Hospital metrics validation failed', ErrorCode.BAD_REQUEST, 400);
     }
 
     // Create hospital
@@ -307,7 +299,7 @@ export async function POST(request: NextRequest) {
     // Populate company info for response
     await hospital.populate('ownedBy', 'name industry');
 
-    return NextResponse.json({
+    return createSuccessResponse({
       hospital: {
         ...hospital.toObject(),
         metrics: {
@@ -319,19 +311,13 @@ export async function POST(request: NextRequest) {
         }
       },
       message: 'Hospital created successfully'
-    }, { status: 201 });
+    }, undefined, 201);
 
   } catch (error) {
     console.error('Error creating hospital:', error);
     if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: 'Invalid hospital data', details: error.errors },
-        { status: 400 }
-      );
+      return createErrorResponse('Invalid hospital data', ErrorCode.BAD_REQUEST, 400);
     }
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return createErrorResponse('Internal server error', ErrorCode.INTERNAL_ERROR, 500);
   }
 }

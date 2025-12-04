@@ -6,8 +6,9 @@
  * @author ECHO v1.3.1
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { auth } from '@/auth';
+import { createSuccessResponse, createErrorResponse, ErrorCode } from '@/lib/utils/apiResponse';
 
 import { connectDB } from '@/lib/db';
 import { GasField } from '@/lib/db/models';
@@ -20,7 +21,7 @@ export async function GET(request: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     await connectDB();
@@ -44,7 +45,7 @@ export async function GET(request: NextRequest) {
       .sort({ createdAt: -1 })
       .lean();
 
-    return NextResponse.json({
+    return createSuccessResponse({
       fields,
       pagination: {
         page,
@@ -55,10 +56,7 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('GET /api/energy/gas-fields error:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch gas fields' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to fetch gas fields', ErrorCode.INTERNAL_ERROR, 500);
   }
 }
 
@@ -70,7 +68,7 @@ export async function POST(request: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     await connectDB();
@@ -85,16 +83,10 @@ export async function POST(request: NextRequest) {
 
     await field.save();
 
-    return NextResponse.json(
-      { message: 'Gas field created', field },
-      { status: 201 }
-    );
+    return createSuccessResponse({ message: 'Gas field created', field }, undefined, 201);
   } catch (error) {
     console.error('POST /api/energy/gas-fields error:', error);
-    return NextResponse.json(
-      { error: 'Failed to create gas field' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to create gas field', ErrorCode.INTERNAL_ERROR, 500);
   }
 }
 

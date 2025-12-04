@@ -289,7 +289,7 @@ export default function ClinicNetwork({ companyId }: ClinicNetworkProps) {
               <Select
                 label="Clinic Type"
                 selectedKeys={[formData.clinicType]}
-                onChange={(e) => setFormData({ ...formData, clinicType: e.target.value as any })}
+                onChange={(e) => setFormData({ ...formData, clinicType: e.target.value as typeof formData.clinicType })}
                 isRequired
               >
                 <SelectItem key="primary_care">Primary Care</SelectItem>

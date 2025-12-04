@@ -185,7 +185,7 @@ export function CompetitiveLeaderboard({
         <span className="text-sm font-medium">Sort by:</span>
         <Select
           selectedKeys={[sortMetric]}
-          onSelectionChange={(keys) => setSortMetric(Array.from(keys)[0] as any)}
+          onSelectionChange={(keys) => setSortMetric(String(Array.from(keys)[0]) as 'performance' | 'research' | 'revenue')}
           className="max-w-xs"
           size="sm"
         >

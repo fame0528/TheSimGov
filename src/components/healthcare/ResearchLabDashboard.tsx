@@ -353,7 +353,7 @@ export default function ResearchLabDashboard({ companyId }: ResearchLabDashboard
               <Select
                 label="Research Type"
                 selectedKeys={[formData.researchType]}
-                onChange={(e) => setFormData({ ...formData, researchType: e.target.value as any })}
+                onChange={(e) => setFormData({ ...formData, researchType: e.target.value as typeof formData.researchType })}
                 isRequired
               >
                 <SelectItem key="clinical_trial">Clinical Trial</SelectItem>
@@ -373,9 +373,9 @@ export default function ResearchLabDashboard({ companyId }: ResearchLabDashboard
               />
 
               <Select
-                label="Research Phase"
+                label="Phase"
                 selectedKeys={[formData.phase]}
-                onChange={(e) => setFormData({ ...formData, phase: e.target.value as any })}
+                onChange={(e) => setFormData({ ...formData, phase: e.target.value as typeof formData.phase })}
                 isRequired
               >
                 <SelectItem key="preclinical">Preclinical</SelectItem>
@@ -389,7 +389,7 @@ export default function ResearchLabDashboard({ companyId }: ResearchLabDashboard
               <Select
                 label="Funding Source"
                 selectedKeys={[formData.fundingSource]}
-                onChange={(e) => setFormData({ ...formData, fundingSource: e.target.value as any })}
+                onChange={(e) => setFormData({ ...formData, fundingSource: e.target.value as typeof formData.fundingSource })}
                 isRequired
               >
                 <SelectItem key="government">Government Grant</SelectItem>

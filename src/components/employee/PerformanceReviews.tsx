@@ -84,6 +84,8 @@ import {
   getMoraleLabel,
   getPerformanceLabel,
   getRetentionRiskLabel,
+  getPerformanceRatingScheme,
+  getMoraleScheme,
 } from '@/lib/utils/employee';
 import type { Employee, PerformanceReview } from '@/lib/types/models';
 
@@ -512,12 +514,12 @@ export default function PerformanceReviews({ companyId }: PerformanceReviewsProp
                         )}
                       </TableCell>
                       <TableCell>
-                        <Badge color={getPerformanceRatingColor(getPerformanceRatingScale(review.performanceRating)) as any}>
+                        <Badge color={getPerformanceRatingScheme(getPerformanceRatingScale(review.performanceRating))}>
                           {review.performanceRating}/100
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <Badge color={getMoraleColor(review.morale) as any}>
+                        <Badge color={getMoraleScheme(review.morale)}>
                           {review.morale}
                         </Badge>
                       </TableCell>
@@ -606,7 +608,7 @@ export default function PerformanceReviews({ companyId }: PerformanceReviewsProp
                         <TableCell>{formatReviewDate(review.date)}</TableCell>
                         <TableCell className="text-sm">{review.reviewerId.slice(0, 8)}...</TableCell>
                         <TableCell>
-                          <Badge color={getPerformanceRatingColor(getPerformanceRatingScale(review.overallScore)) as any}>
+                          <Badge color={getPerformanceRatingScheme(getPerformanceRatingScale(review.overallScore))}>
                             {review.overallScore}/100
                           </Badge>
                         </TableCell>
@@ -793,7 +795,7 @@ export default function PerformanceReviews({ companyId }: PerformanceReviewsProp
                       <Button
                         key={template}
                         variant={reviewForm.selectedTemplate === template ? 'solid' : 'bordered'}
-                        onPress={() => handleTemplateChange(template as any)}
+                        onPress={() => handleTemplateChange(template as keyof typeof REVIEW_TEMPLATES)}
                         size="sm"
                       >
                         {template.charAt(0).toUpperCase() + template.slice(1)}
@@ -890,7 +892,7 @@ export default function PerformanceReviews({ companyId }: PerformanceReviewsProp
                         <div>
                           <p className="text-gray-600">Performance Score</p>
                           <p className="font-bold text-lg">
-                            <Badge color={getPerformanceRatingColor(getPerformanceRatingScale(showConfirmation.overallScore)) as any}>
+                            <Badge color={getPerformanceRatingScheme(getPerformanceRatingScale(showConfirmation.overallScore))}>
                               {showConfirmation.overallScore}/100
                             </Badge>
                           </p>

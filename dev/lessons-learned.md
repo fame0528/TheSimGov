@@ -1,6 +1,6 @@
 # 📚 Lessons Learned
 
-**Last Updated:** 2025-11-29
+**Last Updated:** 2025-12-04
 
 This file captures insights, patterns, and lessons from completed features. Auto-updated by AUTO_UPDATE_COMPLETED().
 
@@ -18,6 +18,30 @@ Each lesson includes:
 ---
 
 ## 🎓 Lessons
+
+### 2025-12-04: HeroUI Color Props Require Explicit Union Types
+**Context:** Complete `as any` elimination - discovered 85+ components using `color={someString as any}` for HeroUI Chip/Badge/Progress components  
+**Lesson:** HeroUI components (Chip, Badge, Progress, Button) have strictly typed `color` props that only accept `'default' | 'primary' | 'secondary' | 'success' | 'warning' | 'danger'`. Functions returning colors must have explicit return types matching this union, not generic `string`.  
+**Impact:** Updated 15+ color utility functions (getMoraleScheme, getPerformanceRatingScheme, getBillStatusColor, getPositionColor, etc.) to return proper HeroUI color types. Eliminated 85 `as any` patterns.  
+**Action:** When creating color utility functions for HeroUI components, ALWAYS declare return type as the explicit HeroUI color union. Never return `string`. Pattern: `function getColor(): 'success' | 'warning' | 'danger' | 'default'`
+
+### 2025-12-04: Select Handler Type Casts Follow Standard Pattern
+**Context:** Complete `as any` elimination - discovered 20+ Select components with `onSelectionChange={(keys) => setState(Array.from(keys)[0] as any)}`  
+**Lesson:** HeroUI Select `onSelectionChange` returns `Selection` type (Set-like). Standard pattern for extracting value and casting to state type: `String(Array.from(keys)[0]) as 'option1' | 'option2' | 'option3'`  
+**Impact:** Standardized pattern across all Select handlers in AI, Healthcare, Politics, Employee components.  
+**Action:** For Select handlers, use: `onSelectionChange={(keys) => setState(String(Array.from(keys)[0]) as StateType)}` where StateType is union of valid option keys.
+
+### 2025-12-04: Player-Only Enforcement Requires playerId at Schema Level
+**Context:** Game Production Readiness Audit - discovered Election.ts, District.ts, Campaign.ts had string-only names without playerId references  
+**Lesson:** Political positions must have `playerId` fields at the schema level, not just display names. String names alone cannot link back to player records for validation, queries, or ownership checks.  
+**Impact:** Fixed 3 models (Election, District, Campaign) to add playerId fields. Established pattern: `playerId: { type: String, required: true }` + `displayName: { type: String }` for denormalized display.  
+**Action:** When creating any model that tracks position holders or participants, ALWAYS include playerId reference alongside any display name. Follow the pattern established in Party.ts and Lobby.ts.
+
+### 2025-12-04: Export Props Types from Components for Dynamic Imports
+**Context:** map/page.tsx had TypeScript errors on dynamic import - couldn't find USMapProps type  
+**Lesson:** When using Next.js `dynamic()` with generic type parameter `dynamic<Props>`, the Props type must be exported from the component module. Internal `interface Props` is not accessible for external typing.  
+**Impact:** Fixed by exporting USMapProps from USMap.tsx and adding to barrel export in index.ts.  
+**Action:** For any component that may be dynamically imported, export its props interface. Add to barrel export file for clean imports.
 
 ### 2025-11-29: FLAWLESS Protocol Step 3 Violations Cost 5× Time
 **Context:** FID-20251129-POLITICS-FIX - Politics API routes generated without reading model files  

@@ -2,8 +2,23 @@
  * @file src/components/politics/index.ts
  * @description Politics components exports
  * @created 2025-11-24
- * @updated 2025-11-27 (Phase 8: Added PoliticalLeaderboard)
+ * @updated 2025-12-03 (Added DemographicPollingPanel, Lobbies, Parties, Elections, Proposals)
  */
+
+// ===== Polling Components =====
+export { DemographicPollingPanel, type DemographicPollingPanelProps } from './polling';
+
+// ===== Lobby Components =====
+export { LobbyCard, LobbiesGrid } from './lobbies';
+
+// ===== Party Components =====
+export { PartyCard, PartiesGrid } from './parties';
+
+// ===== Leadership Election Components =====
+export { LeadershipElectionCard, LeadershipElectionsGrid } from './elections';
+
+// ===== Proposal Components =====
+export { ProposalCard, ProposalsGrid } from './proposals';
 
 // ===== Phase 10D Components (FID-20251126-001 - Legislative System UI) =====
 export { BillBrowser, type BillBrowserProps } from './BillBrowser';

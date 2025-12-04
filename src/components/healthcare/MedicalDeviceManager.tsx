@@ -321,7 +321,7 @@ export default function MedicalDeviceManager({ companyId }: MedicalDeviceManager
               <Select
                 label="Device Type"
                 selectedKeys={[formData.deviceType]}
-                onChange={(e) => setFormData({ ...formData, deviceType: e.target.value as any })}
+                onChange={(e) => setFormData({ ...formData, deviceType: e.target.value as typeof formData.deviceType })}
                 isRequired
               >
                 <SelectItem key="diagnostic">Diagnostic</SelectItem>
@@ -334,7 +334,7 @@ export default function MedicalDeviceManager({ companyId }: MedicalDeviceManager
               <Select
                 label="FDA Classification"
                 selectedKeys={[formData.classification]}
-                onChange={(e) => setFormData({ ...formData, classification: e.target.value as any })}
+                onChange={(e) => setFormData({ ...formData, classification: e.target.value as typeof formData.classification })}
                 isRequired
               >
                 <SelectItem key="class_i">Class I (Low Risk)</SelectItem>
@@ -353,7 +353,7 @@ export default function MedicalDeviceManager({ companyId }: MedicalDeviceManager
               <Select
                 label="FDA Status"
                 selectedKeys={[formData.fdaStatus]}
-                onChange={(e) => setFormData({ ...formData, fdaStatus: e.target.value as any })}
+                onChange={(e) => setFormData({ ...formData, fdaStatus: e.target.value as typeof formData.fdaStatus })}
                 isRequired
               >
                 <SelectItem key="development">Development</SelectItem>

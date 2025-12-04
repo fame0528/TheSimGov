@@ -14,9 +14,10 @@
  * POST /api/edtech/enrollments - Create new enrollment
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { auth } from '@/auth';
 import { connectDB } from '@/lib/db';
+import { createSuccessResponse, createErrorResponse, ErrorCode } from '@/lib/utils/apiResponse';
 import StudentEnrollment from '@/lib/db/models/edtech/StudentEnrollment';
 import EdTechCourse from '@/lib/db/models/edtech/EdTechCourse';
 import Certification from '@/lib/db/models/edtech/Certification';
@@ -38,7 +39,7 @@ export async function GET(req: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     await connectDB();
@@ -86,16 +87,13 @@ export async function GET(req: NextRequest) {
       metrics.byStatus[enrollment.status] = (metrics.byStatus[enrollment.status] || 0) + 1;
     });
 
-    return NextResponse.json({
+    return createSuccessResponse({
       enrollments,
       metrics,
     });
   } catch (error) {
     console.error('GET /api/edtech/enrollments error:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch enrollments' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to fetch enrollments', ErrorCode.INTERNAL_ERROR, 500);
   }
 }
 
@@ -118,7 +116,7 @@ export async function POST(req: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', ErrorCode.UNAUTHORIZED, 401);
     }
 
     await connectDB();
@@ -136,10 +134,7 @@ export async function POST(req: NextRequest) {
 
     // Validate mutual exclusivity: must have course XOR certification
     if ((!course && !certification) || (course && certification)) {
-      return NextResponse.json(
-        { error: 'Must specify either course or certification, not both' },
-        { status: 400 }
-      );
+      return createErrorResponse('Must specify either course or certification, not both', ErrorCode.VALIDATION_ERROR, 400);
     }
 
     // Check for duplicate enrollment
@@ -152,30 +147,27 @@ export async function POST(req: NextRequest) {
 
     const existingEnrollment = await StudentEnrollment.findOne(duplicateQuery);
     if (existingEnrollment) {
-      return NextResponse.json(
-        { error: 'Student already enrolled in this course/certification' },
-        { status: 400 }
-      );
+      return createErrorResponse('Student already enrolled in this course/certification', ErrorCode.CONFLICT, 400);
     }
 
     // Validate course/certification exists
     if (course) {
       const courseDoc = await EdTechCourse.findById(course);
       if (!courseDoc) {
-        return NextResponse.json({ error: 'Course not found' }, { status: 404 });
+        return createErrorResponse('Course not found', ErrorCode.NOT_FOUND, 404);
       }
       if (!courseDoc.active) {
-        return NextResponse.json({ error: 'Course is not active' }, { status: 400 });
+        return createErrorResponse('Course is not active', ErrorCode.BAD_REQUEST, 400);
       }
     }
 
     if (certification) {
       const certDoc = await Certification.findById(certification);
       if (!certDoc) {
-        return NextResponse.json({ error: 'Certification not found' }, { status: 404 });
+        return createErrorResponse('Certification not found', ErrorCode.NOT_FOUND, 404);
       }
       if (!certDoc.active) {
-        return NextResponse.json({ error: 'Certification is not active' }, { status: 400 });
+        return createErrorResponse('Certification is not active', ErrorCode.BAD_REQUEST, 400);
       }
     }
 
@@ -192,27 +184,18 @@ export async function POST(req: NextRequest) {
       status: 'Enrolled',
     });
 
-    return NextResponse.json(enrollment, { status: 201 });
+    return createSuccessResponse(enrollment, undefined, 201);
   } catch (error) {
     console.error('POST /api/edtech/enrollments error:', error);
     
     if ((error as { code?: number }).code === 11000) {
-      return NextResponse.json(
-        { error: 'Duplicate enrollment detected' },
-        { status: 400 }
-      );
+      return createErrorResponse('Duplicate enrollment detected', ErrorCode.CONFLICT, 400);
     }
 
     if ((error as { name?: string }).name === 'ValidationError') {
-      return NextResponse.json(
-        { error: 'Validation error', details: (error as { errors?: unknown }).errors },
-        { status: 400 }
-      );
+      return createErrorResponse('Validation error', ErrorCode.VALIDATION_ERROR, 400, (error as { errors?: unknown }).errors);
     }
 
-    return NextResponse.json(
-      { error: 'Failed to create enrollment' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to create enrollment', ErrorCode.INTERNAL_ERROR, 500);
   }
 }

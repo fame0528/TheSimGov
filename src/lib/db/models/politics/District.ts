@@ -95,7 +95,8 @@ export interface IDistrict extends Document {
   // Demographics
   demographics?: DistrictDemographics;
 
-  // Representation
+  // Representation (player-only positions)
+  incumbentPlayerId?: string;
   incumbent?: string;
   incumbentParty?: PoliticalParty;
   yearEstablished?: number;
@@ -298,7 +299,12 @@ const DistrictSchema = new Schema<IDistrict>(
       type: DistrictDemographicsSchema,
     },
 
-    // Representation
+    // Representation (player-only positions)
+    incumbentPlayerId: {
+      type: String,
+      trim: true,
+      index: true,
+    },
     incumbent: {
       type: String,
       trim: true,
@@ -404,13 +410,15 @@ DistrictSchema.methods.updatePopulation = function (
 };
 
 /**
- * Set incumbent representative
+ * Set incumbent representative (player-only)
  */
 DistrictSchema.methods.setIncumbent = function (
   this: IDistrict,
+  playerId: string,
   name: string,
   party: PoliticalParty
 ): void {
+  this.incumbentPlayerId = playerId;
   this.incumbent = name;
   this.incumbentParty = party;
 };

@@ -5,9 +5,10 @@
  * @created 2025-11-23
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { auth } from '@/auth';
 import { connectDB, Loan, Company, Bank } from '@/lib/db';
+import { createSuccessResponse, createErrorResponse } from '@/lib/utils/apiResponse';
 import { z } from 'zod';
 
 // Validation schema for payment request
@@ -26,10 +27,7 @@ export async function POST(request: NextRequest) {
     // Authenticate user
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: 'Authentication required' },
-        { status: 401 }
-      );
+      return createErrorResponse('Authentication required', 'UNAUTHORIZED', 401);
     }
 
     // Parse and validate request body
@@ -37,13 +35,7 @@ export async function POST(request: NextRequest) {
     const validationResult = paymentSchema.safeParse(body);
 
     if (!validationResult.success) {
-      return NextResponse.json(
-        {
-          error: 'Validation failed',
-          details: validationResult.error.issues
-        },
-        { status: 400 }
-      );
+      return createErrorResponse('Validation failed', 'VALIDATION_ERROR', 400, validationResult.error.issues);
     }
 
     const { loanId, amount, paymentMethod } = validationResult.data;
@@ -54,10 +46,7 @@ export async function POST(request: NextRequest) {
     // Find the loan and verify ownership
     const loan = await Loan.findById(loanId).populate('bankId');
     if (!loan) {
-      return NextResponse.json(
-        { error: 'Loan not found' },
-        { status: 404 }
-      );
+      return createErrorResponse('Loan not found', 'NOT_FOUND', 404);
     }
 
     // Verify company ownership
@@ -67,41 +56,27 @@ export async function POST(request: NextRequest) {
     });
 
     if (!company) {
-      return NextResponse.json(
-        { error: 'Company not found or access denied' },
-        { status: 404 }
-      );
+      return createErrorResponse('Company not found or access denied', 'NOT_FOUND', 404);
     }
 
     // Check if loan is active
     if (loan.status !== 'Active') {
-      return NextResponse.json(
-        { error: `Cannot make payment on ${loan.status.toLowerCase()} loan` },
-        { status: 400 }
-      );
+      return createErrorResponse(`Cannot make payment on ${loan.status.toLowerCase()} loan`, 'INVALID_LOAN_STATUS', 400);
     }
 
     // Check if payment amount is reasonable
     if (amount > loan.remainingBalance) {
-      return NextResponse.json(
-        {
-          error: 'Payment amount exceeds remaining balance',
-          remainingBalance: loan.remainingBalance
-        },
-        { status: 400 }
-      );
+      return createErrorResponse('Payment amount exceeds remaining balance', 'PAYMENT_EXCEEDS_BALANCE', 400, {
+        remainingBalance: loan.remainingBalance
+      });
     }
 
     // Check if company has enough cash
     if (company.cash < amount) {
-      return NextResponse.json(
-        {
-          error: 'Insufficient funds',
-          availableCash: company.cash,
-          requiredAmount: amount
-        },
-        { status: 400 }
-      );
+      return createErrorResponse('Insufficient funds', 'INSUFFICIENT_FUNDS', 400, {
+        availableCash: company.cash,
+        requiredAmount: amount
+      });
     }
 
     // Process the payment
@@ -143,8 +118,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    return NextResponse.json({
-      success: true,
+    return createSuccessResponse({
       payment: {
         id: loan.payments[loan.payments.length - 1]._id,
         loanId: loan._id,
@@ -160,9 +134,6 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Payment processing error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return createErrorResponse('Internal server error', 'INTERNAL_ERROR', 500);
   }
 }

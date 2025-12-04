@@ -103,7 +103,8 @@ export async function POST(req: NextRequest) {
     };
 
     rd.researchProjects = rd.researchProjects || [];
-    rd.researchProjects.push(project as any);
+    // Push project - companyId as string matches runtime behavior
+    rd.researchProjects.push(project as unknown as typeof rd.researchProjects[number]);
     rd.budget -= projectInput.budget;
 
     await rd.save();

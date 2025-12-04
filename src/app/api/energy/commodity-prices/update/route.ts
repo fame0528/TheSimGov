@@ -9,11 +9,12 @@
  * with market-based pricing mechanisms and historical tracking.
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { connectDB as dbConnect } from '@/lib/db';
 import { CommodityPrice } from '@/lib/db/models';
 import { auth } from '@/auth';
+import { createSuccessResponse, createErrorResponse } from '@/lib/utils/apiResponse';
 
 // ============================================================================
 // VALIDATION SCHEMAS
@@ -61,7 +62,7 @@ export async function POST(req: NextRequest) {
     // Authentication
     const session = await auth();
     if (!session?.user?.companyId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return createErrorResponse('Unauthorized', 'UNAUTHORIZED', 401);
     }
 
     // Parse request body
@@ -69,10 +70,7 @@ export async function POST(req: NextRequest) {
     const validation = UpdatePriceSchema.safeParse(body);
     
     if (!validation.success) {
-      return NextResponse.json(
-        { error: 'Invalid input', details: validation.error.flatten() },
-        { status: 400 }
-      );
+      return createErrorResponse('Invalid input', 'BAD_REQUEST', 400);
     }
 
     const { commodity, symbol, price, notes } = validation.data;
@@ -115,8 +113,7 @@ export async function POST(req: NextRequest) {
     // Log price update
     console.log(`[ENERGY] Price update: ${commodity} ${symbol} = $${price} (${priceChangePercent >= 0 ? '+' : ''}${priceChangePercent.toFixed(2)}%)`);
 
-    return NextResponse.json({
-      success: true,
+    return createSuccessResponse({
       priceRecord: {
         id: doc._id,
         commodity,
@@ -137,10 +134,7 @@ export async function POST(req: NextRequest) {
 
   } catch (error) {
     console.error('[ENERGY] Price update error:', error);
-    return NextResponse.json(
-      { error: 'Failed to update commodity price', details: error instanceof Error ? error.message : 'Unknown error' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to update commodity price', 'INTERNAL_ERROR', 500);
   }
 }
 

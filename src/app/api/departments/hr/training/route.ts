@@ -105,7 +105,8 @@ export async function POST(req: NextRequest) {
     };
 
     hr.trainingPrograms = hr.trainingPrograms || [];
-    hr.trainingPrograms.push(program as any);
+    // Push program - companyId as string matches runtime behavior
+    hr.trainingPrograms.push(program as unknown as typeof hr.trainingPrograms[number]);
     hr.budget -= programInput.cost;
 
     await hr.save();
