@@ -201,7 +201,10 @@ const authConfig: NextAuthConfig = {
       return session;
     },
   },
-  secret: process.env.NEXTAUTH_SECRET,
+  // Use AUTH_SECRET (NextAuth v5 standard) with fallback to NEXTAUTH_SECRET
+  secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
+  // Required for Vercel/production deployments - trust the host header
+  trustHost: true,
 };
 
 export const authOptions = authConfig;
