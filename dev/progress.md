@@ -1,7 +1,7 @@
 # 🚧 In Progress Features
 
 **Last Updated:** 2025-12-04  
-**Session Status:** ✅ FID-20251205-005 COMPLETE  
+**Session Status:** 🔵 Design Complete — Implementation Ready  
 **ECHO Version:** v1.4.0 (OPTIMIZED Release)
 
 This file tracks features currently being implemented. Features move here from `planned.md` when work begins, and move to `completed.md` when finished.
@@ -10,9 +10,49 @@ This file tracks features currently being implemented. Features move here from `
 
 ## 📊 Current Focus
 
-**Active Work:** None - All `as any` patterns removed  
-**Status:** Zero `as any` in codebase ✅  
+**Active Work:** FID-20251204-CRIME-MMO — Dope Wars MMO System  
+**Status:** Design Complete ✅ | Implementation Phase 11.1 Next  
 **TypeScript:** 0 errors ✅
+
+---
+
+## 🔥 FID-20251204-CRIME-MMO: Dope Wars MMO System
+
+**Status:** 🟡 IN PROGRESS (Design Phase Complete)  
+**Priority:** P0 (Core Gameplay)  
+**Complexity:** 5 (Epic)  
+**Estimated:** 80-120h (6 sub-phases)
+
+### Progress Log
+
+| Timestamp | Activity | Status |
+|-----------|----------|--------|
+| 2025-12-04 | Created comprehensive design document | ✅ |
+| 2025-12-04 | Updated MASTER_PLAN.md to v2.2 | ✅ |
+| 2025-12-04 | Updated /dev tracking files | ✅ |
+| TBD | Phase 11.1: Street Trading Core | 🔴 NEXT |
+
+### Design Document
+**Location:** `dev/fids/FID-20251204-CRIME-MMO.md`
+
+**Key Features Designed:**
+- Street Trading (Dope Wars style) - Buy/sell, 50 states, price fluctuations
+- Production Tiers - Closet → Basement → Warehouse → Industrial → Underground → Cartel HQ
+- P2P Marketplace - Player trading with escrow & reputation system
+- Heat System - Wanted levels, encounters, law enforcement
+- Cartel System - Guilds, territory control, turf wars
+- Cross-system integration - Real Estate, Politics, Banking
+
+### Implementation Phases
+
+| Phase | Scope | Time | Status |
+|-------|-------|------|--------|
+| 11.1 | Street Trading Core | 16-24h | 🔴 NEXT |
+| 11.2 | Production Foundation | 16-24h | ⚫ PLANNED |
+| 11.3 | P2P Marketplace | 12-16h | ⚫ PLANNED |
+| 11.4 | Heat & Encounters | 8-12h | ⚫ PLANNED |
+| 11.5 | Cartels | 16-24h | ⚫ PLANNED |
+| 11.6 | Polish & Integration | 12-16h | ⚫ PLANNED |
 
 ---
 
@@ -29,22 +69,10 @@ This file tracks features currently being implemented. Features move here from `
 - **~280+ `as any` removed total (all sessions)**
 - **0 TypeScript errors**
 
-**Session Summary:**
-- Fixed 15 component/hook/util files with HeroUI color typing
-- Fixed 6 Mongoose models (politics) with toJSON transforms
-- Created HeroUI scheme functions for type-safe color returns
-- Fixed Select handler type casts across AI, Healthcare, Politics domains
-
-**Key Patterns Applied:**
-- HeroUI color functions return `'success' | 'warning' | 'danger' | 'default' | 'primary' | 'secondary'`
-- Select handlers: `String(Array.from(keys)[0]) as 'option1' | 'option2'`
-- Mongoose toJSON: `as unknown as Record<string, unknown>`
-- Destructuring instead of delete for removing properties
-
 ---
 
 ## 🎯 Next Steps
 
-1. Move FID-20251205-005 to completed.md
-2. Continue with other planned features
-3. Project ready for new feature development
+1. ~~Move FID-20251205-005 to completed.md~~ ✅
+2. Begin Phase 11.1: Street Trading Core Implementation
+3. Continue with Phase 11.2-11.6 as phases complete

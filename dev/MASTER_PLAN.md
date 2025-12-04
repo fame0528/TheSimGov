@@ -1,10 +1,10 @@
 # 🎯 MASTER IMPLEMENTATION PLAN - TheSimGov Complete Build
 
 **Created:** 2025-11-28  
-**Version:** 2.1  
-**Status:** ✅ ALL PHASES COMPLETE - Zero `as any` achieved! 🎉  
+**Version:** 2.2  
+**Status:** ✅ Phase 1-10 COMPLETE | Phase 11 (Crime MMO) PLANNED  
 **ECHO Compliance:** v1.4.0 (OPTIMIZED Release)  
-**Last Updated:** 2025-12-04 (20 FIDs COMPLETE - Type Safety Phase done, 0 `as any` remaining)
+**Last Updated:** 2025-12-04 (Crime MMO design complete, ready for implementation)
 
 ---
 
@@ -34,7 +34,7 @@
 
 ## 📊 CONSOLIDATED PROJECT SCOPE
 
-### Total FIDs to Implement: 20 (20 COMPLETE)
+### Total FIDs: 21 (20 COMPLETE, 1 PLANNED)
 
 | # | FID | Domain | Priority | Status |
 |---|-----|--------|----------|--------|
@@ -58,6 +58,7 @@
 | 18 | FID-20251205-003 | Type Safety Phase 2A (21 patterns) | HIGH | ✅ COMPLETE |
 | 19 | FID-20251205-004 | Type Safety Phase 2B-E (~195 patterns) | HIGH | ✅ COMPLETE |
 | 20 | FID-20251205-005 | Complete `as any` Elimination (85 patterns) | HIGH | ✅ COMPLETE |
+| **21** | **FID-20251204-CRIME-MMO** | **Dope Wars MMO System (Epic)** | **P0** | **🔴 PLANNED** |
 
 **⭐ Note:** All estimates removed - ECHO delivers 10-20x faster than traditional estimates. Focus on LOC delivered, not hours.
 
@@ -385,12 +386,48 @@
 | 8. Political System Expansion | ✅ COMPLETE | 100% | 2025-12-03 | 2025-12-03 |
 | 9. Game Production Audit | ✅ COMPLETE | 100% | 2025-12-04 | 2025-12-04 |
 | 10. Type Safety (`as any` Elimination) | ✅ COMPLETE | 100% | 2025-12-04 | 2025-12-04 |
+| **11. Crime MMO (Dope Wars)** | **🔴 PLANNED** | **0%** | **TBD** | **TBD** |
 
-### Overall Progress: 100% (20/20 FIDs complete, All Phases DONE) 🎉
+### Overall Progress: 20/21 FIDs complete (95%)
 
-**Completed FIDs:** Political System, Chat MVP, Employees, AI, Energy, Software, E-Commerce, EdTech, Media, Manufacturing, Consulting, Politics Expansion (original), Crime Domain, Political System Expansion, Game Audit, Dashboard Wiring (6 industries), Type Safety (280+ patterns removed)
-**Remaining FIDs:** None - all work complete!
+**Completed FIDs (20):** Political System, Chat MVP, Employees, AI, Energy, Software, E-Commerce, EdTech, Media, Manufacturing, Consulting, Politics Expansion (original), Crime Domain, Political System Expansion, Game Audit, Dashboard Wiring (6 industries), Type Safety (280+ patterns removed)
+
+**Next FID (1):** FID-20251204-CRIME-MMO (Dope Wars MMO - Epic, 80-120h estimated)
+
 **`as any` Count:** 0 patterns ✅
+
+---
+
+### PHASE 11: CRIME MMO (DOPE WARS) — NEXT UP
+**Status:** 🔴 PLANNED
+**FID:** FID-20251204-CRIME-MMO
+**Priority:** P0 (Core Gameplay)
+**Complexity:** 5 (Epic)
+**Estimated:** 80-120h (Multi-phase)
+
+**Goal:** Transform Crime system into a fully-featured Dope Wars MMO
+
+**Sub-Phases:**
+| Phase | Scope | Est. Time | Status |
+|-------|-------|-----------|--------|
+| 11.1 | Street Trading Core (buy/sell/travel) | 16-24h | 🔴 PLANNED |
+| 11.2 | Production Foundation (grow ops, tiers) | 16-24h | 🔴 PLANNED |
+| 11.3 | P2P Marketplace (listings, escrow) | 12-16h | 🔴 PLANNED |
+| 11.4 | Heat & Encounters (cops, events) | 8-12h | 🔴 PLANNED |
+| 11.5 | Cartels (guilds, territory) | 16-24h | 🔴 PLANNED |
+| 11.6 | Polish & Integration | 12-16h | 🔴 PLANNED |
+
+**Key Deliverables:**
+- PlayerStash model (player inventory, cash, location, heat)
+- StatePricing model (50-state dynamic pricing)
+- GrowOperation model (production tiers: closet → Breaking Bad)
+- Cartel model (guild system with territory control)
+- Street Trading UI (buy/sell/travel interface)
+- Production UI (grow room, care system, harvest)
+- P2P Marketplace (player listings, escrow, reputation)
+- Tutorial system (react-joyride integration)
+
+**Full Design:** See `dev/fids/FID-20251204-CRIME-MMO.md`
 
 ---
 
@@ -458,6 +495,7 @@ When marking a phase complete, verify:
 | 2025-12-03 | 1.6 | Political System Expansion COMPLETE (Unions, Paramilitaries, 2,430 LOC) | ECHO |
 | 2025-12-04 | 2.0 | ALL PHASES COMPLETE - Game Audit done, player-only enforcement, 15/15 FIDs | ECHO |
 | 2025-12-04 | 2.1 | Type Safety Phase COMPLETE - Zero `as any`, 280+ patterns removed, 20/20 FIDs | ECHO |
+| 2025-12-04 | 2.2 | Crime MMO (Dope Wars) design complete - FID-20251204-CRIME-MMO created | ECHO |
 
 ---
 

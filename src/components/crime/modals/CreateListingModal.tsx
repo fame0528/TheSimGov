@@ -111,6 +111,12 @@ export function CreateListingModal({ isOpen, onClose, onSuccess }: CreateListing
                 onChange={(e) => setFormData({ ...formData, substanceName: e.target.value })}
                 description="What you're selling"
                 isRequired
+                classNames={{
+                  label: "text-white/80",
+                  input: "text-white placeholder:text-slate-500",
+                  inputWrapper: "bg-slate-800/50 border-slate-700 hover:border-violet-500/50 group-data-[focus=true]:border-violet-500",
+                  description: "text-slate-400"
+                }}
               />
 
               <Input
@@ -120,6 +126,12 @@ export function CreateListingModal({ isOpen, onClose, onSuccess }: CreateListing
                 onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                 description="Where the product is"
                 isRequired
+                classNames={{
+                  label: "text-white/80",
+                  input: "text-white placeholder:text-slate-500",
+                  inputWrapper: "bg-slate-800/50 border-slate-700 hover:border-violet-500/50 group-data-[focus=true]:border-violet-500",
+                  description: "text-slate-400"
+                }}
               />
             </div>
 
@@ -140,6 +152,11 @@ export function CreateListingModal({ isOpen, onClose, onSuccess }: CreateListing
                   { value: 1000, label: '1k' },
                 ]}
                 className="max-w-full"
+                classNames={{
+                  label: "text-white/80",
+                  value: "text-white",
+                  mark: "text-slate-400"
+                }}
               />
             </div>
 
@@ -159,6 +176,11 @@ export function CreateListingModal({ isOpen, onClose, onSuccess }: CreateListing
                   { value: 100, label: '100%' },
                 ]}
                 className="max-w-full"
+                classNames={{
+                  label: "text-white/80",
+                  value: "text-white",
+                  mark: "text-slate-400"
+                }}
                 color={
                   formData.purity >= 80 ? 'success' :
                   formData.purity >= 50 ? 'warning' :
@@ -183,6 +205,11 @@ export function CreateListingModal({ isOpen, onClose, onSuccess }: CreateListing
                   { value: 500, label: '$500' },
                 ]}
                 className="max-w-full"
+                classNames={{
+                  label: "text-white/80",
+                  value: "text-white",
+                  mark: "text-slate-400"
+                }}
               />
             </div>
 

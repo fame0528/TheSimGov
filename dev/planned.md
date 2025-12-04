@@ -1,8 +1,8 @@
 # 📋 Planned Features
 
-**Last Updated:** 2025-12-05  
+**Last Updated:** 2025-12-04  
 **Single Source of Truth:** [MASTER_PLAN.md](./MASTER_PLAN.md)  
-**Session Status:** ✅ Properly closed - all work current
+**Session Status:** ✅ Crime MMO Design Complete - Ready for Implementation
 
 ---
 
@@ -17,53 +17,46 @@ This file is now kept minimal. All planned work is documented in:
 
 ## 📊 Current Planned Work
 
-### ✅ Recently Completed (moved to completed.md)
-- **FID-20251203-002** - Political System Expansion (100% complete) ✅
-- **FID-20251204-AUDIT** - Game Production Readiness Audit ✅
-- **FID-20251205-001** - Manufacturing/Consulting/Crime Dashboard Wiring ✅
-- **FID-20251205-002** - Healthcare/Media/Banking Dashboard Wiring ✅
-- **FID-20251205-003** - ECHO Compliance Phase 2A (Type Safety) ✅
+### 🔥 MAJOR NEW INITIATIVE — NEXT UP
 
-### Queued for Implementation (See [MASTER_PLAN.md](./MASTER_PLAN.md))
+#### FID-20251204-CRIME-MMO: Dope Wars MMO System
+**Status:** 🔴 PLANNED  
+**Priority:** P0 (Core Gameplay)  
+**Complexity:** 5 (Epic)  
+**Estimated:** 80-120h (6 sub-phases)
 
-| Phase | FID | Description | Status |
-|-------|-----|-------------|--------|
-| 6 | FID-20251127-POLITICS | Politics Expansion | ✅ COMPLETE |
-| 7 | FID-20251127-CRIME | Crime/Underworld Domain | ✅ COMPLETE |
-| 8 | FID-20251201-001 | Crime P1 Backlog | ✅ COMPLETE |
-| 9 | FID-20251201-002 | ECHO Compliance Phase 1 | ✅ COMPLETE |
-| 10 | FID-20251203-001 | Player Profile Page | ✅ COMPLETE |
-| 11 | FID-20251203-002 | Political System Expansion | ✅ COMPLETE |
-| 12 | FID-20251204-AUDIT | Game Production Readiness Audit | ✅ COMPLETE |
-| 13 | FID-20251205-003 | ECHO Compliance Phase 2A | ✅ COMPLETE |
-| -- | **Next Session** | Select from candidates below | **PLANNED** |
+Transform Crime system into a fully-featured Dope Wars MMO with:
+- **Street Trading** - Buy/sell drugs, travel between 50 states, price arbitrage
+- **Production Tiers** - Closet grow → Breaking Bad industrial operation  
+- **P2P Marketplace** - Player-to-player trading with escrow & reputation
+- **Cartel System** - Guilds with territory control & turf wars
+- **Integration** - Connects to Real Estate, Politics, Banking systems
+
+**Implementation Phases:**
+| Phase | Scope | Time |
+|-------|-------|------|
+| 11.1 | Street Trading Core | 16-24h |
+| 11.2 | Production Foundation | 16-24h |
+| 11.3 | P2P Marketplace | 12-16h |
+| 11.4 | Heat & Encounters | 8-12h |
+| 11.5 | Cartels | 16-24h |
+| 11.6 | Polish & Integration | 12-16h |
+
+**Full Design:** See `dev/fids/FID-20251204-CRIME-MMO.md`
 
 ---
 
-## 📋 Candidate FIDs for Next Session
+### ✅ Recently Completed (20 FIDs)
 
-### FID-20251205-004 — ECHO Compliance Phase 2B (Energy Domain)
-**Status:** PLANNED **Priority:** P2 **Complexity:** 4 **Estimated:** 3-4h
-
-**Description:** Remove ~75 `as any` type assertions from Energy domain API routes. Requires updating Mongoose model interfaces to include missing fields.
-
-**Acceptance:**
-- All `as any` removed from Energy API routes
-- Energy model interfaces updated with proper field types
-- TypeScript: 0 errors
-- Tests remain green
-
-**Targets:**
-- `src/app/api/energy/forecasting/demand/route.ts`
-- `src/app/api/energy/forecasting/generation/route.ts`
-- `src/app/api/energy/analytics/generation/route.ts`
-- `src/app/api/energy/analytics/performance/route.ts`
-- `src/app/api/energy/reserves/route.ts`
-- `src/app/api/energy/subsidies/route.ts`
-- `src/app/api/energy/storage/[id]/charge/route.ts`
-- `src/app/api/energy/storage/[id]/discharge/route.ts`
-- `src/app/api/energy/compliance/emissions/route.ts`
-- Energy model interface updates
+| FID | Description | Status |
+|-----|-------------|--------|
+| FID-20251205-005 | Complete `as any` Elimination | ✅ COMPLETE |
+| FID-20251205-004 | Type Safety Phase 2B-E | ✅ COMPLETE |
+| FID-20251205-003 | Type Safety Phase 2A | ✅ COMPLETE |
+| FID-20251205-002 | Dashboard Wiring (Healthcare/Media/Banking) | ✅ COMPLETE |
+| FID-20251205-001 | Dashboard Wiring (Mfg/Consulting/Crime) | ✅ COMPLETE |
+| FID-20251204-AUDIT | Game Production Readiness Audit | ✅ COMPLETE |
+| FID-20251203-002 | Political System Expansion | ✅ COMPLETE |
 
 ---
 
@@ -73,12 +66,10 @@ Active Feature ID specifications in `dev/fids/`:
 
 ```
 dev/fids/
+├── FID-20251204-CRIME-MMO.md    ← 🔥 NEXT UP: Dope Wars MMO System (Epic)
+├── FID-20251204-006.md          ← Original concept (superseded by CRIME-MMO)
 ├── FID-20251203-002.md          ← Political System Expansion ✅ COMPLETE
 ├── FID-20251203-001.md          ← Player Profile Page ✅ COMPLETE
-├── FID-20251202-001.md          ← Main Page Fixes ✅ COMPLETE
-├── FID-20251201-002.md          ← ECHO Compliance Phase 1 ✅ COMPLETE
-├── FID-20251201-001.md          ← Crime P1 Backlog ✅ COMPLETE
-├── FID-20251127-CRIME.md        ← Crime Domain ✅ COMPLETE
 └── archives/                     ← Older completed FIDs
 ```
 
@@ -88,20 +79,11 @@ dev/fids/
 
 | Metric | Value |
 |--------|-------|
-| **FIDs Complete** | 15/15 (100%) |
+| **FIDs Complete** | 20/21 (95%) |
+| **FIDs Planned** | 1 (Crime MMO) |
 | **TypeScript** | 0 errors ✅ |
+| **`as any` Count** | 0 patterns ✅ |
 | **ECHO** | v1.4.0 (OPTIMIZED Release) |
-| **Session** | Properly closed |
-
----
-
-## 🔄 How This File Updates
-
-1. **New work identified?** → Create FID in `dev/fids/`, add to MASTER_PLAN.md
-2. **Work starts?** → Move to progress.md (AUTO_UPDATE_PROGRESS)
-3. **Work completes?** → Move to completed.md (AUTO_UPDATE_COMPLETED)
-
-This keeps planned.md clean and prevents stale content accumulation.
 
 ---
 
