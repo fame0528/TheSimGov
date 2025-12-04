@@ -179,6 +179,8 @@ const authConfig: NextAuthConfig = {
     signIn: '/login',
     error: '/login',
   },
+  // Enable debug mode in development or when DEBUG_AUTH is set
+  debug: process.env.NODE_ENV === 'development' || process.env.DEBUG_AUTH === 'true',
   callbacks: {
     async jwt({ token, user }) {
       // Add user data to token on sign in

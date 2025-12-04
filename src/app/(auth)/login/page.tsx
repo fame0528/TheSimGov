@@ -33,6 +33,26 @@ function LoginForm() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
 
+  // Map NextAuth error codes to user-friendly messages
+  const getErrorMessage = (errorCode: string): string => {
+    const errorMessages: Record<string, string> = {
+      'Configuration': 'Server configuration error. Please try again later.',
+      'AccessDenied': 'Access denied. Please check your credentials.',
+      'Verification': 'Verification failed. Please try again.',
+      'CredentialsSignin': 'Invalid email or password.',
+      'SessionRequired': 'Please sign in to continue.',
+      'OAuthSignin': 'Error during sign in. Please try again.',
+      'OAuthCallback': 'Error during sign in callback.',
+      'OAuthCreateAccount': 'Could not create account.',
+      'EmailCreateAccount': 'Could not create account.',
+      'Callback': 'Error during callback.',
+      'OAuthAccountNotLinked': 'Account not linked.',
+      'EmailSignin': 'Check your email for sign in link.',
+      'Default': 'An error occurred. Please try again.',
+    };
+    return errorMessages[errorCode] || errorMessages['Default'];
+  };
+
   // Auto-restore email from localStorage
   useEffect(() => {
     const savedEmail = localStorage.getItem('loginEmail');
@@ -43,7 +63,7 @@ function LoginForm() {
     // Show NextAuth error message from query string, if present
     const qsError = search?.get('error');
     if (qsError) {
-      setError(qsError);
+      setError(getErrorMessage(qsError));
     }
     
     // Auto-focus email field
