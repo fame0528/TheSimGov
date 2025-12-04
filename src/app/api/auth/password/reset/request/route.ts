@@ -14,6 +14,7 @@ import jwt from 'jsonwebtoken';
 import { connectDB } from '@/lib/db';
 import User from '@/lib/db/models/User';
 import { resend } from '@/lib/email/resend';
+import { getBaseUrl } from '@/lib/utils/getBaseUrl';
 
 export async function POST(req: Request) {
   try {
@@ -28,9 +29,9 @@ export async function POST(req: Request) {
     // Always respond success (avoid user enumeration). Log link only if user exists.
 
     if (user) {
-      const secret = process.env.NEXTAUTH_SECRET || 'dev-secret';
+      const secret = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET || 'dev-secret';
       const token = jwt.sign({ sub: user._id.toString(), email }, secret, { expiresIn: '15m' });
-      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+      const baseUrl = getBaseUrl();
       const resetLink = `${baseUrl}/reset-password/${token}`;
       // Attempt to send email via Resend; if not configured, log link for development
       try {

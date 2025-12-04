@@ -14,6 +14,7 @@ import { auth } from '@/auth';
 import { connectDB } from '@/lib/db';
 import { Company } from '@/lib/db/models';
 import { Card, CardBody } from '@heroui/card';
+import { getBaseUrl } from '@/lib/utils/getBaseUrl';
 import BankingPageClient from './BankingPageClient';
 import {
   handleLoanApplication,
@@ -42,7 +43,7 @@ async function getCompanyData(companyId: string) {
   // Fetch credit score from API
   let creditScore = 550; // Default
   try {
-    const creditResponse = await fetch(`${process.env.NEXTAUTH_URL}/api/banking/credit-score?companyId=${companyId}`, {
+    const creditResponse = await fetch(`${getBaseUrl()}/api/banking/credit-score?companyId=${companyId}`, {
       method: 'GET',
     });
     if (creditResponse.ok) {
@@ -56,7 +57,7 @@ async function getCompanyData(companyId: string) {
   // Fetch investment portfolio
   let investmentPortfolio = null;
   try {
-    const portfolioResponse = await fetch(`${process.env.NEXTAUTH_URL}/api/banking/investments/portfolio?companyId=${companyId}`, {
+    const portfolioResponse = await fetch(`${getBaseUrl()}/api/banking/investments/portfolio?companyId=${companyId}`, {
       method: 'GET',
     });
     if (portfolioResponse.ok) {

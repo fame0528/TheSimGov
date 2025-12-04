@@ -10,6 +10,9 @@
  * @author ECHO v1.1.0
  */
 
+// Base URL utility for Vercel deployment
+export { getBaseUrl, getClientBaseUrl } from './getBaseUrl';
+
 // Currency utilities
 export {
   formatCurrency,

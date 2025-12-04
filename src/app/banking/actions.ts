@@ -13,6 +13,7 @@
 'use server';
 
 import { auth } from '@/auth';
+import { getBaseUrl } from '@/lib/utils/getBaseUrl';
 import type {
   LoanApplicationFormData,
   LoanPaymentData,
@@ -29,7 +30,7 @@ export async function handleLoanApplication(data: LoanApplicationFormData) {
     throw new Error('Unauthorized');
   }
 
-  const response = await fetch(`${process.env.NEXTAUTH_URL}/api/banking/apply`, {
+  const response = await fetch(`${getBaseUrl()}/api/banking/apply`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -57,7 +58,7 @@ export async function handlePayment(data: LoanPaymentData) {
     throw new Error('Unauthorized');
   }
 
-  const response = await fetch(`${process.env.NEXTAUTH_URL}/api/banking/payments`, {
+  const response = await fetch(`${getBaseUrl()}/api/banking/payments`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -85,7 +86,7 @@ export async function handleAutoPayToggle(loanId: string, enabled: boolean) {
     throw new Error('Unauthorized');
   }
 
-  const response = await fetch(`${process.env.NEXTAUTH_URL}/api/banking/loans/auto-pay`, {
+  const response = await fetch(`${getBaseUrl()}/api/banking/loans/auto-pay`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -114,7 +115,7 @@ export async function handleInvestmentPurchase(data: InvestmentPurchaseData) {
     throw new Error('Unauthorized');
   }
 
-  const response = await fetch(`${process.env.NEXTAUTH_URL}/api/banking/investments/purchase`, {
+  const response = await fetch(`${getBaseUrl()}/api/banking/investments/purchase`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -142,7 +143,7 @@ export async function handleRebalancePortfolio(targetAllocations: Record<string,
     throw new Error('Unauthorized');
   }
 
-  const response = await fetch(`${process.env.NEXTAUTH_URL}/api/banking/investments/rebalance`, {
+  const response = await fetch(`${getBaseUrl()}/api/banking/investments/rebalance`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -170,7 +171,7 @@ export async function handleBankCreate(data: PlayerBankCreationData) {
     throw new Error('Unauthorized');
   }
 
-  const response = await fetch(`${process.env.NEXTAUTH_URL}/api/banking/player/create`, {
+  const response = await fetch(`${getBaseUrl()}/api/banking/player/create`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -198,7 +199,7 @@ export async function handlePortfolioCreate(data: any) {
     throw new Error('Unauthorized');
   }
 
-  const response = await fetch(`${process.env.NEXTAUTH_URL}/api/banking/investments/portfolios`, {
+  const response = await fetch(`${getBaseUrl()}/api/banking/investments/portfolios`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -226,7 +227,7 @@ export async function handleCreditRefresh() {
     throw new Error('Unauthorized');
   }
 
-  const response = await fetch(`${process.env.NEXTAUTH_URL}/api/banking/credit-score?companyId=${session.user.companyId}`, {
+  const response = await fetch(`${getBaseUrl()}/api/banking/credit-score?companyId=${session.user.companyId}`, {
     method: 'GET',
   });
 

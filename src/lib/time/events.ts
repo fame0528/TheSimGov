@@ -12,20 +12,21 @@
 
 import TimeEngine from './timeEngine';
 import { scheduleRecurringEvent, scheduleOneTimeEvent } from './scheduler';
+import { getBaseUrl } from '@/lib/utils/getBaseUrl';
 
 // Domain handlers imported lazily inside listener to avoid circular deps
 async function runPayroll() {
-  await fetch(`${process.env.NEXT_PUBLIC_BASE_URL ?? ''}/api/payroll`, { method: 'POST' });
+  await fetch(`${getBaseUrl()}/api/payroll`, { method: 'POST' });
 }
 async function runContractDeadlines() {
-  await fetch(`${process.env.NEXT_PUBLIC_BASE_URL ?? ''}/api/contracts/deadlines`, { method: 'POST' });
+  await fetch(`${getBaseUrl()}/api/contracts/deadlines`, { method: 'POST' });
 }
 async function runSkillDecay() {
-  await fetch(`${process.env.NEXT_PUBLIC_BASE_URL ?? ''}/api/employees/decay`, { method: 'POST' });
+  await fetch(`${getBaseUrl()}/api/employees/decay`, { method: 'POST' });
 }
 async function completeTraining(employeeId: string) {
   // Call training completion endpoint with employee ID payload
-  await fetch(`${process.env.NEXT_PUBLIC_BASE_URL ?? ''}/api/employees/training/complete`, {
+  await fetch(`${getBaseUrl()}/api/employees/training/complete`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ employeeId }),

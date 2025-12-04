@@ -24,7 +24,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Invalid password (min 6 chars)' }, { status: 400 });
     }
 
-    const secret = process.env.NEXTAUTH_SECRET || 'dev-secret';
+    const secret = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET || 'dev-secret';
     let payload: { sub: string; email: string };
     try {
       payload = jwt.verify(token, secret) as { sub: string; email: string };
