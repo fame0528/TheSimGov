@@ -1,10 +1,69 @@
 ﻿# ✅ Completed Features
 
-**Last Updated:** 2025-12-04  
-**Total Completed:** 20/20 FIDs + Game Audit ✅  
+**Last Updated:** 2025-12-05  
+**Total Completed:** 21/21 FIDs + Game Audit ✅  
 **Quality Standard:** ECHO v1.4.0 AAA (OPTIMIZED Release)
 
 This file tracks successfully completed features with metrics and lessons learned.
+
+---
+
+## [FID-20251205-006] User Model Consolidation - PlayerStash Removal
+**Status:** ✅ COMPLETED **Priority:** P0 (Critical) **Complexity:** 3
+**Started:** 2025-12-05 **Completed:** 2025-12-05
+**Estimated:** 2h **Actual:** 1.5h
+
+**Description:** Consolidate all crime data from separate PlayerStash model into User model's embedded subdocument. Unified cash system across all game features.
+
+**Deliverables:**
+- ✅ Added `User.crime` embedded subdocument with all crime data
+- ✅ Unified `User.cash` as single source of truth (default $5000)
+- ✅ Added `User.bankBalance` for safe deposits
+- ✅ Rewrote `stash/route.ts` to use User.crime
+- ✅ Rewrote `buy-sell/route.ts` to use User.crime
+- ✅ Rewrote `travel/route.ts` to use User.crime with encounter system
+- ✅ Deleted deprecated `PlayerStash.ts` model
+- ✅ Fixed `TravelEncounterType` to use correct snake_case values
+- ✅ Fixed `useCrimeTrading` hook (playerId → id property)
+- ✅ TypeScript: 0 errors
+
+**Files Modified:**
+| File | Changes |
+|------|---------|
+| `src/lib/types/models.ts` | Added UserCrimeData, UserDrugItem, User.crime, User.bankBalance |
+| `src/lib/db/models/User.ts` | Added DrugItemSchema, CrimeDataSchema, bankBalance field |
+| `src/lib/types/crime-mmo.ts` | Added CrimePlayerDTO, deprecated PlayerStashDTO as alias |
+| `src/app/api/crime/stash/route.ts` | Rewrote to use User.crime, auto-init |
+| `src/app/api/crime/trading/buy-sell/route.ts` | Rewrote to use User.crime |
+| `src/app/api/crime/stash/travel/route.ts` | Rewrote with travel encounters, heat decay |
+| `src/hooks/useCrimeTrading.ts` | Fixed playerId → id property check |
+
+**Files Deleted:**
+| File | Reason |
+|------|--------|
+| `src/lib/db/models/crime/PlayerStash.ts` | Data now in User.crime subdocument |
+
+**New Data Architecture:**
+```
+User {
+  cash: number           // Unified (default 5000)
+  bankBalance: number    // Safe money
+  state: StateCode       // Current location
+  crime: {
+    currentCity, heat, reputation, carryCapacity,
+    inventory[], level, experience, unlockedSubstances[],
+    totalProfit, totalDeals, successfulDeals,
+    timesArrested, timesMugged, lastActiveAt
+  }
+}
+```
+
+**Metrics:**
+- Routes Rewritten: 3
+- Models Consolidated: 1 (PlayerStash → User.crime)
+- TypeScript Errors: 0 ✅
+- Files Modified: 7
+- Files Deleted: 1
 
 ---
 

@@ -4,8 +4,10 @@
  * 
  * OVERVIEW:
  * User account model for authentication and game data.
+ * Includes embedded crime/drug trading subdocument.
  * 
  * @created 2025-11-20
+ * @updated 2025-12-04 - Added crime subdocument
  * @author ECHO v1.1.0
  */
 
@@ -13,6 +15,46 @@ import mongoose, { Schema, Model } from 'mongoose';
 import { User } from '@/lib/types';
 import { STATE_ABBREVIATIONS } from '@/lib/utils/stateHelpers';
 import type { Gender, Ethnicity } from '@/lib/types/portraits';
+
+/**
+ * Drug inventory item subdocument schema
+ */
+const DrugItemSchema = new Schema({
+  substance: { 
+    type: String, 
+    required: true,
+    enum: ['Cannabis', 'Cocaine', 'Heroin', 'Methamphetamine', 'MDMA', 'LSD', 'Psilocybin', 'Fentanyl', 'Oxycodone']
+  },
+  strain: { type: String },
+  quantity: { type: Number, required: true, min: 0 },
+  quality: { type: Number, required: true, min: 0, max: 100 },
+  avgPurchasePrice: { type: Number, required: true, min: 0 },
+  acquiredAt: { type: Date, default: Date.now }
+}, { _id: false });
+
+/**
+ * Crime/drug trading subdocument schema
+ */
+const CrimeDataSchema = new Schema({
+  currentCity: { type: String, default: 'Los Angeles' },
+  heat: { type: Number, default: 0, min: 0, max: 100 },
+  reputation: { type: Number, default: 0, min: 0, max: 100 },
+  carryCapacity: { type: Number, default: 50, min: 1 },
+  inventory: { type: [DrugItemSchema], default: [] },
+  level: { type: Number, default: 1, min: 1, max: 100 },
+  experience: { type: Number, default: 0, min: 0 },
+  unlockedSubstances: { 
+    type: [String], 
+    default: ['Cannabis'],
+    enum: ['Cannabis', 'Cocaine', 'Heroin', 'Methamphetamine', 'MDMA', 'LSD', 'Psilocybin', 'Fentanyl', 'Oxycodone']
+  },
+  totalProfit: { type: Number, default: 0 },
+  totalDeals: { type: Number, default: 0, min: 0 },
+  successfulDeals: { type: Number, default: 0, min: 0 },
+  timesArrested: { type: Number, default: 0, min: 0 },
+  timesMugged: { type: Number, default: 0, min: 0 },
+  lastActiveAt: { type: Date, default: Date.now }
+}, { _id: false });
 
 const userSchema = new Schema<User>({
   username: {
@@ -124,14 +166,25 @@ const userSchema = new Schema<User>({
   }],
   cash: {
     type: Number,
+    default: 5000,
+    min: 0,
+  },
+  bankBalance: {
+    type: Number,
     default: 0,
     min: 0,
+  },
+  crime: {
+    type: CrimeDataSchema,
+    default: undefined, // Only created when player enters crime system
   },
 });
 
 // Indexes for faster lookups
 userSchema.index({ firstName: 1, lastName: 1 });
 userSchema.index({ state: 1 });
+userSchema.index({ 'crime.level': -1 });
+userSchema.index({ 'crime.heat': -1 });
 
 // Prevent model recompilation in development
 const UserModel: Model<User> = mongoose.models.User || mongoose.model<User>('User', userSchema);

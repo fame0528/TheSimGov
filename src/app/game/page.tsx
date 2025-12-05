@@ -10,8 +10,24 @@ import { useCompanies } from '@/lib/hooks/useCompany';
 
 export default function GameDashboard() {
   const router = useRouter();
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const { data: companies, isLoading: companiesLoading } = useCompanies();
+
+  // User cash from API (not session)
+  const [userCash, setUserCash] = React.useState<number>(0);
+  const [cashLoading, setCashLoading] = React.useState(true);
+  React.useEffect(() => {
+    if (status === 'authenticated') {
+      setCashLoading(true);
+      fetch('/api/user/me')
+        .then(res => res.json())
+        .then(data => {
+          setUserCash(data?.cash || 0);
+          setCashLoading(false);
+        })
+        .catch(() => setCashLoading(false));
+    }
+  }, [status]);
 
   // Contracts aggregation: fetch for each company
   const [totalActiveContracts, setTotalActiveContracts] = React.useState<number>(0);
@@ -104,19 +120,12 @@ export default function GameDashboard() {
                   content: "text-white font-bold"
                 }}
               >
-                5cf Online
+                ● Online
               </Chip>
               <div className="flex items-center bg-gradient-to-br from-amber-500/20 to-amber-600/10 px-4 py-2 rounded-xl border border-amber-500/30">
                 <span className="text-xs text-slate-400 mr-2">Cash:</span>
                 <span className="text-lg font-bold text-amber-400">
-                  {
-                    (() => {
-                      // TypeScript fallback for cash property
-                      if (!session || !session.user) return '0';
-                      const user = session.user as typeof session.user & { cash?: number };
-                      return typeof user.cash === 'number' ? user.cash.toLocaleString() : '0';
-                    })()
-                  }
+                  {cashLoading ? '...' : `$${userCash.toLocaleString()}`}
                 </span>
               </div>
             </div>

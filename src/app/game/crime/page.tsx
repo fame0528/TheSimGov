@@ -80,7 +80,7 @@ export default function CrimePage() {
 
   if (status === 'loading' || isLoading) {
     return (
-      <DashboardLayout title="Crime Operations" subtitle="Underground economy management">
+      <DashboardLayout title="Crime Operations" subtitle="Underground economy management" maxWidth="1600px">
         <div className="flex items-center justify-center min-h-[400px]">
           <LoadingSpinner size="lg" />
         </div>
@@ -90,7 +90,7 @@ export default function CrimePage() {
 
   if (error) {
     return (
-      <DashboardLayout title="Crime Operations" subtitle="Underground economy management">
+      <DashboardLayout title="Crime Operations" subtitle="Underground economy management" maxWidth="1600px">
         <ErrorMessage error={error.message || 'Failed to load crime data'} />
       </DashboardLayout>
     );
@@ -100,6 +100,7 @@ export default function CrimePage() {
     <DashboardLayout
       title="Crime Operations"
       subtitle={`Managing ${summary?.totalFacilities || 0} facilities, ${summary?.totalRoutes || 0} routes`}
+      maxWidth="1600px"
     >
       {summary && (
         <CrimeDashboard

@@ -474,9 +474,10 @@ export const manufacturingEndpoints = {
 } as const;
 
 /**
- * Crime Industry endpoints (Phase 1 Alpha + Phase 2 Beta)
+ * Crime Industry endpoints (Phase 1 Alpha + Phase 2 Beta + Phase 11 MMO)
  * Phase 1: Production, distribution, marketplace, laundering, heat
  * Phase 2: Gangs, territories, turf wars, travel/state pricing
+ * Phase 11: Street Trading MMO - Buy/sell drugs, travel between states
  */
 export const crimeEndpoints = {
   // Phase 1 (Alpha) - Economic Loop
@@ -485,6 +486,22 @@ export const crimeEndpoints = {
   marketplace: '/api/crime/marketplace',
   laundering: '/api/crime/laundering',
   heat: '/api/crime/heat',
+  
+  // Phase 11 (MMO) - Street Trading Core
+  stash: {
+    get: '/api/crime/stash',
+    initialize: '/api/crime/stash',
+    travel: '/api/crime/stash/travel',
+  },
+  
+  trading: {
+    buySell: '/api/crime/trading/buy-sell',
+  },
+  
+  pricing: {
+    byState: (state: string) => `/api/crime/pricing?state=${state}` as const,
+    all: '/api/crime/pricing?all=true',
+  },
   
   // Phase 2 (Beta) - MMO Social Layer
   gangs: {

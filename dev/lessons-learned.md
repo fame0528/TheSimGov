@@ -1,6 +1,6 @@
 # 📚 Lessons Learned
 
-**Last Updated:** 2025-12-04
+**Last Updated:** 2025-12-05
 
 This file captures insights, patterns, and lessons from completed features. Auto-updated by AUTO_UPDATE_COMPLETED().
 
@@ -18,6 +18,18 @@ Each lesson includes:
 ---
 
 ## 🎓 Lessons
+
+### 2025-12-05: Consolidate Related Data into Single Document
+**Context:** User Model Consolidation - merged PlayerStash into User.crime subdocument  
+**Lesson:** Having separate collections for tightly-coupled data (User + PlayerStash) creates synchronization issues, duplicate lookups, and confusion about which is the source of truth. Embedding related data as subdocuments (User.crime) simplifies queries, ensures atomicity, and eliminates sync bugs.  
+**Impact:** Removed PlayerStash model entirely. All crime data now accessed via single User document query. Cash is unified at User.cash level.  
+**Action:** When designing new features, prefer embedding related data as subdocuments over separate collections unless data needs independent scaling or has many-to-many relationships. Use single source of truth pattern.
+
+### 2025-12-05: Use Correct Type Values from Imports
+**Context:** Travel route had TravelEncounterType values like 'PoliceCheckpoint' but actual type uses 'police_checkpoint' (snake_case)  
+**Lesson:** Always read the actual type definition before using literal values. TypeScript will catch mismatches but only if types are imported correctly.  
+**Impact:** Fixed 6 encounter type values from PascalCase to snake_case.  
+**Action:** When using union literal types, always verify exact values from the type definition. Use IDE autocomplete to avoid typos.
 
 ### 2025-12-04: HeroUI Color Props Require Explicit Union Types
 **Context:** Complete `as any` elimination - discovered 85+ components using `color={someString as any}` for HeroUI Chip/Badge/Progress components  

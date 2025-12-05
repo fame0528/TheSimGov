@@ -13,6 +13,53 @@
 import type { IndustryType, LoanType, ContractType, ContractStatus, LoanStatus, InvestmentType } from './enums';
 import type { StateAbbreviation } from './state';
 import type { Gender, Ethnicity } from './portraits';
+import type { SubstanceName } from './crime';
+
+/**
+ * Drug inventory item in player's crime stash
+ */
+export interface UserDrugItem {
+  substance: SubstanceName;
+  strain?: string;
+  quantity: number;
+  quality: number;
+  avgPurchasePrice: number;
+  acquiredAt: Date;
+}
+
+/**
+ * Crime/drug trading data embedded in User
+ */
+export interface UserCrimeData {
+  /** Current city within state */
+  currentCity: string;
+  /** Law enforcement attention 0-100 */
+  heat: number;
+  /** Street reputation 0-100 */
+  reputation: number;
+  /** Max units player can carry */
+  carryCapacity: number;
+  /** Drug inventory */
+  inventory: UserDrugItem[];
+  /** Street level 1-100 */
+  level: number;
+  /** XP toward next level */
+  experience: number;
+  /** Unlocked drug types */
+  unlockedSubstances: SubstanceName[];
+  /** Lifetime profit from deals */
+  totalProfit: number;
+  /** Total deals attempted */
+  totalDeals: number;
+  /** Successful deals completed */
+  successfulDeals: number;
+  /** Times arrested */
+  timesArrested: number;
+  /** Times mugged */
+  timesMugged: number;
+  /** Last crime activity */
+  lastActiveAt: Date;
+}
 
 /**
  * User account model
@@ -33,7 +80,9 @@ export interface User {
   createdAt: Date;
   lastLogin?: Date;
   companies: string[]; // Company IDs
-  cash: number; // Player's liquid cash
+  cash: number; // Player's liquid cash (vulnerable to mugging in crime)
+  bankBalance: number; // Money in bank (safe from mugging, earns interest)
+  crime?: UserCrimeData; // Crime/drug trading data
 }
 
 /**

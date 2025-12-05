@@ -10,13 +10,14 @@
 
 import React from 'react';
 import { Tabs, Tab, Button, Card, CardBody } from '@heroui/react';
-import { Factory, Truck, ShoppingBag, DollarSign, Flame, Plus } from 'lucide-react';
+import { Factory, Truck, ShoppingBag, DollarSign, Flame, Plus, ShoppingCart } from 'lucide-react';
 import type { CrimeSummary } from '@/hooks/useCrime';
 import { FacilityCard } from './FacilityCard';
 import { RouteCard } from './RouteCard';
 import { ListingCard } from './ListingCard';
 import { ChannelCard } from './ChannelCard';
 import { HeatDisplay } from './HeatDisplay';
+import { TradingDashboard } from './trading/TradingDashboard';
 
 interface CrimeDashboardProps {
   summary: CrimeSummary;
@@ -367,6 +368,20 @@ export function CrimeDashboard({
                 </CardBody>
               </Card>
             )}
+          </div>
+        </Tab>
+
+        <Tab
+          key="trading"
+          title={
+            <div className="flex items-center space-x-2">
+              <ShoppingCart className="h-4 w-4" />
+              <span>Street Trading</span>
+            </div>
+          }
+        >
+          <div className="py-6">
+            <TradingDashboard />
           </div>
         </Tab>
 
