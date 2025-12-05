@@ -1,7 +1,7 @@
 # 🚧 In Progress Features
 
 **Last Updated:** 2025-12-05  
-**Session Status:** ✅ Session Closed — User Model Consolidation Complete  
+**Session Status:** ✅ Session Closed — DB Init Script Complete  
 **ECHO Version:** v1.4.0 (OPTIMIZED Release)
 
 This file tracks features currently being implemented. Features move here from `planned.md` when work begins, and move to `completed.md` when finished.
@@ -11,42 +11,46 @@ This file tracks features currently being implemented. Features move here from `
 ## 📊 Current Focus
 
 **Active Work:** None — Session properly closed  
-**Last Completed:** User Model Consolidation (PlayerStash → User.crime)  
+**Last Completed:** Comprehensive DB Init Script + Schema Fixes  
 **TypeScript:** 0 errors ✅
 
 ---
 
 ## ✅ Session 2025-12-05 Complete
 
-### User Model Consolidation (PlayerStash Removal)
+### 1. Comprehensive DB Init Script (FID-20251205-007)
+
+**Completed Tasks:**
+- ✅ Created `scripts/initDB.ts` (536 LOC) - comprehensive DB scaffold
+- ✅ Registered 106 Mongoose models for index creation
+- ✅ Created 635 custom indexes across all collections
+- ✅ Added StatePricing seed for all 51 states
+- ✅ Added npm scripts: `db:init`, `db:init:qa`, `db:drop`, `db:seed`
+- ✅ Fixed 3 schema index conflicts:
+  - Business.ts: Removed duplicate `convertedFromFacilityId` index
+  - Union.ts: Removed duplicate `slug` unique constraint
+  - StudentEnrollment.ts: Fixed sparse + partialFilterExpression conflict
+- ✅ Installed tsx for TypeScript script execution
+
+### 2. User Model Consolidation (FID-20251205-006)
 
 **Completed Tasks:**
 - ✅ Consolidated all crime data into `User.crime` subdocument
 - ✅ Unified `User.cash` as single source of truth for money
 - ✅ Added `User.bankBalance` for safe deposits
-- ✅ Rewrote `stash/route.ts` to use User.crime
-- ✅ Rewrote `buy-sell/route.ts` to use User.crime  
-- ✅ Rewrote `travel/route.ts` to use User.crime
+- ✅ Rewrote stash, buy-sell, travel routes
 - ✅ Deleted `PlayerStash.ts` model file
-- ✅ Fixed TravelEncounterType to use correct snake_case values
-- ✅ Fixed useCrimeTrading hook (playerId → id)
 - ✅ TypeScript: 0 errors
 
-### Current Data Architecture
+### Current DB Architecture
 
 ```
-User {
-  cash: number           // Unified cash (default 5000)
-  bankBalance: number    // Safe money (bank deposits)
-  state: StateCode       // Current US state
-  
-  crime: {               // Embedded subdocument
-    currentCity, heat, reputation, carryCapacity,
-    inventory, level, experience, unlockedSubstances,
-    totalProfit, totalDeals, successfulDeals,
-    timesArrested, timesMugged, lastActiveAt
-  }
-}
+106 Collections | 635 Indexes | 51 StatePricing Records
+
+npm run db:init      # Full reset with seed data
+npm run db:init:qa   # Full reset with QA test data
+npm run db:drop      # Drop only
+npm run db:seed      # Seed only
 ```
 
 ---

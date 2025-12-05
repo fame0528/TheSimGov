@@ -8,40 +8,41 @@
 
 ---
 
-## 🚨 SESSION STATUS: ✅ SESSION CLOSED — ALL TASKS COMPLETE
+## 🚨 SESSION STATUS: ✅ SESSION CLOSED — SOLID BASELINE ESTABLISHED
 
 **Last Session:** 2025-12-05  
 **Active FID:** None — Session properly closed
 
 **Completed This Session:**
+- ✅ Created comprehensive DB init script (`scripts/initDB.ts`)
+- ✅ Registered 106 models with 635 custom indexes
+- ✅ Fixed 3 schema index conflicts (Business, Union, StudentEnrollment)
+- ✅ Added npm scripts: `db:init`, `db:init:qa`, `db:drop`, `db:seed`
 - ✅ Consolidated PlayerStash → User.crime subdocument
-- ✅ Unified User.cash as single money source ($5000 default)
-- ✅ Added User.bankBalance for safe deposits
-- ✅ Rewrote stash, buy-sell, and travel routes
-- ✅ Deleted PlayerStash model (no longer needed)
-- ✅ Fixed TravelEncounterType and hook issues
 - ✅ TypeScript: 0 errors
 
 **Next Up:** Phase 11.2 — Production Foundation (16-24h)
 
 ---
 
-## 📊 Current State (21 FIDs Complete)
+## 📊 Current State (22 FIDs Complete)
 
-### ✅ Just Completed: User Model Consolidation
+### ✅ Just Completed: DB Init Script
 
 | Metric | Value |
 |--------|-------|
-| **FID** | FID-20251205-006 |
+| **FID** | FID-20251205-007 |
 | **Status** | Complete ✅ |
-| **Routes Rewritten** | 3 |
-| **Models Consolidated** | 1 |
+| **Collections** | 106 |
+| **Indexes** | 635 |
+| **Schema Fixes** | 3 |
 
-**New Architecture:**
-```
-User.cash         → Unified money
-User.bankBalance  → Safe deposits  
-User.crime        → All crime data
+**DB Commands:**
+```bash
+npm run db:init      # Full reset + seed
+npm run db:init:qa   # Full reset + QA data
+npm run db:drop      # Drop all collections
+npm run db:seed      # Seed only (no drop)
 ```
 
 ### ✅ Previous: Type Safety Achievement

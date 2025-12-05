@@ -375,7 +375,7 @@ const UnionSchema = new Schema<UnionDocument>(
   {
     // Identity
     name: { type: String, required: true, maxlength: 100 },
-    slug: { type: String, required: true, unique: true, lowercase: true },
+    slug: { type: String, required: true, lowercase: true },
     acronym: { type: String, maxlength: 20 },
     description: { type: String, required: true, maxlength: 2000 },
     motto: { type: String, maxlength: 200 },

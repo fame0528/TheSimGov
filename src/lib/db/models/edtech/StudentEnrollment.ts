@@ -388,11 +388,11 @@ StudentEnrollmentSchema.index({ refunded: 1, paymentStatus: 1 }); // Refund trac
  */
 StudentEnrollmentSchema.index(
   { student: 1, course: 1 },
-  { unique: true, sparse: true, partialFilterExpression: { course: { $exists: true } } }
+  { unique: true, partialFilterExpression: { course: { $exists: true } } }
 );
 StudentEnrollmentSchema.index(
   { student: 1, certification: 1 },
-  { unique: true, sparse: true, partialFilterExpression: { certification: { $exists: true } } }
+  { unique: true, partialFilterExpression: { certification: { $exists: true } } }
 );
 
 /**

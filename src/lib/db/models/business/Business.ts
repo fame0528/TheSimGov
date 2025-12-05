@@ -59,7 +59,7 @@ const businessSchema = new Schema<BusinessDocument>(
     ownerId: { type: String, required: true, index: true },
     companyId: { type: String, index: true },
     facilityId: { type: String, index: true },
-    convertedFromFacilityId: { type: String, index: true },
+    convertedFromFacilityId: { type: String },
     category: {
       type: String,
       required: true,

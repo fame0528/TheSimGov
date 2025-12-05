@@ -22,10 +22,11 @@
 | Metric | Status |
 |--------|--------|
 | **Development Phase** | Phase 11 - Crime MMO (Street Trading Complete) |
-| **FIDs Complete** | 21/21 (100%) ✅ |
+| **FIDs Complete** | 22/22 (100%) ✅ |
 | **TypeScript Errors** | 🎯 0 (Clean Build) |
 | **`as any` Count** | 🎯 0 (Complete Elimination) |
 | **Build Status** | ✅ Passing |
+| **DB Collections** | 106 with 635 indexes |
 | **ECHO Compliance** | 🛡️ v1.4.0 OPTIMIZED Active |
 
 **Last Updated:** December 5, 2025
@@ -120,6 +121,12 @@ npm test
 
 # TypeScript check
 npx tsc --noEmit
+
+# Database initialization (drop + create + seed)
+npm run db:init
+
+# Database init with QA test data
+npm run db:init:qa
 ```
 
 ### **Environment Setup**
@@ -183,9 +190,10 @@ See [`/dev/fids/`](./dev/fids/) for individual feature documentation.
 
 | Category | Current Status |
 |----------|---------------|
-| **FIDs Complete** | 21/21 (100%) ✅ |
-| **Total LOC Created** | ~78,000+ |
-| **Lines of Code** | ~120,000+ (including dependencies) |
+| **FIDs Complete** | 22/22 (100%) ✅ |
+| **Total LOC Created** | ~78,500+ |
+| **DB Collections** | 106 |
+| **DB Indexes** | 635 |
 | **TypeScript Coverage** | 100% (strict mode) |
 | **`as any` Patterns** | 0 (Complete elimination) |
 | **Build Time** | ~15s (Turbopack) |

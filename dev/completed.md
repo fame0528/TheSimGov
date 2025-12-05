@@ -1,10 +1,63 @@
 ﻿# ✅ Completed Features
 
 **Last Updated:** 2025-12-05  
-**Total Completed:** 21/21 FIDs + Game Audit ✅  
+**Total Completed:** 22/22 FIDs + Game Audit ✅  
 **Quality Standard:** ECHO v1.4.0 AAA (OPTIMIZED Release)
 
 This file tracks successfully completed features with metrics and lessons learned.
+
+---
+
+## [FID-20251205-007] Comprehensive DB Init Script
+**Status:** ✅ COMPLETED **Priority:** P1 (High) **Complexity:** 3
+**Started:** 2025-12-05 **Completed:** 2025-12-05
+**Estimated:** 2h **Actual:** 1h
+
+**Description:** Create comprehensive database initialization script that drops all collections, creates indexes, and seeds reference data for fresh database setup.
+
+**Deliverables:**
+- ✅ Created `scripts/initDB.ts` (536 LOC)
+- ✅ Registered 106 Mongoose models for collection/index creation
+- ✅ Created 635 custom indexes across all domains
+- ✅ Seeded StatePricing for all 51 states (reference data)
+- ✅ Optional QA data seeding with `--with-qa` flag
+- ✅ Added npm scripts: `db:init`, `db:init:qa`, `db:drop`, `db:seed`
+- ✅ Installed tsx dependency for TypeScript script execution
+- ✅ Fixed 3 schema index conflicts
+
+**Schema Fixes:**
+| File | Issue | Fix |
+|------|-------|-----|
+| `Business.ts` | Duplicate index on convertedFromFacilityId | Removed `index: true` (kept schema.index with unique) |
+| `Union.ts` | Duplicate unique on slug | Removed `unique: true` from field (kept schema.index) |
+| `StudentEnrollment.ts` | sparse + partialFilterExpression conflict | Removed `sparse: true` from compound indexes |
+
+**Files Created:**
+| File | LOC | Purpose |
+|------|-----|---------||
+| `scripts/initDB.ts` | 536 | Comprehensive DB scaffold script |
+
+**Files Modified:**
+| File | Changes |
+|------|---------||
+| `package.json` | Added db:init, db:init:qa, db:drop, db:seed scripts |
+| `src/lib/db/models/business/Business.ts` | Removed duplicate index |
+| `src/lib/db/models/politics/Union.ts` | Removed duplicate unique |
+| `src/lib/db/models/edtech/StudentEnrollment.ts` | Fixed sparse+partial conflict |
+
+**DB Init Output:**
+```
+106 collections created
+635 custom indexes
+51 StatePricing records seeded
+0 errors
+```
+
+**Metrics:**
+- Collections Registered: 106
+- Custom Indexes: 635
+- Schema Fixes: 3
+- Script LOC: 536
 
 ---
 
