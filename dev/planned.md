@@ -1,6 +1,6 @@
 # 📋 Planned Features
 
-**Last Updated:** 2025-12-04  
+**Last Updated:** 2025-12-05  
 **Single Source of Truth:** [MASTER_PLAN.md](./MASTER_PLAN.md)  
 **Session Status:** ✅ Crime MMO Design Complete - Ready for Implementation
 
@@ -16,6 +16,23 @@ This file is now kept minimal. All planned work is documented in:
 ---
 
 ## 📊 Current Planned Work
+
+### 🆕 FID-20251205-008: In-Game Email/Messaging System
+**Status:** 🔴 PLANNED  
+**Priority:** P2 (Medium)  
+**Complexity:** 3 (Medium)  
+**Estimated:** 8-12h
+
+Player-to-player messaging system:
+- Send/receive messages by username
+- Inbox, Sent, Read/Unread status
+- Unread count badge in nav
+- Profanity filter
+- Rate limiting (10/min)
+
+**Full Design:** See `dev/fids/FID-20251205-008.md`
+
+---
 
 ### 🔥 MAJOR NEW INITIATIVE — NEXT UP
 
