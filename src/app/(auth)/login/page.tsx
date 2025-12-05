@@ -107,21 +107,25 @@ function LoginForm() {
         redirect: false,
         email,
         password,
+        callbackUrl: '/game',
       });
 
       if (result?.error) {
         // Use server-provided error if available (e.g., registration incomplete)
         setError(result.error);
         setIsLoading(false);
-      } else {
+      } else if (result?.ok) {
         // Show success animation
         setShowSuccess(true);
         
-        // Wait for animation, then redirect
+        // Wait for animation, then use window.location for full page reload
+        // This ensures cookies are properly read on the new page
         setTimeout(() => {
-          router.push('/game');
-          router.refresh();
+          window.location.href = '/game';
         }, 1500);
+      } else {
+        setError('Login failed. Please try again.');
+        setIsLoading(false);
       }
     } catch (err) {
       setError('An unexpected error occurred. Please try again.');
