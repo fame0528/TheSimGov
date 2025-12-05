@@ -114,8 +114,13 @@ export async function POST(request: NextRequest) {
     const validationResult = registerSchema.safeParse(body);
     if (!validationResult.success) {
       console.log('[Register API] Validation failed:', JSON.stringify(validationResult.error.errors, null, 2));
+      // Return detailed errors for debugging
       return NextResponse.json(
-        { error: validationResult.error.errors[0].message },
+        { 
+          error: validationResult.error.errors[0].message,
+          details: validationResult.error.errors,
+          receivedFields: Object.keys(body),
+        },
         { status: 400 }
       );
     }
