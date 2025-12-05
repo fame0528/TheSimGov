@@ -106,10 +106,14 @@ const registerSchema = z.object({
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
+    
+    // Log received payload for debugging (remove in production)
+    console.log('[Register API] Received payload:', JSON.stringify(body, null, 2));
 
     // Validate request body
     const validationResult = registerSchema.safeParse(body);
     if (!validationResult.success) {
+      console.log('[Register API] Validation failed:', JSON.stringify(validationResult.error.errors, null, 2));
       return NextResponse.json(
         { error: validationResult.error.errors[0].message },
         { status: 400 }
