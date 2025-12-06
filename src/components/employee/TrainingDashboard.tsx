@@ -664,7 +664,7 @@ export default function TrainingDashboard({
         <CardHeader className="flex justify-between items-center">
           <div>
             <h1 className="text-2xl font-bold">Training & Development</h1>
-            <p className="text-sm text-default-500">
+            <p className="text-sm text-default-700">
               {employee.name} • {employee.role}
             </p>
           </div>
@@ -701,7 +701,7 @@ export default function TrainingDashboard({
             <CardBody>
               <div className="space-y-4">
                 {scheduledSessions.length === 0 ? (
-                  <p className="text-default-500 text-center py-8">
+                  <p className="text-default-700 text-center py-8">
                     No scheduled training sessions
                   </p>
                 ) : (
@@ -772,7 +772,7 @@ export default function TrainingDashboard({
             <CardBody>
               <div className="space-y-4">
                 {trainingRecords.filter((r: TrainingRecord) => !r.completedAt).length === 0 ? (
-                  <p className="text-default-500 text-center py-8">
+                  <p className="text-default-700 text-center py-8">
                     No active training courses
                   </p>
                 ) : (
@@ -792,7 +792,7 @@ export default function TrainingDashboard({
                                   <h3 className="font-semibold">
                                     {SKILL_LABELS[record.skill]} Training
                                   </h3>
-                                  <p className="text-sm text-default-500">
+                                  <p className="text-sm text-default-700">
                                     Started {record.startedAt.toLocaleDateString()}
                                   </p>
                                 </div>
@@ -831,7 +831,7 @@ export default function TrainingDashboard({
             <CardBody>
               <div className="space-y-4">
                 {certifications.length === 0 ? (
-                  <p className="text-default-500 text-center py-8">
+                  <p className="text-default-700 text-center py-8">
                     No certifications earned yet
                   </p>
                 ) : (
@@ -1056,7 +1056,7 @@ export default function TrainingDashboard({
             <CardBody>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {filteredCourses.length === 0 ? (
-                  <p className="text-default-500 text-center py-8 col-span-2">
+                  <p className="text-default-700 text-center py-8 col-span-2">
                     No courses found matching your filters
                   </p>
                 ) : (
@@ -1083,15 +1083,15 @@ export default function TrainingDashboard({
                           <Divider />
                           <div className="grid grid-cols-3 gap-2 text-sm">
                             <div>
-                              <p className="text-default-500">Duration</p>
+                              <p className="text-default-700">Duration</p>
                               <p className="font-semibold">{course.estimatedHours}h</p>
                             </div>
                             <div>
-                              <p className="text-default-500">Cost</p>
+                              <p className="text-default-700">Cost</p>
                               <p className="font-semibold">${course.cost}</p>
                             </div>
                             <div>
-                              <p className="text-default-500">Provider</p>
+                              <p className="text-default-700">Provider</p>
                               <p className="font-semibold text-xs">{course.provider}</p>
                             </div>
                           </div>
@@ -1136,19 +1136,19 @@ export default function TrainingDashboard({
                   <Divider />
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <p className="text-sm text-default-500">Completed</p>
+                      <p className="text-sm text-default-700">Completed</p>
                       <p className="text-xl font-bold">{completionStats.completed}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-default-500">In Progress</p>
+                      <p className="text-sm text-default-700">In Progress</p>
                       <p className="text-xl font-bold">{completionStats.inProgress}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-default-500">Total Hours</p>
+                      <p className="text-sm text-default-700">Total Hours</p>
                       <p className="text-xl font-bold">{completionStats.totalHours.toFixed(0)}h</p>
                     </div>
                     <div>
-                      <p className="text-sm text-default-500">Total Cost</p>
+                      <p className="text-sm text-default-700">Total Cost</p>
                       <p className="text-xl font-bold">
                         ${completionStats.totalCost.toLocaleString()}
                       </p>
@@ -1223,21 +1223,21 @@ export default function TrainingDashboard({
               <CardBody>
                 <div className="grid grid-cols-3 gap-6">
                   <div className="text-center">
-                    <p className="text-sm text-default-500 mb-1">Investment</p>
+                    <p className="text-sm text-default-700 mb-1">Investment</p>
                     <p className="text-2xl font-bold text-warning">
                       ${completionStats.totalCost.toLocaleString()}
                     </p>
                     <p className="text-xs text-default-400 mt-1">Total training cost</p>
                   </div>
                   <div className="text-center">
-                    <p className="text-sm text-default-500 mb-1">Time Invested</p>
+                    <p className="text-sm text-default-700 mb-1">Time Invested</p>
                     <p className="text-2xl font-bold text-primary">
                       {completionStats.totalHours.toFixed(0)}h
                     </p>
                     <p className="text-xs text-default-400 mt-1">Hours of learning</p>
                   </div>
                   <div className="text-center">
-                    <p className="text-sm text-default-500 mb-1">Skill Gain</p>
+                    <p className="text-sm text-default-700 mb-1">Skill Gain</p>
                     <p className="text-2xl font-bold text-success">
                       +{completionStats.totalImprovement}
                     </p>
@@ -1254,7 +1254,7 @@ export default function TrainingDashboard({
           <Card>
             <CardHeader>
               <h2 className="text-xl font-semibold">Recommended Training</h2>
-              <p className="text-sm text-default-500">
+              <p className="text-sm text-default-700">
                 Based on your skill gaps and career path
               </p>
             </CardHeader>
@@ -1265,7 +1265,7 @@ export default function TrainingDashboard({
                     <p className="text-success text-lg font-semibold mb-2">
                       ✓ You're meeting all role requirements!
                     </p>
-                    <p className="text-default-500">
+                    <p className="text-default-700">
                       Check the Course Library for advanced training options.
                     </p>
                   </div>
@@ -1314,15 +1314,15 @@ export default function TrainingDashboard({
                             <div className="flex items-center justify-between">
                               <div className="flex gap-6 text-sm">
                                 <div>
-                                  <span className="text-default-500">Duration: </span>
+                                  <span className="text-default-700">Duration: </span>
                                   <span className="font-semibold">{course.estimatedHours}h</span>
                                 </div>
                                 <div>
-                                  <span className="text-default-500">Cost: </span>
+                                  <span className="text-default-700">Cost: </span>
                                   <span className="font-semibold">${course.cost}</span>
                                 </div>
                                 <div>
-                                  <span className="text-default-500">Provider: </span>
+                                  <span className="text-default-700">Provider: </span>
                                   <span className="font-semibold">{course.provider}</span>
                                 </div>
                               </div>
@@ -1356,7 +1356,7 @@ export default function TrainingDashboard({
                 <div>
                   <h3 className="font-semibold mb-3">Upcoming Events</h3>
                   {scheduledSessions.length === 0 ? (
-                    <p className="text-default-500 text-center py-4">No upcoming events</p>
+                    <p className="text-default-700 text-center py-4">No upcoming events</p>
                   ) : (
                     <div className="space-y-2">
                       {scheduledSessions.map((session) => {
@@ -1373,7 +1373,7 @@ export default function TrainingDashboard({
                               <div className="text-2xl font-bold">
                                 {session.date.getDate()}
                               </div>
-                              <div className="text-xs text-default-500">
+                              <div className="text-xs text-default-700">
                                 {session.date.toLocaleDateString('en-US', { month: 'short' })}
                               </div>
                             </div>
@@ -1470,19 +1470,19 @@ export default function TrainingDashboard({
                 <Divider />
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   <div>
-                    <p className="text-default-500">Skill</p>
+                    <p className="text-default-700">Skill</p>
                     <p className="font-semibold">{SKILL_LABELS[selectedCourse.skill]}</p>
                   </div>
                   <div>
-                    <p className="text-default-500">Level</p>
+                    <p className="text-default-700">Level</p>
                     <p className="font-semibold">{selectedCourse.level}</p>
                   </div>
                   <div>
-                    <p className="text-default-500">Duration</p>
+                    <p className="text-default-700">Duration</p>
                     <p className="font-semibold">{selectedCourse.estimatedHours} hours</p>
                   </div>
                   <div>
-                    <p className="text-default-500">Cost</p>
+                    <p className="text-default-700">Cost</p>
                     <p className="font-semibold">${selectedCourse.cost}</p>
                   </div>
                 </div>
@@ -1533,22 +1533,22 @@ export default function TrainingDashboard({
                 <Divider />
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <p className="text-sm text-default-500">Credential ID</p>
+                    <p className="text-sm text-default-700">Credential ID</p>
                     <p className="font-mono font-semibold">{selectedCert.credentialId}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-default-500">Skill Area</p>
+                    <p className="text-sm text-default-700">Skill Area</p>
                     <p className="font-semibold">{SKILL_LABELS[selectedCert.skill]}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-default-500">Earned Date</p>
+                    <p className="text-sm text-default-700">Earned Date</p>
                     <p className="font-semibold">
                       {selectedCert.earnedAt.toLocaleDateString()}
                     </p>
                   </div>
                   {selectedCert.expiresAt && (
                     <div>
-                      <p className="text-sm text-default-500">Expiration Date</p>
+                      <p className="text-sm text-default-700">Expiration Date</p>
                       <p className="font-semibold">
                         {selectedCert.expiresAt.toLocaleDateString()}
                       </p>

@@ -88,7 +88,7 @@ export default function BudgetAllocation({
     <Card className="max-w-4xl mx-auto">
       <CardHeader className="flex flex-col items-start gap-2">
         <h2 className="text-2xl font-bold">Budget Allocation</h2>
-        <p className="text-default-500">Distribute company funds across departments</p>
+        <p className="text-default-700">Distribute company funds across departments</p>
       </CardHeader>
       <CardBody className="space-y-6">
         {/* Available Cash Summary */}
@@ -96,15 +96,15 @@ export default function BudgetAllocation({
           <CardBody>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <p className="text-sm text-default-500">Available Cash</p>
+                <p className="text-sm text-default-700">Available Cash</p>
                 <p className="text-2xl font-bold">${availableCash.toLocaleString()}</p>
               </div>
               <div>
-                <p className="text-sm text-default-500">Total Allocated</p>
+                <p className="text-sm text-default-700">Total Allocated</p>
                 <p className="text-2xl font-bold">${totalAllocated.toLocaleString()}</p>
               </div>
               <div>
-                <p className="text-sm text-default-500">Remaining</p>
+                <p className="text-sm text-default-700">Remaining</p>
                 <p className={`text-2xl font-bold ${remaining < 0 ? 'text-danger' : 'text-success'}`}>
                   ${remaining.toLocaleString()}
                 </p>
@@ -137,13 +137,13 @@ export default function BudgetAllocation({
                     placeholder="Enter amount"
                     value={allocation.toString()}
                     onValueChange={(val) => handleAllocationChange(dept.id, val)}
-                    startContent={<span className="text-default-500">$</span>}
+                    startContent={<span className="text-default-700">$</span>}
                     min="0"
                     max={availableCash.toString()}
                   />
                 </div>
                 <div className="w-24 text-right">
-                  <p className="text-sm text-default-500">Percentage</p>
+                  <p className="text-sm text-default-700">Percentage</p>
                   <p className="text-lg font-bold">{percentage.toFixed(1)}%</p>
                 </div>
               </div>

@@ -67,7 +67,7 @@ export function MarketingDashboard({
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-3xl font-bold">📢 Marketing Department</h2>
-          <p className="text-default-500">Level {department.level} • {formatCurrency(department.budget)} Budget</p>
+          <p className="text-default-700">Level {department.level} • {formatCurrency(department.budget)} Budget</p>
         </div>
         {onRefresh && <Button size="sm" variant="flat" onPress={onRefresh}>Refresh</Button>}
       </div>
@@ -79,19 +79,19 @@ export function MarketingDashboard({
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardBody>
-            <p className="text-sm text-default-500">Brand Value</p>
+            <p className="text-sm text-default-700">Brand Value</p>
             <p className="text-2xl font-bold">{formatCurrency(department.brandValue || 0)}</p>
           </CardBody>
         </Card>
         <Card>
           <CardBody>
-            <p className="text-sm text-default-500">Customer Base</p>
+            <p className="text-sm text-default-700">Customer Base</p>
             <p className="text-2xl font-bold">{formatNumber(department.customerBase || 0)}</p>
           </CardBody>
         </Card>
         <Card>
           <CardBody>
-            <p className="text-sm text-default-500">Market Share</p>
+            <p className="text-sm text-default-700">Market Share</p>
             <p className="text-2xl font-bold">
               <Chip color={(department.marketShare || 0) >= 20 ? 'success' : (department.marketShare || 0) >= 10 ? 'warning' : 'default'}>
                 {(department.marketShare || 0).toFixed(1)}%
@@ -101,7 +101,7 @@ export function MarketingDashboard({
         </Card>
         <Card>
           <CardBody>
-            <p className="text-sm text-default-500">Avg Campaign ROI</p>
+            <p className="text-sm text-default-700">Avg Campaign ROI</p>
             <p className="text-2xl font-bold">
               <span className={avgROI >= 0 ? 'text-success' : 'text-danger'}>
                 {avgROI >= 0 ? '+' : ''}{avgROI.toFixed(1)}%
@@ -119,15 +119,15 @@ export function MarketingDashboard({
           </CardHeader>
           <CardBody className="space-y-3">
             <div className="flex justify-between">
-              <span className="text-default-500">CAC (Cost per Acquisition)</span>
+              <span className="text-default-700">CAC (Cost per Acquisition)</span>
               <span className="font-semibold">{formatCurrency(department.customerAcquisitionCost || 0)}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-default-500">LTV (Lifetime Value)</span>
+              <span className="text-default-700">LTV (Lifetime Value)</span>
               <span className="font-semibold">{formatCurrency(department.customerLifetimeValue || 0)}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-default-500">LTV:CAC Ratio</span>
+              <span className="text-default-700">LTV:CAC Ratio</span>
               <span className={`font-semibold ${(department.customerLifetimeValue || 0) / Math.max(1, department.customerAcquisitionCost || 1) >= 3 ? 'text-success' : 'text-warning'}`}>
                 {((department.customerLifetimeValue || 0) / Math.max(1, department.customerAcquisitionCost || 1)).toFixed(2)}:1
               </span>
@@ -145,11 +145,11 @@ export function MarketingDashboard({
               <div key={campaign.id} className="flex justify-between items-center py-2 border-b border-divider last:border-0">
                 <div>
                   <p className="font-medium">{campaign.name}</p>
-                  <p className="text-xs text-default-500">{campaign.campaignType}</p>
+                  <p className="text-xs text-default-700">{campaign.campaignType}</p>
                 </div>
                 <div className="text-right">
                   <p className="text-sm font-semibold">{formatNumber(campaign.reach)}</p>
-                  <p className="text-xs text-default-500">reach</p>
+                  <p className="text-xs text-default-700">reach</p>
                 </div>
               </div>
             ))}

@@ -122,7 +122,7 @@ function getStatusColor(status: ConsultingProjectStatus): 'default' | 'primary' 
 // ============================================================================
 
 /**
- * Metric card for displaying KPIs
+ * Metric card for displaying KPIs - AAA Design matching Banking
  */
 function MetricCard({
   title,
@@ -140,32 +140,33 @@ function MetricCard({
   color?: 'primary' | 'success' | 'warning' | 'danger';
 }) {
   const colorClasses = {
-    primary: 'bg-primary-100 text-primary-600',
-    success: 'bg-success-100 text-success-600',
-    warning: 'bg-warning-100 text-warning-600',
-    danger: 'bg-danger-100 text-danger-600',
+    primary: 'bg-blue-900/30 text-blue-400',
+    success: 'bg-green-900/30 text-green-400',
+    warning: 'bg-yellow-900/30 text-yellow-400',
+    danger: 'bg-red-900/30 text-red-400',
   };
 
   return (
-    <Card>
-      <CardBody className="p-4">
-        <div className="flex items-start justify-between">
-          <div>
-            <p className="text-sm text-default-500">{title}</p>
-            <p className="text-2xl font-bold mt-1">{value}</p>
-            {subtitle && <p className="text-xs text-default-400 mt-1">{subtitle}</p>}
-            {trend && (
-              <div className={`flex items-center gap-1 mt-2 text-xs ${trend.value >= 0 ? 'text-success' : 'text-danger'}`}>
-                <FiTrendingUp className={`w-3 h-3 ${trend.value < 0 ? 'rotate-180' : ''}`} />
-                <span>{Math.abs(trend.value)}% {trend.label}</span>
-              </div>
-            )}
-          </div>
-          <div className={`p-3 rounded-lg ${colorClasses[color]}`}>
-            <Icon className="w-5 h-5" />
-          </div>
+    <Card className="p-4 bg-slate-800/50 border border-slate-700">
+      <div className="flex items-start justify-between">
+        <div className={`p-3 rounded-xl ${colorClasses[color]}`}>
+          <Icon className="w-5 h-5" />
         </div>
-      </CardBody>
+        {trend && (
+          <Chip 
+            size="sm" 
+            color={trend.value >= 0 ? 'success' : 'danger'}
+            variant="flat"
+          >
+            {trend.value >= 0 ? '+' : ''}{trend.value}%
+          </Chip>
+        )}
+      </div>
+      <div className="mt-4">
+        <p className="text-sm text-gray-400">{title}</p>
+        <p className="text-2xl font-bold mt-1 text-white">{value}</p>
+        {subtitle && <p className="text-xs text-gray-500 mt-1">{subtitle}</p>}
+      </div>
     </Card>
   );
 }
@@ -203,7 +204,7 @@ function RecommendationCard({ recommendation }: { recommendation: ConsultingReco
                 {recommendation.priority}
               </Chip>
             </div>
-            <p className="text-xs text-default-500 mt-1">{recommendation.description}</p>
+            <p className="text-xs text-default-700 mt-1">{recommendation.description}</p>
           </div>
         </div>
       </CardBody>
@@ -536,7 +537,7 @@ export function ConsultingDashboard({ companyId }: ConsultingDashboardProps): Re
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Consulting Dashboard</h1>
-          <p className="text-default-500">Manage projects, track revenue, and monitor client satisfaction</p>
+          <p className="text-default-700">Manage projects, track revenue, and monitor client satisfaction</p>
         </div>
         <Button color="primary" startContent={<FiPlus />} onPress={onOpen}>
           New Project
@@ -621,11 +622,11 @@ export function ConsultingDashboard({ companyId }: ConsultingDashboardProps): Re
                   />
                   <div className="mt-4">
                     <div className="flex justify-between text-sm">
-                      <span className="text-default-500">Total Profit</span>
+                      <span className="text-default-700">Total Profit</span>
                       <span className="font-medium">{formatCurrency(metrics?.totalProfit || 0)}</span>
                     </div>
                     <div className="flex justify-between text-sm mt-1">
-                      <span className="text-default-500">Total Cost</span>
+                      <span className="text-default-700">Total Cost</span>
                       <span>{formatCurrency(metrics?.totalCost || 0)}</span>
                     </div>
                   </div>
@@ -646,11 +647,11 @@ export function ConsultingDashboard({ companyId }: ConsultingDashboardProps): Re
                   />
                   <div className="mt-4">
                     <div className="flex justify-between text-sm">
-                      <span className="text-default-500">Collected</span>
+                      <span className="text-default-700">Collected</span>
                       <span className="font-medium text-success">{formatCurrency(metrics?.totalCollected || 0)}</span>
                     </div>
                     <div className="flex justify-between text-sm mt-1">
-                      <span className="text-default-500">Outstanding</span>
+                      <span className="text-default-700">Outstanding</span>
                       <span className="text-warning">{formatCurrency(metrics?.outstandingBalance || 0)}</span>
                     </div>
                   </div>
@@ -890,7 +891,7 @@ export function ConsultingDashboard({ companyId }: ConsultingDashboardProps): Re
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   {billingBreakdown.map((item) => (
                     <div key={item.model} className="p-4 bg-default-100 rounded-lg">
-                      <p className="text-sm text-default-500">{item.model}</p>
+                      <p className="text-sm text-default-700">{item.model}</p>
                       <p className="text-xl font-bold">{formatCurrency(item.totalRevenue)}</p>
                       <p className="text-xs text-default-400 mt-1">
                         {item.count} projects | {item.percentOfRevenue}%

@@ -164,7 +164,7 @@ export function TalentMarketplace({
       {/* Header */}
       <div>
         <h2 className="text-3xl font-bold">👥 AI Talent Marketplace</h2>
-        <p className="text-default-500">Browse and hire top AI engineers and researchers</p>
+        <p className="text-default-700">Browse and hire top AI engineers and researchers</p>
       </div>
 
       {/* Filters */}
@@ -228,7 +228,7 @@ export function TalentMarketplace({
                   ) : null;
                 })}
               </div>
-              <span className="text-sm text-default-500">{comparison.length}/3 selected</span>
+              <span className="text-sm text-default-700">{comparison.length}/3 selected</span>
             </div>
           </CardBody>
         </Card>
@@ -238,7 +238,7 @@ export function TalentMarketplace({
       {filteredCandidates.length === 0 ? (
         <Card>
           <CardBody>
-            <p className="text-center text-default-500 py-8">
+            <p className="text-center text-default-700 py-8">
               No candidates match your filters. Adjust filters to see more talent.
             </p>
           </CardBody>
@@ -269,7 +269,7 @@ export function TalentMarketplace({
               <CardBody className="space-y-3">
                 {/* Expertise */}
                 <div>
-                  <p className="text-xs text-default-500 mb-1">Expertise</p>
+                  <p className="text-xs text-default-700 mb-1">Expertise</p>
                   <div className="flex flex-wrap gap-1">
                     {candidate.expertise.slice(0, 3).map(exp => (
                       <Chip key={exp} size="sm" variant="flat">{exp}</Chip>
@@ -280,19 +280,19 @@ export function TalentMarketplace({
                 {/* Skills */}
                 <div className="grid grid-cols-2 gap-2 text-xs">
                   <div>
-                    <span className="text-default-500">Research:</span>
+                    <span className="text-default-700">Research:</span>
                     <span className="font-bold ml-1">{candidate.skills.research}/10</span>
                   </div>
                   <div>
-                    <span className="text-default-500">Coding:</span>
+                    <span className="text-default-700">Coding:</span>
                     <span className="font-bold ml-1">{candidate.skills.coding}/10</span>
                   </div>
                   <div>
-                    <span className="text-default-500">Technical:</span>
+                    <span className="text-default-700">Technical:</span>
                     <span className="font-bold ml-1">{candidate.skills.technical}/100</span>
                   </div>
                   <div>
-                    <span className="text-default-500">Analytical:</span>
+                    <span className="text-default-700">Analytical:</span>
                     <span className="font-bold ml-1">{candidate.skills.analytical}/100</span>
                   </div>
                 </div>
@@ -300,7 +300,7 @@ export function TalentMarketplace({
                 {/* Salary & Interest */}
                 <div className="flex justify-between items-center text-sm">
                   <div>
-                    <span className="text-default-500">Expected:</span>
+                    <span className="text-default-700">Expected:</span>
                     <span className="font-bold ml-1">{formatCurrency(candidate.expectedSalary)}</span>
                   </div>
                   <Chip size="sm" color={

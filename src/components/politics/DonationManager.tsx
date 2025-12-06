@@ -225,7 +225,7 @@ export default function DonationManager({
         <DollarSign className="w-6 h-6 text-primary" />
         <div className="flex flex-col flex-1">
           <p className="text-xl font-bold">Campaign Donation Manager</p>
-          <p className="text-sm text-default-500">
+          <p className="text-sm text-default-700">
             Support candidates and gain political influence
           </p>
         </div>

@@ -110,7 +110,7 @@ export default function LobbiesPage() {
           </Button>
           <div>
             <h1 className="text-3xl font-bold">Lobbies</h1>
-            <p className="text-default-500">Join or create interest groups to influence policy</p>
+            <p className="text-default-700">Join or create interest groups to influence policy</p>
           </div>
         </div>
         <Button

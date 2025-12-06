@@ -189,7 +189,7 @@ export default function EndorsementsPanel() {
           <ThumbsUp className="w-8 h-8 text-primary" />
           <div>
             <h2 className="text-2xl font-bold">Political Endorsements</h2>
-            <p className="text-default-500 text-sm mt-1">
+            <p className="text-default-700 text-sm mt-1">
               {filteredEndorsements.length} of {data.data.total} total endorsements
             </p>
           </div>
@@ -312,7 +312,7 @@ export default function EndorsementsPanel() {
       {filteredEndorsements.length === 0 && data.data.total > 0 && (
         <Card>
           <CardBody>
-            <div className="text-center py-8 text-default-500">
+            <div className="text-center py-8 text-default-700">
               <ThumbsUp className="w-12 h-12 mx-auto mb-3 opacity-50" />
               <p className="font-semibold">No endorsements match filters</p>
               <p className="text-sm mt-1">Try selecting a different party filter</p>

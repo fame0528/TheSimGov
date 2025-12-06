@@ -84,7 +84,7 @@ export default function ModelDetailPage({
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold">{model.name}</h1>
-          <p className="text-default-500 mt-1">
+          <p className="text-default-700 mt-1">
             {model.architecture} • {model.modelSize} • {(model.parameters / 1_000_000_000).toFixed(2)}B parameters
           </p>
         </div>
@@ -117,16 +117,16 @@ export default function ModelDetailPage({
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="bg-default-100 p-4 rounded-lg">
-                <p className="text-sm text-default-500">Time Remaining</p>
+                <p className="text-sm text-default-700">Time Remaining</p>
                 <p className="text-2xl font-bold text-warning">{model.timeRemaining}h</p>
               </div>
               <div className="bg-default-100 p-4 rounded-lg">
-                <p className="text-sm text-default-500">Cost Spent</p>
+                <p className="text-sm text-default-700">Cost Spent</p>
                 <p className="text-2xl font-bold text-danger">{formatCurrency(model.costSpent)}</p>
-                <p className="text-xs text-default-500 mt-1">of {formatCurrency(model.estimatedCost)}</p>
+                <p className="text-xs text-default-700 mt-1">of {formatCurrency(model.estimatedCost)}</p>
               </div>
               <div className="bg-default-100 p-4 rounded-lg">
-                <p className="text-sm text-default-500">Compute Allocated</p>
+                <p className="text-sm text-default-700">Compute Allocated</p>
                 <p className="text-2xl font-bold text-success">{model.computeAllocation} GPU-hours</p>
               </div>
             </div>
@@ -142,19 +142,19 @@ export default function ModelDetailPage({
         <CardBody>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <p className="text-sm text-default-500">Architecture</p>
+              <p className="text-sm text-default-700">Architecture</p>
               <p className="font-bold">{model.architecture}</p>
             </div>
             <div>
-              <p className="text-sm text-default-500">Model Size</p>
+              <p className="text-sm text-default-700">Model Size</p>
               <p className="font-bold">{model.modelSize}</p>
             </div>
             <div>
-              <p className="text-sm text-default-500">Parameters</p>
+              <p className="text-sm text-default-700">Parameters</p>
               <p className="font-bold">{(model.parameters / 1_000_000_000).toFixed(2)}B</p>
             </div>
             <div>
-              <p className="text-sm text-default-500">Dataset Quality</p>
+              <p className="text-sm text-default-700">Dataset Quality</p>
               <Chip size="sm" color={model.datasetQuality === 'premium' ? 'success' : 'primary'}>
                 {model.datasetQuality}
               </Chip>
@@ -162,23 +162,23 @@ export default function ModelDetailPage({
             {model.apiEndpoint && (
               <>
                 <div>
-                  <p className="text-sm text-default-500">API Endpoint</p>
+                  <p className="text-sm text-default-700">API Endpoint</p>
                   <p className="font-mono text-sm">/api/ai/models/{model.apiEndpoint}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-default-500">Scaling Policy</p>
+                  <p className="text-sm text-default-700">Scaling Policy</p>
                   <Chip size="sm">{model.scalingPolicy}</Chip>
                 </div>
               </>
             )}
             <div>
-              <p className="text-sm text-default-500">Monitoring</p>
+              <p className="text-sm text-default-700">Monitoring</p>
               <Chip size="sm" color={model.monitoring ? 'success' : 'default'}>
                 {model.monitoring ? 'Enabled' : 'Disabled'}
               </Chip>
             </div>
             <div>
-              <p className="text-sm text-default-500">Created</p>
+              <p className="text-sm text-default-700">Created</p>
               <p className="font-bold">{model.createdAt.toLocaleDateString()}</p>
             </div>
           </div>

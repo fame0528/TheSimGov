@@ -103,7 +103,7 @@ function OutreachCard({ operation, onSelect }: OutreachCardProps) {
           </Chip>
         </div>
 
-        <div className="text-sm text-default-500">
+        <div className="text-sm text-default-700">
           {(operation.scheduledDate ? new Date(operation.scheduledDate).toLocaleDateString() : '—')} •{' '}
           {(operation.type ?? '').replace('_', ' ')}
         </div>
@@ -127,7 +127,7 @@ function OutreachCard({ operation, onSelect }: OutreachCardProps) {
             <span className="text-success">
               ✓ {(operation.successfulContacts ?? 0)} successful
             </span>
-            <span className="text-default-500">
+            <span className="text-default-700">
               {(operation.contactRate ?? 0).toFixed(1)}% rate
             </span>
           </div>
@@ -178,7 +178,7 @@ function OutreachDetail({ operation, onClose, onRefresh }: OutreachDetailProps) 
             <span className="text-3xl">{TYPE_ICONS[ui.type ?? ''] ?? '📋'}</span>
             <h2 className="text-2xl font-bold">{ui.name ?? ''}</h2>
           </div>
-          <p className="text-default-500 mt-1">
+          <p className="text-default-700 mt-1">
             {(ui.type ?? '').replace('_', ' ')} •{' '}
             {(ui.scheduledDate ? new Date(ui.scheduledDate as Date).toLocaleDateString() : '—')}
           </p>
@@ -195,7 +195,7 @@ function OutreachDetail({ operation, onClose, onRefresh }: OutreachDetailProps) 
         <Card>
           <CardBody className="text-center">
             <p className="text-2xl font-bold">{metrics.totalAttempts ?? 0}</p>
-            <p className="text-sm text-default-500">Total Attempts</p>
+            <p className="text-sm text-default-700">Total Attempts</p>
           </CardBody>
         </Card>
         <Card>
@@ -203,7 +203,7 @@ function OutreachDetail({ operation, onClose, onRefresh }: OutreachDetailProps) 
             <p className="text-2xl font-bold text-success">
               {metrics.successfulContacts ?? 0}
             </p>
-            <p className="text-sm text-default-500">Successful</p>
+            <p className="text-sm text-default-700">Successful</p>
           </CardBody>
         </Card>
         <Card>
@@ -211,7 +211,7 @@ function OutreachDetail({ operation, onClose, onRefresh }: OutreachDetailProps) 
             <p className="text-2xl font-bold">
               {(metrics.contactRate ?? 0).toFixed(1)}%
             </p>
-            <p className="text-sm text-default-500">Contact Rate</p>
+            <p className="text-sm text-default-700">Contact Rate</p>
           </CardBody>
         </Card>
         <Card>
@@ -219,7 +219,7 @@ function OutreachDetail({ operation, onClose, onRefresh }: OutreachDetailProps) 
             <p className="text-2xl font-bold">
               {(metrics.supportRate ?? 0).toFixed(1)}%
             </p>
-            <p className="text-sm text-default-500">Support Rate</p>
+            <p className="text-sm text-default-700">Support Rate</p>
           </CardBody>
         </Card>
       </div>
@@ -311,7 +311,7 @@ function OutreachDetail({ operation, onClose, onRefresh }: OutreachDetailProps) 
             </TableBody>
           </Table>
         ) : (
-          <p className="text-default-500 text-center py-4">
+          <p className="text-default-700 text-center py-4">
             No volunteers assigned yet
           </p>
         )}
@@ -446,7 +446,7 @@ export default function VoterOutreachPanel() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Voter Outreach</h1>
-          <p className="text-default-500">Ground game operations and volunteer tracking</p>
+          <p className="text-default-700">Ground game operations and volunteer tracking</p>
         </div>
         <Button color="primary" onPress={() => {}}>
           New Operation
@@ -548,7 +548,7 @@ export default function VoterOutreachPanel() {
       ) : (
         <Card>
           <CardBody className="text-center py-12">
-            <p className="text-default-500">No operations found</p>
+            <p className="text-default-700">No operations found</p>
           </CardBody>
         </Card>
       )}
@@ -559,27 +559,27 @@ export default function VoterOutreachPanel() {
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-center">
             <div>
               <p className="text-2xl font-bold">{stats.total}</p>
-              <p className="text-sm text-default-500">Total Operations</p>
+              <p className="text-sm text-default-700">Total Operations</p>
             </div>
             <div>
               <p className="text-2xl font-bold text-warning">{stats.active}</p>
-              <p className="text-sm text-default-500">Active Now</p>
+              <p className="text-sm text-default-700">Active Now</p>
             </div>
             <div>
               <p className="text-2xl font-bold">
                 {stats.totalContacts.toLocaleString()}
               </p>
-              <p className="text-sm text-default-500">Total Contacts</p>
+              <p className="text-sm text-default-700">Total Contacts</p>
             </div>
             <div>
               <p className="text-2xl font-bold text-success">
                 {stats.totalSuccess.toLocaleString()}
               </p>
-              <p className="text-sm text-default-500">Successful</p>
+              <p className="text-sm text-default-700">Successful</p>
             </div>
             <div>
               <p className="text-2xl font-bold">{stats.totalVolunteers}</p>
-              <p className="text-sm text-default-500">Volunteers</p>
+              <p className="text-sm text-default-700">Volunteers</p>
             </div>
           </div>
         </CardBody>
@@ -602,7 +602,7 @@ export default function VoterOutreachPanel() {
               />
             ) : (
               <div className="h-64 flex items-center justify-center">
-                <p className="text-default-500">Loading operation details...</p>
+                <p className="text-default-700">Loading operation details...</p>
               </div>
             )}
           </ModalBody>

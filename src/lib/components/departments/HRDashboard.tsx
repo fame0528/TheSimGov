@@ -87,7 +87,7 @@ export function HRDashboard({
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-3xl font-bold">👥 HR Department</h2>
-          <p className="text-default-500">Level {department.level} • {formatCurrency(department.budget)} Budget</p>
+          <p className="text-default-700">Level {department.level} • {formatCurrency(department.budget)} Budget</p>
         </div>
         {onRefresh && <Button size="sm" variant="flat" onPress={onRefresh}>Refresh</Button>}
       </div>
@@ -99,19 +99,19 @@ export function HRDashboard({
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardBody>
-            <p className="text-sm text-default-500">Total Employees</p>
+            <p className="text-sm text-default-700">Total Employees</p>
             <p className="text-2xl font-bold">{department.totalEmployees || 0}</p>
           </CardBody>
         </Card>
         <Card>
           <CardBody>
-            <p className="text-sm text-default-500">Avg Salary</p>
+            <p className="text-sm text-default-700">Avg Salary</p>
             <p className="text-2xl font-bold">{formatCurrency(department.avgSalary || 0)}</p>
           </CardBody>
         </Card>
         <Card>
           <CardBody>
-            <p className="text-sm text-default-500">Turnover Rate</p>
+            <p className="text-sm text-default-700">Turnover Rate</p>
             <p className="text-2xl font-bold">
               <Chip color={(department.employeeTurnover || 0) < 10 ? 'success' : (department.employeeTurnover || 0) < 20 ? 'warning' : 'danger'}>
                 {(department.employeeTurnover || 0).toFixed(1)}%
@@ -121,7 +121,7 @@ export function HRDashboard({
         </Card>
         <Card>
           <CardBody>
-            <p className="text-sm text-default-500">Training Budget</p>
+            <p className="text-sm text-default-700">Training Budget</p>
             <p className="text-2xl font-bold">{formatCurrency(department.trainingBudget || 0)}</p>
           </CardBody>
         </Card>
@@ -141,7 +141,7 @@ export function HRDashboard({
                   <div key={program.id} className="flex justify-between items-center py-2 border-b border-divider last:border-0">
                     <div>
                       <p className="font-medium">{program.name}</p>
-                      <p className="text-xs text-default-500">{program.skillTarget}</p>
+                      <p className="text-xs text-default-700">{program.skillTarget}</p>
                     </div>
                     <Chip size="sm">{program.enrolled}/{program.capacity}</Chip>
                   </div>
@@ -162,7 +162,7 @@ export function HRDashboard({
                   <div key={campaign.id} className="flex justify-between items-center py-2 border-b border-divider last:border-0">
                     <div>
                       <p className="font-medium">{campaign.role}</p>
-                      <p className="text-xs text-default-500">{campaign.applicants} applicants</p>
+                      <p className="text-xs text-default-700">{campaign.applicants} applicants</p>
                     </div>
                     <Chip size="sm">{campaign.hired}/{campaign.positions}</Chip>
                   </div>

@@ -105,21 +105,21 @@ export default function ResearchProjectDetailPage({
         </CardHeader>
         <CardBody className="space-y-3">
           <div>
-            <p className="text-sm text-default-500 mb-1">Description</p>
+            <p className="text-sm text-default-700 mb-1">Description</p>
             <p>{project.description}</p>
           </div>
           <div>
-            <p className="text-sm text-default-500 mb-1">Expected Impact</p>
+            <p className="text-sm text-default-700 mb-1">Expected Impact</p>
             <p className="font-medium">{project.expectedImpact}</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
             <div>
-              <p className="text-sm text-default-500">Created</p>
+              <p className="text-sm text-default-700">Created</p>
               <p className="font-bold">{project.createdAt.toLocaleDateString()}</p>
             </div>
             {project.completedAt && (
               <div>
-                <p className="text-sm text-default-500">Completed</p>
+                <p className="text-sm text-default-700">Completed</p>
                 <p className="font-bold">{project.completedAt.toLocaleDateString()}</p>
               </div>
             )}
@@ -167,7 +167,7 @@ export default function ResearchProjectDetailPage({
                 />
               </div>
               <div className="bg-default-100 p-4 rounded-lg">
-                <p className="text-sm text-default-500">Remaining Budget</p>
+                <p className="text-sm text-default-700">Remaining Budget</p>
                 <p className="text-2xl font-bold text-success">
                   {formatCurrency(project.budgetAllocated - project.budgetSpent)}
                 </p>

@@ -41,7 +41,7 @@ export function useMarketplace(companyId?: string, difficulty?: number) {
   );
 
   return {
-    contracts: data || [],
+    contracts: data?.contracts || [],
     isLoading,
     error,
     mutate,

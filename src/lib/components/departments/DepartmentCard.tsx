@@ -91,7 +91,7 @@ export function DepartmentCard({
           <span className="text-4xl">{getDepartmentIcon(department.type)}</span>
           <div>
             <h3 className="text-xl font-bold">{department.name}</h3>
-            <p className="text-sm text-default-500">Level {department.level}/5</p>
+            <p className="text-sm text-default-700">Level {department.level}/5</p>
           </div>
         </div>
         <Chip color={getHealthColor(healthScore)} variant="flat" size="sm">
@@ -109,7 +109,7 @@ export function DepartmentCard({
         {/* Budget Percentage */}
         <div>
           <div className="flex justify-between items-center mb-1">
-            <span className="text-xs text-default-500">Budget Allocation</span>
+            <span className="text-xs text-default-700">Budget Allocation</span>
             <span className="text-xs font-medium">{department.budgetPercentage}%</span>
           </div>
           <Progress
@@ -125,7 +125,7 @@ export function DepartmentCard({
             {/* KPIs Grid */}
             <div className="grid grid-cols-2 gap-2 pt-2 border-t border-divider">
               <div>
-                <p className="text-xs text-default-500">Efficiency</p>
+                <p className="text-xs text-default-700">Efficiency</p>
                 <Progress
                   value={department.kpis.efficiency}
                   maxValue={100}
@@ -135,7 +135,7 @@ export function DepartmentCard({
                 />
               </div>
               <div>
-                <p className="text-xs text-default-500">Performance</p>
+                <p className="text-xs text-default-700">Performance</p>
                 <Progress
                   value={department.kpis.performance}
                   maxValue={100}
@@ -145,7 +145,7 @@ export function DepartmentCard({
                 />
               </div>
               <div>
-                <p className="text-xs text-default-500">Utilization</p>
+                <p className="text-xs text-default-700">Utilization</p>
                 <Progress
                   value={department.kpis.utilization}
                   maxValue={100}
@@ -155,7 +155,7 @@ export function DepartmentCard({
                 />
               </div>
               <div>
-                <p className="text-xs text-default-500">Quality</p>
+                <p className="text-xs text-default-700">Quality</p>
                 <Progress
                   value={department.kpis.quality}
                   maxValue={100}

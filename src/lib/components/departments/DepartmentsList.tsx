@@ -30,7 +30,7 @@ export function DepartmentsList({
     <div className="space-y-6">
       <div>
         <h2 className="text-3xl font-bold">Departments Overview</h2>
-        <p className="text-default-500">Manage your company's core departments</p>
+        <p className="text-default-700">Manage your company's core departments</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

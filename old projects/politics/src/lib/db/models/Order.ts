@@ -55,7 +55,7 @@
  *     {
  *       product: productId,
  *       name: 'Premium Laptop Bag',
- *       variant: 'Size: 15-inch, Color: Black',
+ *       variant: 'Size: 15-inch, color: var(--color-fg-default)',
  *       quantity: 2,
  *       unitPrice: 89.99,
  *       lineTotal: 179.98

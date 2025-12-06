@@ -88,7 +88,7 @@ export default function LeadershipElectionsPage() {
         </Button>
         <div>
           <h1 className="text-3xl font-bold">Leadership Elections</h1>
-          <p className="text-default-500">Vote for leaders in your organizations</p>
+          <p className="text-default-700">Vote for leaders in your organizations</p>
         </div>
       </div>
 

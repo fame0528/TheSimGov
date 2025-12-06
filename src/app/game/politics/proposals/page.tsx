@@ -161,7 +161,7 @@ export default function ProposalsPage() {
           </Button>
           <div>
             <h1 className="text-3xl font-bold">Proposals</h1>
-            <p className="text-default-500">Submit and vote on organizational proposals</p>
+            <p className="text-default-700">Submit and vote on organizational proposals</p>
           </div>
         </div>
         <Button

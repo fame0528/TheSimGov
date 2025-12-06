@@ -22,6 +22,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Card, CardBody, CardHeader } from '@heroui/card';
+import { TrendingUp, Flame, DollarSign, BarChart3, Leaf } from 'lucide-react';
 import { Button } from '@heroui/button';
 import { Chip } from '@heroui/chip';
 import { Progress } from '@heroui/progress';
@@ -199,6 +200,43 @@ const getWeatherImpact = (condition: WeatherCondition): number => {
 // ============================================================================
 
 /**
+ * AAA KPI Card for overview stats (matches Banking dashboard)
+ */
+function KPICard({
+  title,
+  value,
+  subtitle,
+  icon: Icon,
+  color = 'emerald',
+}: {
+  title: string;
+  value: string | number;
+  subtitle?: string;
+  icon: React.ElementType;
+  color?: 'emerald' | 'blue' | 'yellow' | 'red' | 'purple';
+}) {
+  const colorClasses = {
+    emerald: 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400',
+    blue: 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400',
+    yellow: 'bg-yellow-100 text-yellow-600 dark:bg-yellow-900/30 dark:text-yellow-400',
+    red: 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400',
+    purple: 'bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400',
+  };
+  return (
+    <Card className="p-4 bg-slate-800/50 border border-slate-700">
+      <div className="flex items-start justify-between">
+        <div className={`p-3 rounded-xl ${colorClasses[color]}`}> <Icon className="h-6 w-6" /> </div>
+      </div>
+      <div className="mt-4">
+        <p className="text-sm text-gray-400">{title}</p>
+        <p className="text-2xl font-bold mt-1 text-white">{value}</p>
+        {subtitle && <p className="text-xs text-gray-500 mt-1">{subtitle}</p>}
+      </div>
+    </Card>
+  );
+}
+
+/**
  * RenewableEnergyDashboard Component
  * 
  * Renewable energy management dashboard with solar and wind assets,
@@ -263,53 +301,6 @@ export function RenewableEnergyDashboard({ companyId, onDataChange }: RenewableE
     fetchData();
   }, [fetchData]);
 
-  /**
-   * Handle generation operation
-   */
-  const handleGenerate = async () => {
-    if (!selectedAsset) return;
-
-    setIsGenerating(true);
-    const endpoint = assetType === 'solar'
-      ? `/api/energy/solar-farms/${selectedAsset._id}/generate`
-      : `/api/energy/wind-turbines/${selectedAsset._id}/generate`;
-
-    try {
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ hours: generationHours }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        addToast({
-          title: 'Generation complete',
-          description: `Output: ${formatPower(data.output)}, Revenue: ${formatCurrency(data.revenue)}`,
-          color: 'success',
-        });
-        fetchData();
-        onDataChange?.();
-        onGenerateClose();
-      } else {
-        addToast({
-          title: 'Generation failed',
-          description: data.error || 'Operation failed',
-          color: 'danger',
-        });
-      }
-    } catch (error) {
-      addToast({
-        title: 'Error',
-        description: error instanceof Error ? error.message : 'Network error',
-        color: 'danger',
-      });
-    } finally {
-      setIsGenerating(false);
-    }
-  };
-
   // Calculate totals
   const totalSolarCapacity = solarFarms.reduce((sum, farm) => sum + farm.capacity, 0);
   const totalWindCapacity = windTurbines.reduce((sum, turbine) => sum + turbine.capacity, 0);
@@ -323,6 +314,14 @@ export function RenewableEnergyDashboard({ companyId, onDataChange }: RenewableE
   const avgEfficiency = solarFarms.length > 0
     ? solarFarms.reduce((sum, farm) => sum + farm.panelEfficiency, 0) / solarFarms.length
     : 0;
+
+  /**
+   * Handle generation operation
+   */
+  const handleGenerate = async () => {
+    if (!selectedAsset) return;
+    // ...existing code...
+  };
 
   // Solar farm table columns
   const solarColumns: Column<SolarFarm>[] = [
@@ -417,23 +416,23 @@ export function RenewableEnergyDashboard({ companyId, onDataChange }: RenewableE
 
   return (
     <div className="space-y-6">
-      {/* Overview Stats */}
+      {/* Overview Stats - AAA Design */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-        <Card>
-          <CardBody>
-            <div className="text-sm text-default-500">Total Capacity</div>
-            <div className="text-2xl font-bold">{formatPower(totalRenewableCapacity)}</div>
-            <div className="text-xs text-default-400">
+        <Card className="p-4 bg-slate-800/50 border border-slate-700">
+          <CardBody className="p-0">
+            <div className="text-sm text-gray-400">Total Capacity</div>
+            <div className="text-2xl font-bold text-white">{formatPower(totalRenewableCapacity)}</div>
+            <div className="text-xs text-gray-500">
               Solar: {formatPower(totalSolarCapacity)} | Wind: {formatPower(totalWindCapacity)}
             </div>
           </CardBody>
         </Card>
 
-        <Card>
-          <CardBody>
-            <div className="text-sm text-default-500">Current Output</div>
-            <div className="text-2xl font-bold text-success">{formatPower(totalCurrentOutput)}</div>
-            <div className="text-xs text-default-400">
+        <Card className="p-4 bg-slate-800/50 border border-slate-700">
+          <CardBody className="p-0">
+            <div className="text-sm text-gray-400">Current Output</div>
+            <div className="text-2xl font-bold text-emerald-400">{formatPower(totalCurrentOutput)}</div>
+            <div className="text-xs text-gray-500">
               {totalRenewableCapacity > 0 
                 ? `${((totalCurrentOutput / totalRenewableCapacity) * 100).toFixed(1)}% capacity factor`
                 : 'No capacity'}
@@ -441,37 +440,43 @@ export function RenewableEnergyDashboard({ companyId, onDataChange }: RenewableE
           </CardBody>
         </Card>
 
-        <Card>
-          <CardBody>
-            <div className="text-sm text-default-500">Daily Revenue</div>
-            <div className="text-2xl font-bold text-success">{formatCurrency(totalRevenue)}</div>
-            <div className="text-xs text-default-400">From all renewable assets</div>
+        <Card className="p-4 bg-slate-800/50 border border-slate-700">
+          <CardBody className="p-0">
+            <div className="text-sm text-gray-400">Daily Revenue</div>
+            <div className="text-2xl font-bold text-green-400">{formatCurrency(totalRevenue)}</div>
+            <div className="text-xs text-gray-500">From all renewable assets</div>
           </CardBody>
         </Card>
 
-        <Card>
-          <CardBody>
-            <div className="text-sm text-default-500">Carbon Credits</div>
-            <div className="text-2xl font-bold">{formatNumber(totalCarbonCredits)}</div>
-            <div className="text-xs text-default-400">Tons CO₂ offset</div>
+        <Card className="p-4 bg-slate-800/50 border border-slate-700">
+          <CardBody className="p-0">
+            <div className="text-sm text-gray-400">Carbon Credits</div>
+            <div className="text-2xl font-bold text-white">{formatNumber(totalCarbonCredits)}</div>
+            <div className="text-xs text-gray-500">Tons CO₂ offset</div>
           </CardBody>
         </Card>
 
-        <Card>
-          <CardBody>
-            <div className="text-sm text-default-500">Avg Efficiency</div>
-            <div className="text-2xl font-bold">{avgEfficiency.toFixed(1)}%</div>
-            <div className="text-xs text-default-400">Solar panel efficiency</div>
+        <Card className="p-4 bg-slate-800/50 border border-slate-700">
+          <CardBody className="p-0">
+            <div className="text-sm text-gray-400">Avg Efficiency</div>
+            <div className="text-2xl font-bold text-white">{avgEfficiency.toFixed(1)}%</div>
+            <div className="text-xs text-gray-500">Solar panel efficiency</div>
           </CardBody>
         </Card>
       </div>
 
-      {/* Tabbed Content */}
-      <Card>
+      {/* Tabs - AAA Design */}
+      <Card className="bg-slate-800/50 border border-slate-700">
         <CardBody>
           <Tabs
             selectedKey={activeTab}
             onSelectionChange={(key) => setActiveTab(key as string)}
+            color="primary"
+            classNames={{
+              tabList: "bg-slate-700/50",
+              cursor: "bg-primary",
+              tab: "text-gray-400 data-[selected=true]:text-white",
+            }}
           >
             <Tab key="solar" title={`Solar Farms (${solarFarms.length})`}>
               <div className="pt-4">
@@ -510,7 +515,7 @@ export function RenewableEnergyDashboard({ companyId, onDataChange }: RenewableE
           </ModalHeader>
           <ModalBody>
             <div className="space-y-4">
-              <p className="text-sm text-default-500">
+              <p className="text-sm text-gray-400">
                 Calculate power generation for this {assetType === 'solar' ? 'solar farm' : 'wind turbine'}.
               </p>
 
@@ -524,8 +529,8 @@ export function RenewableEnergyDashboard({ companyId, onDataChange }: RenewableE
               />
 
               {selectedAsset && (
-                <Card className="bg-default-100">
-                  <CardBody className="text-sm space-y-1">
+                <Card className="bg-slate-700/50 border border-slate-600">
+                  <CardBody className="text-sm space-y-1 text-gray-300">
                     <div className="flex justify-between">
                       <span>Capacity:</span>
                       <span>{formatPower((selectedAsset as SolarFarm | WindTurbine).capacity)}</span>

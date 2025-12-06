@@ -141,32 +141,32 @@ export function InfrastructureManager({
       {/* Header */}
       <div>
         <h2 className="text-3xl font-bold">⚡ Infrastructure Manager</h2>
-        <p className="text-default-500">GPU clusters, data centers, and cost optimization</p>
+        <p className="text-default-700">GPU clusters, data centers, and cost optimization</p>
       </div>
 
       {/* Stats Summary */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardBody>
-            <p className="text-sm text-default-500">Total GPUs</p>
+            <p className="text-sm text-default-700">Total GPUs</p>
             <p className="text-2xl font-bold text-primary">{totalGPUs}</p>
           </CardBody>
         </Card>
         <Card>
           <CardBody>
-            <p className="text-sm text-default-500">Avg Utilization</p>
+            <p className="text-sm text-default-700">Avg Utilization</p>
             <p className="text-2xl font-bold text-success">{avgUtilization.toFixed(1)}%</p>
           </CardBody>
         </Card>
         <Card>
           <CardBody>
-            <p className="text-sm text-default-500">Clusters</p>
+            <p className="text-sm text-default-700">Clusters</p>
             <p className="text-2xl font-bold text-warning">{clusters.length}</p>
           </CardBody>
         </Card>
         <Card>
           <CardBody>
-            <p className="text-sm text-default-500">Total Value</p>
+            <p className="text-sm text-default-700">Total Value</p>
             <p className="text-2xl font-bold text-danger">
               {formatCurrency(clusters.reduce((sum, c) => sum + c.totalCost, 0))}
             </p>
@@ -221,7 +221,7 @@ export function InfrastructureManager({
                 </div>
                 <div className="flex justify-between items-center">
                   <div>
-                    <p className="text-sm text-default-500">Total Power: <span className="font-bold">{totalPower}W</span></p>
+                    <p className="text-sm text-default-700">Total Power: <span className="font-bold">{totalPower}W</span></p>
                   </div>
                   <Button color="primary" onPress={handleCreateCluster}>
                     Add Cluster
@@ -234,7 +234,7 @@ export function InfrastructureManager({
             {clusters.length === 0 ? (
               <Card>
                 <CardBody>
-                  <p className="text-center text-default-500 py-8">
+                  <p className="text-center text-default-700 py-8">
                     No GPU clusters yet. Add your first cluster to start training models!
                   </p>
                 </CardBody>
@@ -252,19 +252,19 @@ export function InfrastructureManager({
                     <CardBody className="space-y-3">
                       <div className="grid grid-cols-2 gap-2 text-sm">
                         <div>
-                          <span className="text-default-500">GPUs:</span>
+                          <span className="text-default-700">GPUs:</span>
                           <span className="font-bold ml-1">{cluster.count}</span>
                         </div>
                         <div>
-                          <span className="text-default-500">Power:</span>
+                          <span className="text-default-700">Power:</span>
                           <span className="font-bold ml-1">{cluster.totalPower}W</span>
                         </div>
                         <div>
-                          <span className="text-default-500">Cost:</span>
+                          <span className="text-default-700">Cost:</span>
                           <span className="font-bold ml-1">{formatCurrency(cluster.totalCost)}</span>
                         </div>
                         <div>
-                          <span className="text-default-500">Utilization:</span>
+                          <span className="text-default-700">Utilization:</span>
                           <span className="font-bold ml-1">{cluster.utilization}%</span>
                         </div>
                       </div>
@@ -344,15 +344,15 @@ export function InfrastructureManager({
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="bg-default-100 p-4 rounded-lg">
-                    <p className="text-sm text-default-500">Annual Profit</p>
+                    <p className="text-sm text-default-700">Annual Profit</p>
                     <p className="text-2xl font-bold text-success">{formatCurrency(annualProfit)}</p>
                   </div>
                   <div className="bg-default-100 p-4 rounded-lg">
-                    <p className="text-sm text-default-500">Payback Period</p>
+                    <p className="text-sm text-default-700">Payback Period</p>
                     <p className="text-2xl font-bold text-warning">{paybackYears.toFixed(1)} years</p>
                   </div>
                   <div className="bg-default-100 p-4 rounded-lg">
-                    <p className="text-sm text-default-500">5-Year ROI</p>
+                    <p className="text-sm text-default-700">5-Year ROI</p>
                     <p className="text-2xl font-bold text-primary">{fiveYearROI.toFixed(0)}%</p>
                   </div>
                 </div>

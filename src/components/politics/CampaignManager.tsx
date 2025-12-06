@@ -262,7 +262,7 @@ export default function CampaignManager({ playerId, onPhaseAdvance }: CampaignMa
           <CheckCircle className="w-8 h-8 text-primary" />
           <div className="flex flex-col flex-1">
             <p className="text-xl font-bold">Campaign Cycle #{state.cycleSequence}</p>
-            <p className="text-sm text-default-500">Election campaign phase management</p>
+            <p className="text-sm text-default-700">Election campaign phase management</p>
           </div>
         </CardHeader>
       </Card>
@@ -278,7 +278,7 @@ export default function CampaignManager({ playerId, onPhaseAdvance }: CampaignMa
                 ACTIVE
               </Chip>
             </div>
-            <p className="text-sm text-default-500">{phaseConfig.description}</p>
+            <p className="text-sm text-default-700">{phaseConfig.description}</p>
           </div>
         </CardHeader>
 
@@ -301,7 +301,7 @@ export default function CampaignManager({ playerId, onPhaseAdvance }: CampaignMa
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {/* Social Progression Index */}
             <div className="bg-default-100 dark:bg-default-800/50 rounded-lg p-3">
-              <p className="text-xs text-default-500 uppercase tracking-wide mb-1">
+              <p className="text-xs text-default-700 uppercase tracking-wide mb-1">
                 Social Progression Index
               </p>
               <p className="text-2xl font-bold text-primary">
@@ -311,7 +311,7 @@ export default function CampaignManager({ playerId, onPhaseAdvance }: CampaignMa
 
             {/* Vulnerability Multiplier */}
             <div className="bg-default-100 dark:bg-default-800/50 rounded-lg p-3">
-              <p className="text-xs text-default-500 uppercase tracking-wide mb-1">
+              <p className="text-xs text-default-700 uppercase tracking-wide mb-1">
                 Vulnerability Multiplier
               </p>
               <p className="text-2xl font-bold text-warning">
@@ -321,7 +321,7 @@ export default function CampaignManager({ playerId, onPhaseAdvance }: CampaignMa
 
             {/* Election Scaling */}
             <div className="bg-default-100 dark:bg-default-800/50 rounded-lg p-3">
-              <p className="text-xs text-default-500 uppercase tracking-wide mb-1">
+              <p className="text-xs text-default-700 uppercase tracking-wide mb-1">
                 Election Scaling
               </p>
               <p className="text-2xl font-bold text-success">
@@ -333,19 +333,19 @@ export default function CampaignManager({ playerId, onPhaseAdvance }: CampaignMa
           {/* Campaign metrics */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2 border-t border-default-200 dark:border-default-700">
             <div>
-              <p className="text-sm text-default-500">Current Funds</p>
+              <p className="text-sm text-default-700">Current Funds</p>
               <p className="text-lg font-semibold text-success">
                 ${state.currentFunds.toLocaleString()}
               </p>
             </div>
             <div>
-              <p className="text-sm text-default-500">Public Support</p>
+              <p className="text-sm text-default-700">Public Support</p>
               <p className="text-lg font-semibold text-primary">
                 {(state.currentSupport * 100).toFixed(1)}%
               </p>
             </div>
             <div>
-              <p className="text-sm text-default-500">Momentum</p>
+              <p className="text-sm text-default-700">Momentum</p>
               <p className="text-lg font-semibold text-secondary">
                 {state.currentMomentum.toFixed(2)}
               </p>

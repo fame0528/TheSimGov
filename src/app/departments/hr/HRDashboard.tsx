@@ -116,7 +116,7 @@ export default function HRDashboard({ department, onRefresh }: HRDashboardProps)
             <FaUsers size={32} className="text-primary" />
             {department.name}
           </h1>
-          <p className="text-default-500">Level {department.level} • {department.budgetPercentage}% Budget Allocation</p>
+          <p className="text-default-700">Level {department.level} • {department.budgetPercentage}% Budget Allocation</p>
         </div>
         <Chip color="primary" variant="flat" size="lg">
           Budget: ${(department.budget / 1000).toFixed(0)}k
@@ -257,7 +257,7 @@ export default function HRDashboard({ department, onRefresh }: HRDashboardProps)
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
                         <p className="font-semibold text-lg">{campaign.role}</p>
-                        <p className="text-sm text-default-500">
+                        <p className="text-sm text-default-700">
                           {campaign.positions} positions • {campaign.durationWeeks} weeks
                         </p>
                         <div className="mt-2">
@@ -267,7 +267,7 @@ export default function HRDashboard({ department, onRefresh }: HRDashboardProps)
                             size="sm"
                             label="Applicants"
                           />
-                          <p className="text-xs text-default-500 mt-1">
+                          <p className="text-xs text-default-700 mt-1">
                             {campaign.applicants} applicants, {campaign.hired} hired
                           </p>
                         </div>
@@ -366,7 +366,7 @@ export default function HRDashboard({ department, onRefresh }: HRDashboardProps)
                           {program.status}
                         </Chip>
                       </div>
-                      <p className="text-sm text-default-500">{program.skillTarget}</p>
+                      <p className="text-sm text-default-700">{program.skillTarget}</p>
                       <div className="flex justify-between text-sm">
                         <span className="text-default-600">Duration</span>
                         <span className="font-semibold">{program.durationWeeks} weeks</span>

@@ -229,7 +229,7 @@ export function ActionResultModal({
           {/* Details */}
           <Divider />
           <div>
-            <p className="text-sm text-default-500">{result.details}</p>
+            <p className="text-sm text-default-700">{result.details}</p>
           </div>
         </ModalBody>
         

@@ -134,6 +134,42 @@ export function formatAccounting(value: number): string {
   return amount.format();
 }
 
+/**
+ * Format currency for ticker display (compact with rate suffix)
+ *
+ * @param value - Number to format
+ * @param rateSuffix - Suffix for rate display (e.g., "/min", "/hour")
+ * @returns Ticker formatted string
+ *
+ * @example
+ * ```ts
+ * formatTicker(2340, '/min');     // "+$2.3K/min"
+ * formatTicker(-1500, '/hour');   // "-$1.5K/hour"
+ * formatTicker(500);              // "+$500"
+ * ```
+ */
+export function formatTicker(
+  value: number,
+  rateSuffix?: string
+): string {
+  const absValue = Math.abs(value);
+  const sign = value >= 0 ? '+' : '-';
+
+  let formatted: string;
+  if (absValue >= 1_000_000_000) {
+    formatted = `${(absValue / 1_000_000_000).toFixed(1)}B`;
+  } else if (absValue >= 1_000_000) {
+    formatted = `${(absValue / 1_000_000).toFixed(1)}M`;
+  } else if (absValue >= 1_000) {
+    formatted = `${(absValue / 1_000).toFixed(1)}K`;
+  } else {
+    formatted = absValue.toString();
+  }
+
+  const result = `$${formatted}`;
+  return rateSuffix ? `${sign}${result}${rateSuffix}` : `${sign}${result}`;
+}
+
 // ============================================================================
 // ARITHMETIC OPERATIONS
 // ============================================================================

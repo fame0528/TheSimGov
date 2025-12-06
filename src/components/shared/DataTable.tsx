@@ -103,7 +103,7 @@ export function DataTable<T extends { [key: string]: any }>(props: DataTableProp
               </div>
             }
             emptyContent={
-              <div className="p-6 text-center text-default-500">{emptyMessage}</div>
+              <div className="p-6 text-center text-default-700">{emptyMessage}</div>
             }
           >
             {displayData.map((item) => (

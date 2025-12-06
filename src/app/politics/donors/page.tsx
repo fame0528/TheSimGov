@@ -38,7 +38,7 @@ export default function DonorManagementPage() {
                 </div>
                 <div className="rounded-lg border border-default-200 p-4 flex flex-col gap-3">
                   <h2 className="font-semibold">Donors</h2>
-                  <p className="text-default-500">Total: {donors?.length ?? 0}</p>
+                  <p className="text-default-700">Total: {donors?.length ?? 0}</p>
                 </div>
               </div>
             </Tab>
@@ -46,7 +46,7 @@ export default function DonorManagementPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="rounded-lg border border-default-200 p-4 flex flex-col gap-3">
                   <h2 className="font-semibold">Upcoming</h2>
-                  <p className="text-default-500">Count: {fundraising?.events?.length ?? 0}</p>
+                  <p className="text-default-700">Count: {fundraising?.events?.length ?? 0}</p>
                 </div>
                 <div className="rounded-lg border border-default-200 p-4 flex flex-col gap-3">
                   <h2 className="font-semibold">Schedule Event</h2>
@@ -59,11 +59,11 @@ export default function DonorManagementPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="rounded-lg border border-default-200 p-4 flex flex-col gap-3">
                   <h2 className="font-semibold">Summary</h2>
-                  <p className="text-default-500">Raised: ${reports?.raised ?? 0}</p>
+                  <p className="text-default-700">Raised: ${reports?.raised ?? 0}</p>
                 </div>
                 <div className="rounded-lg border border-default-200 p-4 flex flex-col gap-3">
                   <h2 className="font-semibold">Bundlers</h2>
-                  <p className="text-default-500">Count: {reports?.bundlers ?? 0}</p>
+                  <p className="text-default-700">Count: {reports?.bundlers ?? 0}</p>
                 </div>
               </div>
             </Tab>

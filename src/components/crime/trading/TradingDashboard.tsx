@@ -12,7 +12,7 @@
 
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   Card,
   CardBody,
@@ -35,12 +35,34 @@ import {
   Plane,
   Star,
   AlertTriangle,
+  Clock,
+  Info,
 } from 'lucide-react';
 import { useTradingDashboard, calculateTradePotential } from '@/hooks/useCrimeTrading';
 import { StateSelector } from './StateSelector';
 import { TradeModal } from './TradeModal';
 import type { StateCode, SubstanceName } from '@/lib/types/crime';
 import type { TradeAction, SubstancePriceEntry } from '@/lib/types/crime-mmo';
+
+/**
+ * Substance descriptions for each drug
+ */
+const SUBSTANCE_DESCRIPTIONS: Record<SubstanceName, string> = {
+  Cannabis: 'Dried flower with varying THC content. Most widely used illicit substance.',
+  Psilocybin: 'Magic mushrooms containing psychoactive compounds. Growing market.',
+  MDMA: 'Synthetic party drug popular in club scenes. Moderate risk.',
+  LSD: 'Powerful hallucinogen on blotter paper. Small volume, high value.',
+  Cocaine: 'Highly addictive stimulant. Premium pricing in affluent markets.',
+  Methamphetamine: 'Powerful stimulant with severe health effects. Strong demand.',
+  Oxycodone: 'Prescription opioid painkiller. Medical diversion common.',
+  Heroin: 'Highly addictive opioid. Severe legal consequences.',
+  Fentanyl: 'Extremely potent synthetic opioid. Highest risk and reward.',
+};
+
+/**
+ * Price update interval in seconds (5 minutes)
+ */
+const PRICE_UPDATE_INTERVAL = 300;
 
 /**
  * Get trend icon based on price trend
@@ -95,6 +117,36 @@ export function TradingDashboard() {
   const [tradeAction, setTradeAction] = useState<TradeAction>('buy');
   const [showTradeModal, setShowTradeModal] = useState(false);
   const [showTravelModal, setShowTravelModal] = useState(false);
+  const [timeUntilUpdate, setTimeUntilUpdate] = useState(PRICE_UPDATE_INTERVAL);
+
+  // Calculate time remaining based on server's lastUpdate timestamp
+  useEffect(() => {
+    if (!pricing?.lastUpdate) return;
+
+    const calculateTimeRemaining = () => {
+      const lastUpdate = new Date(pricing.lastUpdate).getTime();
+      const now = Date.now();
+      const elapsed = Math.floor((now - lastUpdate) / 1000); // seconds since last update
+      const remaining = Math.max(0, PRICE_UPDATE_INTERVAL - elapsed);
+      
+      setTimeUntilUpdate(remaining);
+    };
+
+    // Calculate immediately
+    calculateTimeRemaining();
+
+    // Update every second
+    const timer = setInterval(calculateTimeRemaining, 1000);
+
+    return () => clearInterval(timer);
+  }, [pricing?.lastUpdate]);
+
+  // Format time as MM:SS
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
 
   // Handle trade button click
   const handleTradeClick = useCallback((substance: SubstanceName, action: TradeAction) => {
@@ -330,11 +382,21 @@ export function TradingDashboard() {
 
         {/* Market Prices Panel */}
         <Card className="lg:col-span-2 bg-gradient-to-br from-slate-800/50 via-slate-900/50 to-transparent backdrop-blur-xl border border-white/10">
-          <CardBody className="p-6">
-            <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-              <ShoppingCart className="h-5 w-5 text-green-400" />
-              Market Prices in {stash.currentState}
-            </h3>
+          <CardBody className="p-6 space-y-6">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                <ShoppingCart className="h-5 w-5 text-green-400" />
+                Market Prices in {stash.currentState}
+              </h3>
+              {pricing && (
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-600/20 border border-blue-500/30">
+                  <Clock className="h-4 w-4 text-blue-400" />
+                  <span className="text-sm font-bold text-blue-400 font-mono">
+                    {formatTime(timeUntilUpdate)}
+                  </span>
+                </div>
+              )}
+            </div>
 
             {!pricing ? (
               <div className="flex items-center justify-center py-8">
@@ -342,46 +404,81 @@ export function TradingDashboard() {
                 <span className="ml-2 text-slate-400">Loading prices...</span>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {pricing.prices.map((priceEntry: SubstancePriceEntry) => {
                   // Check if player owns this substance
                   const owned = stash.inventory.find(i => i.substance === priceEntry.substance);
                   const buyCalc = calculateTradePotential(stash, pricing, priceEntry.substance, 'buy', 1);
+                  const basePrice = priceEntry.basePrice;
+                  const lastPrice = basePrice * 0.95;
+                  const minPrice = basePrice * 0.7;
+                  const maxPrice = basePrice * 1.5;
                   
                   return (
                     <div
                       key={priceEntry.substance}
-                      className="p-4 rounded-lg bg-white/5 border border-white/10 hover:border-white/20 transition-colors"
+                      className="p-4 rounded-lg bg-gradient-to-br from-slate-800/80 to-slate-900/80 backdrop-blur-xl border-2 border-white/20 hover:border-blue-500/50 transition-all duration-300 shadow-lg"
                     >
-                      <div className="flex items-start justify-between mb-2">
+                      {/* Header */}
+                      <div className="flex items-start justify-between mb-3">
                         <div>
-                          <p className="font-medium text-white">{priceEntry.substance}</p>
+                          <p className="font-bold text-white text-lg">{priceEntry.substance}</p>
                           <div className="flex items-center gap-2 mt-1">
-                            <span className="text-lg font-bold text-green-400">
+                            <span className="text-2xl font-black text-green-400">
                               {formatCurrency(priceEntry.currentPrice)}
                             </span>
                             <TrendIcon trend={priceEntry.trend} />
                           </div>
                         </div>
                         {owned && (
-                          <Chip size="sm" color="secondary" variant="flat">
+                          <Chip size="sm" className="bg-purple-500/20 text-purple-400 border border-purple-500/30">
                             Own {owned.quantity}
                           </Chip>
                         )}
                       </div>
 
-                      <div className="flex items-center gap-2 text-xs text-slate-400 mb-3">
-                        <span>Demand: {priceEntry.demand}%</span>
-                        <span>•</span>
-                        <span>Supply: {priceEntry.supply}%</span>
+                      {/* Description */}
+                      <div className="mb-3 p-2 rounded bg-blue-500/5 border border-blue-500/10">
+                        <div className="flex items-start gap-1.5">
+                          <Info className="h-3.5 w-3.5 text-blue-400 flex-shrink-0 mt-0.5" />
+                          <p className="text-xs text-slate-300 leading-relaxed">
+                            {SUBSTANCE_DESCRIPTIONS[priceEntry.substance]}
+                          </p>
+                        </div>
                       </div>
 
+                      <Divider className="my-3 bg-white/10" />
+
+                      {/* Price History */}
+                      <div className="grid grid-cols-3 gap-2 mb-3">
+                        <div className="text-center p-2 rounded bg-slate-800/50 border border-white/5">
+                          <p className="text-[10px] text-slate-400 uppercase mb-0.5">Last</p>
+                          <p className="text-xs font-bold text-slate-300">{formatCurrency(lastPrice)}</p>
+                        </div>
+                        <div className="text-center p-2 rounded bg-slate-800/50 border border-white/5">
+                          <p className="text-[10px] text-slate-400 uppercase mb-0.5">Min</p>
+                          <p className="text-xs font-bold text-red-400">{formatCurrency(minPrice)}</p>
+                        </div>
+                        <div className="text-center p-2 rounded bg-slate-800/50 border border-white/5">
+                          <p className="text-[10px] text-slate-400 uppercase mb-0.5">Max</p>
+                          <p className="text-xs font-bold text-green-400">{formatCurrency(maxPrice)}</p>
+                        </div>
+                      </div>
+
+                      {/* Market Stats */}
+                      <div className="flex items-center justify-between text-xs mb-3">
+                        <span className="text-slate-400">Demand: <span className="text-green-400 font-bold">{priceEntry.demand}%</span></span>
+                        <span className="text-slate-400">Supply: <span className="text-blue-400 font-bold">{priceEntry.supply}%</span></span>
+                        <span className="text-slate-400">Vol: <span className="text-orange-400 font-bold">{priceEntry.volatility}%</span></span>
+                      </div>
+
+                      {/* Action Buttons */}
                       <div className="flex gap-2">
                         <Button
                           size="sm"
                           color="primary"
                           variant="bordered"
-                          className="flex-1 text-blue-400 border-blue-500/50 px-4 py-2"
+                          className="flex-1 text-white border-2 border-blue-500/50 hover:bg-blue-500/20 font-bold"
                           isDisabled={!buyCalc.canExecute}
                           onPress={() => handleTradeClick(priceEntry.substance, 'buy')}
                         >
@@ -391,7 +488,7 @@ export function TradingDashboard() {
                           size="sm"
                           color="success"
                           variant="bordered"
-                          className="flex-1 text-green-400 border-green-500/50 px-4 py-2"
+                          className="flex-1 text-white border-2 border-green-500/50 hover:bg-green-500/20 font-bold"
                           isDisabled={!owned || owned.quantity === 0}
                           onPress={() => handleTradeClick(priceEntry.substance, 'sell')}
                         >

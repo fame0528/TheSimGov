@@ -131,7 +131,7 @@ export default function LobbyCard({
         </div>
 
         {/* Description */}
-        <p className="text-sm text-default-500 line-clamp-2">
+        <p className="text-sm text-default-700 line-clamp-2">
           {lobby.description}
         </p>
 

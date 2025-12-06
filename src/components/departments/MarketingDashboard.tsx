@@ -58,7 +58,7 @@ export default function MarketingDashboard({ department, companyId, onUpdate }: 
           <div className="flex items-center justify-between w-full">
             <div>
               <h2 className="text-2xl font-bold">{department.name} Department</h2>
-              <p className="text-default-500">Level {department.level} • Budget: ${formatNumber(department.budget)}</p>
+              <p className="text-default-700">Level {department.level} • Budget: ${formatNumber(department.budget)}</p>
             </div>
             <Chip color={department.active ? 'success' : 'default'} variant="flat">
               {department.active ? 'Active' : 'Inactive'}
@@ -69,27 +69,27 @@ export default function MarketingDashboard({ department, companyId, onUpdate }: 
           {/* KPIs */}
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
             <div>
-              <p className="text-sm text-default-500">Efficiency</p>
+              <p className="text-sm text-default-700">Efficiency</p>
               <Progress value={department.kpis.efficiency} color="primary" className="mt-2" />
               <p className="text-xs mt-1">{department.kpis.efficiency}%</p>
             </div>
             <div>
-              <p className="text-sm text-default-500">Performance</p>
+              <p className="text-sm text-default-700">Performance</p>
               <Progress value={department.kpis.performance} color="secondary" className="mt-2" />
               <p className="text-xs mt-1">{department.kpis.performance}%</p>
             </div>
             <div>
-              <p className="text-sm text-default-500">ROI</p>
+              <p className="text-sm text-default-700">ROI</p>
               <Progress value={department.kpis.roi} color="success" className="mt-2" />
               <p className="text-xs mt-1">{department.kpis.roi}%</p>
             </div>
             <div>
-              <p className="text-sm text-default-500">Utilization</p>
+              <p className="text-sm text-default-700">Utilization</p>
               <Progress value={department.kpis.utilization} color="warning" className="mt-2" />
               <p className="text-xs mt-1">{department.kpis.utilization}%</p>
             </div>
             <div>
-              <p className="text-sm text-default-500">Quality</p>
+              <p className="text-sm text-default-700">Quality</p>
               <Progress value={department.kpis.quality} color="danger" className="mt-2" />
               <p className="text-xs mt-1">{department.kpis.quality}%</p>
             </div>
@@ -110,20 +110,20 @@ export default function MarketingDashboard({ department, companyId, onUpdate }: 
             <CardBody>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                 <div>
-                  <p className="text-sm text-default-500">Brand Value</p>
+                  <p className="text-sm text-default-700">Brand Value</p>
                   <p className="text-2xl font-bold">${formatNumber(department.brandValue || 0)}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-default-500">Customer Base</p>
+                  <p className="text-sm text-default-700">Customer Base</p>
                   <p className="text-2xl font-bold">{(department.customerBase || 0).toLocaleString()}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-default-500">Market Share</p>
+                  <p className="text-sm text-default-700">Market Share</p>
                   <p className="text-2xl font-bold">{(department.marketShare || 0).toFixed(1)}%</p>
                   <Progress value={department.marketShare || 0} color="primary" size="sm" className="mt-2" />
                 </div>
                 <div>
-                  <p className="text-sm text-default-500">Active Campaigns</p>
+                  <p className="text-sm text-default-700">Active Campaigns</p>
                   <p className="text-2xl font-bold">{department.campaigns?.filter(c => c.status === 'active').length || 0}</p>
                 </div>
               </div>
@@ -179,7 +179,7 @@ export default function MarketingDashboard({ department, companyId, onUpdate }: 
                   </TableBody>
                 </Table>
               ) : (
-                <p className="text-center text-default-500 py-8">No marketing campaigns</p>
+                <p className="text-center text-default-700 py-8">No marketing campaigns</p>
               )}
             </CardBody>
           </Card>
@@ -204,7 +204,7 @@ export default function MarketingDashboard({ department, companyId, onUpdate }: 
                     {(department.customerAcquisitionCost || 0) < 50 ? 'Excellent' :
                      (department.customerAcquisitionCost || 0) < 150 ? 'Good' : 'High'}
                   </Chip>
-                  <p className="text-sm text-default-500 mt-4">
+                  <p className="text-sm text-default-700 mt-4">
                     Total marketing spend divided by new customers acquired
                   </p>
                 </div>
@@ -220,7 +220,7 @@ export default function MarketingDashboard({ department, companyId, onUpdate }: 
                     {(department.customerLifetimeValue || 0) > 500 ? 'Excellent' :
                      (department.customerLifetimeValue || 0) > 200 ? 'Good' : 'Low'}
                   </Chip>
-                  <p className="text-sm text-default-500 mt-4">
+                  <p className="text-sm text-default-700 mt-4">
                     Average revenue generated per customer over their lifetime
                   </p>
                 </div>
@@ -234,7 +234,7 @@ export default function MarketingDashboard({ department, companyId, onUpdate }: 
                         ? (department.customerLifetimeValue / department.customerAcquisitionCost).toFixed(2)
                         : '0.00'}
                     </p>
-                    <p className="text-xl text-default-500">: 1</p>
+                    <p className="text-xl text-default-700">: 1</p>
                   </div>
                   <div className="mt-4">
                     <Progress 
@@ -246,13 +246,13 @@ export default function MarketingDashboard({ department, companyId, onUpdate }: 
                     />
                   </div>
                   <div className="mt-4 space-y-1 text-sm">
-                    <p className="text-default-500">
+                    <p className="text-default-700">
                       • <span className="text-success">5:1 or higher</span> = Excellent (sustainable growth)
                     </p>
-                    <p className="text-default-500">
+                    <p className="text-default-700">
                       • <span className="text-warning">3:1 to 5:1</span> = Good (healthy business)
                     </p>
-                    <p className="text-default-500">
+                    <p className="text-default-700">
                       • <span className="text-danger">Below 3:1</span> = Poor (unprofitable acquisition)
                     </p>
                   </div>

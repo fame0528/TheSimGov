@@ -84,7 +84,7 @@ export default function ElectionsPage() {
         <CardHeader className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
           <div>
             <h1 className="text-xl font-semibold">Election Dashboard</h1>
-            <p className="text-default-500">Browse active and upcoming elections</p>
+            <p className="text-default-700">Browse active and upcoming elections</p>
           </div>
           <div className="flex items-center gap-2">
             <Button variant="flat" onPress={() => refresh()}>Refresh</Button>

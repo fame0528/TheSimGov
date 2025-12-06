@@ -82,7 +82,7 @@ export default function RDDashboard({ department, onRefresh }: RDDashboardProps)
             <FaLightbulb size={32} className="text-secondary" />
             {department.name}
           </h1>
-          <p className="text-default-500">Level {department.level} • {department.budgetPercentage}% Budget Allocation</p>
+          <p className="text-default-700">Level {department.level} • {department.budgetPercentage}% Budget Allocation</p>
         </div>
         <Chip color="secondary" variant="flat" size="lg">
           Budget: ${(department.budget / 1000).toFixed(0)}k
@@ -248,7 +248,7 @@ export default function RDDashboard({ department, onRefresh }: RDDashboardProps)
                       <div className="flex justify-between items-start">
                         <div>
                           <p className="font-semibold">{project.name}</p>
-                          <p className="text-sm text-default-500 capitalize">
+                          <p className="text-sm text-default-700 capitalize">
                             {project.category}
                           </p>
                         </div>
@@ -308,7 +308,7 @@ export default function RDDashboard({ department, onRefresh }: RDDashboardProps)
                 <div className="flex justify-between items-center p-3 bg-default-100 rounded-lg">
                   <div>
                     <p className="font-semibold">AI-Powered Customer Insights</p>
-                    <p className="text-sm text-default-500">Filed: 2024-08-15</p>
+                    <p className="text-sm text-default-700">Filed: 2024-08-15</p>
                   </div>
                   <Chip color="success" size="sm">Granted</Chip>
                 </div>
@@ -316,7 +316,7 @@ export default function RDDashboard({ department, onRefresh }: RDDashboardProps)
                 <div className="flex justify-between items-center p-3 bg-default-100 rounded-lg">
                   <div>
                     <p className="font-semibold">Blockchain Supply Chain</p>
-                    <p className="text-sm text-default-500">Filed: 2024-09-22</p>
+                    <p className="text-sm text-default-700">Filed: 2024-09-22</p>
                   </div>
                   <Chip color="warning" size="sm">Pending</Chip>
                 </div>
@@ -324,7 +324,7 @@ export default function RDDashboard({ department, onRefresh }: RDDashboardProps)
                 <div className="flex justify-between items-center p-3 bg-default-100 rounded-lg">
                   <div>
                     <p className="font-semibold">Green Energy Optimization</p>
-                    <p className="text-sm text-default-500">Filed: 2024-10-11</p>
+                    <p className="text-sm text-default-700">Filed: 2024-10-11</p>
                   </div>
                   <Chip color="success" size="sm">Granted</Chip>
                 </div>

@@ -205,64 +205,70 @@ export default function HealthcareDashboard({ companyId, onSectorSelect }: Healt
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Healthcare Industry Dashboard</h1>
-          <p className="text-gray-600 mt-1">Comprehensive healthcare sector management and analytics</p>
+          <h1 className="text-3xl font-bold text-white">Healthcare Industry Dashboard</h1>
+          <p className="text-gray-400 mt-1">Comprehensive healthcare sector management and analytics</p>
         </div>
         <div className="flex space-x-2">
-          <Badge variant="flat" className="px-3 py-1">
+          <Badge variant="flat" className="px-3 py-1 bg-green-900/30 text-green-400">
             <Activity className="h-4 w-4 mr-1" />
             Operational
           </Badge>
-          <Button onClick={fetchHealthcareMetrics} variant="bordered">
+          <Button onClick={fetchHealthcareMetrics} variant="bordered" className="border-slate-600 text-gray-300">
             <BarChart3 className="h-4 w-4 mr-2" />
             Refresh
           </Button>
         </div>
       </div>
 
-      {/* Overview Cards */}
+      {/* Overview Cards - AAA Design */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <h3 className="text-sm font-medium">Total Facilities</h3>
-            <Building2 className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardBody>
-            <div className="text-2xl font-bold">
-              {metrics.hospitals.total + metrics.clinics.total}
+        <Card className="p-4 bg-slate-800/50 border border-slate-700">
+          <div className="flex items-start justify-between">
+            <div className="p-3 rounded-xl bg-blue-900/30 text-blue-400">
+              <Building2 className="h-6 w-6" />
             </div>
-            <p className="text-xs text-muted-foreground">
+          </div>
+          <div className="mt-4">
+            <p className="text-sm text-gray-400">Total Facilities</p>
+            <p className="text-2xl font-bold mt-1 text-white">
+              {metrics.hospitals.total + metrics.clinics.total}
+            </p>
+            <p className="text-xs text-gray-500 mt-1">
               {metrics.hospitals.operational + metrics.clinics.operational} operational
             </p>
-          </CardBody>
+          </div>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <h3 className="text-sm font-medium">Total Revenue</h3>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardBody>
-            <div className="text-2xl font-bold">
-              ${(metrics.hospitals.totalRevenue + metrics.clinics.totalRevenue + metrics.devices.totalRevenue + metrics.insurance.totalPremiums).toLocaleString()}
+        <Card className="p-4 bg-slate-800/50 border border-slate-700">
+          <div className="flex items-start justify-between">
+            <div className="p-3 rounded-xl bg-green-900/30 text-green-400">
+              <DollarSign className="h-6 w-6" />
             </div>
-            <p className="text-xs text-muted-foreground">
+          </div>
+          <div className="mt-4">
+            <p className="text-sm text-gray-400">Total Revenue</p>
+            <p className="text-2xl font-bold mt-1 text-white">
+              ${(metrics.hospitals.totalRevenue + metrics.clinics.totalRevenue + metrics.devices.totalRevenue + metrics.insurance.totalPremiums).toLocaleString()}
+            </p>
+            <p className="text-xs text-gray-500 mt-1">
               Annual healthcare revenue
             </p>
-          </CardBody>
+          </div>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <h3 className="text-sm font-medium">Active Research</h3>
-            <Microscope className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardBody>
-            <div className="text-2xl font-bold">{metrics.research.active}</div>
-            <p className="text-xs text-muted-foreground">
+        <Card className="p-4 bg-slate-800/50 border border-slate-700">
+          <div className="flex items-start justify-between">
+            <div className="p-3 rounded-xl bg-purple-900/30 text-purple-400">
+              <Microscope className="h-6 w-6" />
+            </div>
+          </div>
+          <div className="mt-4">
+            <p className="text-sm text-gray-400">Active Research</p>
+            <p className="text-2xl font-bold mt-1 text-white">{metrics.research.active}</p>
+            <p className="text-xs text-gray-500 mt-1">
               {metrics.research.successRate.toFixed(1)}% success rate
             </p>
-          </CardBody>
+          </div>
         </Card>
       </div>
 

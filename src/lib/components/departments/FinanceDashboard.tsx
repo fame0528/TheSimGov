@@ -118,7 +118,7 @@ export function FinanceDashboard({
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-3xl font-bold">💰 Finance Department</h2>
-          <p className="text-default-500">Level {department.level} • {formatCurrency(department.budget)} Budget</p>
+          <p className="text-default-700">Level {department.level} • {formatCurrency(department.budget)} Budget</p>
         </div>
         {onRefresh && (
           <Button size="sm" variant="flat" onPress={onRefresh}>
@@ -134,25 +134,25 @@ export function FinanceDashboard({
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardBody>
-            <p className="text-sm text-default-500">Total Revenue</p>
+            <p className="text-sm text-default-700">Total Revenue</p>
             <p className="text-2xl font-bold text-success">{formatCurrency(department.totalRevenue || 0)}</p>
           </CardBody>
         </Card>
         <Card>
           <CardBody>
-            <p className="text-sm text-default-500">Total Expenses</p>
+            <p className="text-sm text-default-700">Total Expenses</p>
             <p className="text-2xl font-bold text-danger">{formatCurrency(department.totalExpenses || 0)}</p>
           </CardBody>
         </Card>
         <Card>
           <CardBody>
-            <p className="text-sm text-default-500">Cash Reserves</p>
+            <p className="text-sm text-default-700">Cash Reserves</p>
             <p className="text-2xl font-bold">{formatCurrency(department.cashReserves || 0)}</p>
           </CardBody>
         </Card>
         <Card>
           <CardBody>
-            <p className="text-sm text-default-500">Credit Score</p>
+            <p className="text-sm text-default-700">Credit Score</p>
             <p className="text-2xl font-bold">
               <Chip color={(department.creditScore || 650) >= 700 ? 'success' : (department.creditScore || 650) >= 600 ? 'warning' : 'danger'}>
                 {department.creditScore || 650}
@@ -174,11 +174,11 @@ export function FinanceDashboard({
               <CardBody>
                 <div className="space-y-2">
                   <div className="flex justify-between">
-                    <span className="text-default-500">Total Debt</span>
+                    <span className="text-default-700">Total Debt</span>
                     <span className="font-semibold">{formatCurrency(totalDebt)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-default-500">Monthly Payments</span>
+                    <span className="text-default-700">Monthly Payments</span>
                     <span className="font-semibold">
                       {formatCurrency(activeLoans.reduce((sum, l) => sum + l.monthlyPayment, 0))}
                     </span>
@@ -195,11 +195,11 @@ export function FinanceDashboard({
               <CardBody>
                 <div className="space-y-2">
                   <div className="flex justify-between">
-                    <span className="text-default-500">Total Value</span>
+                    <span className="text-default-700">Total Value</span>
                     <span className="font-semibold">{formatCurrency(totalInvestmentValue)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-default-500">Total Gain/Loss</span>
+                    <span className="text-default-700">Total Gain/Loss</span>
                     <span className={`font-semibold ${investmentGains >= 0 ? 'text-success' : 'text-danger'}`}>
                       {investmentGains >= 0 ? '+' : ''}{formatCurrency(investmentGains)}
                     </span>

@@ -1,0 +1,75 @@
+#!/usr/bin/env node
+const fs = require('fs');
+const path = require('path');
+
+const ROOT = process.cwd();
+const exts = new Set(['.ts', '.tsx', '.js', '.jsx', '.css', '.scss', '.less', '.html', '.mdx', '.md', '.json']);
+const ignoreDirs = new Set(['node_modules', '.next', 'dist', 'dist-server', 'coverage', 'public', '.git', 'out', 'build', 'docs', 'dev', 'dev_backup']);
+
+const patterns = [
+  { name: 'Tailwind token: text-black', re: /\btext-black\b/i },
+  { name: 'Problem token: text-default-500', re: /\btext-default-500\b/i },
+  { name: 'Hex black: #000 or #000000', re: /#(?:000|000000)\b/i },
+  { name: 'rgb(0,0,0)', re: /rgb\(\s*0\s*,\s*0\s*,\s*0\s*\)/i },
+  { name: 'color: black', re: /color\s*:\s*(?:'|\")?\s*black\s*(?:'|\")?/i },
+  { name: 'inline style color black', re: /style\s*=\s*{{[^}]*color\s*:\s*['\"]?black['\"]?[^}]*}}/i }
+];
+
+function walk(dir, results = []) {
+  const entries = fs.readdirSync(dir, { withFileTypes: true });
+  for (const ent of entries) {
+    if (ent.isDirectory()) {
+      if (ignoreDirs.has(ent.name)) continue;
+      walk(path.join(dir, ent.name), results);
+    } else if (ent.isFile()) {
+      const ext = path.extname(ent.name).toLowerCase();
+      if (!exts.has(ext)) continue;
+      results.push(path.join(dir, ent.name));
+    }
+  }
+  return results;
+}
+
+function scanFile(filePath) {
+  const text = fs.readFileSync(filePath, 'utf8');
+  const lines = text.split(/\r?\n/);
+  const hits = [];
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    for (const p of patterns) {
+      if (p.re.test(line)) {
+        hits.push({ file: filePath, line: i + 1, snippet: line.trim(), rule: p.name });
+      }
+    }
+  }
+  return hits;
+}
+
+function main() {
+  console.log('Checking repository for black / near-black text usages...');
+  const files = walk(ROOT);
+  const allHits = [];
+  for (const f of files) {
+    try {
+      const hits = scanFile(f);
+      allHits.push(...hits);
+    } catch (err) {
+      // ignore unreadable files
+    }
+  }
+
+  if (allHits.length === 0) {
+    console.log('✅ No disallowed black/near-black text usages found.');
+    process.exit(0);
+  }
+
+  console.error(`\n❌ Found ${allHits.length} occurrences of black/near-black text tokens:`);
+  for (const h of allHits) {
+    console.error(`- ${h.file}:${h.line} [${h.rule}]  -> ${h.snippet}`);
+  }
+
+  console.error('\nPlease replace these with accessible theme tokens (e.g. text-default-700, text-foreground) or update the theme mapping.');
+  process.exit(1);
+}
+
+main();

@@ -234,7 +234,7 @@ export function PoliticalLeaderboard({
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold">🏆 Political Leaderboard</h2>
-          <p className="text-default-500">
+          <p className="text-default-700">
             Competitive rankings across political influence metrics
           </p>
         </div>
@@ -407,7 +407,7 @@ export function PoliticalLeaderboard({
       {!isLoading && !error && entries.length === 0 && (
         <Card>
           <CardBody className="text-center py-8">
-            <p className="text-default-500">No ranking data available for this metric.</p>
+            <p className="text-default-700">No ranking data available for this metric.</p>
             <p className="text-sm text-default-400 mt-2">
               Rankings will appear once players start contributing.
             </p>
@@ -431,23 +431,23 @@ export function PoliticalLeaderboard({
               return (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div>
-                    <p className="text-default-500 text-sm">Rank</p>
+                    <p className="text-default-700 text-sm">Rank</p>
                     <p className="text-2xl font-bold text-primary">#{userEntry.rank}</p>
                   </div>
                   <div>
-                    <p className="text-default-500 text-sm">{METRIC_LABELS[selectedMetric]}</p>
+                    <p className="text-default-700 text-sm">{METRIC_LABELS[selectedMetric]}</p>
                     <p className="text-2xl font-bold">
                       {formatMetricValue(userEntry.metricValue, selectedMetric)}
                     </p>
                   </div>
                   <div>
-                    <p className="text-default-500 text-sm">Trend</p>
+                    <p className="text-default-700 text-sm">Trend</p>
                     <Chip size="md" color={trendInfo.color}>
                       {trendInfo.icon} {trendInfo.text}
                     </Chip>
                   </div>
                   <div>
-                    <p className="text-default-500 text-sm">Season</p>
+                    <p className="text-default-700 text-sm">Season</p>
                     <p className="text-lg font-medium">{userEntry.seasonId}</p>
                   </div>
                 </div>

@@ -94,7 +94,7 @@ export function CompetitiveLeaderboard({
       {/* Header */}
       <div>
         <h2 className="text-3xl font-bold">🏆 AI Industry Leaderboard</h2>
-        <p className="text-default-500">Competitive rankings and market position</p>
+        <p className="text-default-700">Competitive rankings and market position</p>
       </div>
 
       {/* Top 3 Podium */}
@@ -264,19 +264,19 @@ export function CompetitiveLeaderboard({
               return (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                   <div>
-                    <p className="text-default-500">Rank</p>
+                    <p className="text-default-700">Rank</p>
                     <p className="text-2xl font-bold text-primary">#{userCompany.rank}</p>
                   </div>
                   <div>
-                    <p className="text-default-500">Performance</p>
+                    <p className="text-default-700">Performance</p>
                     <p className="text-2xl font-bold">{userCompany.modelPerformance.toFixed(1)}</p>
                   </div>
                   <div>
-                    <p className="text-default-500">Research Impact</p>
+                    <p className="text-default-700">Research Impact</p>
                     <p className="text-2xl font-bold">{userCompany.researchImpact.toFixed(1)}</p>
                   </div>
                   <div>
-                    <p className="text-default-500">Market Share</p>
+                    <p className="text-default-700">Market Share</p>
                     <p className="text-2xl font-bold">{userCompany.marketShare.toFixed(2)}%</p>
                   </div>
                 </div>

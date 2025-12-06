@@ -61,7 +61,7 @@ export default function RDDashboard({ department, companyId, onUpdate }: RDDashb
           <div className="flex items-center justify-between w-full">
             <div>
               <h2 className="text-2xl font-bold">{department.name} Department</h2>
-              <p className="text-default-500">Level {department.level} • Budget: ${formatNumber(department.budget)}</p>
+              <p className="text-default-700">Level {department.level} • Budget: ${formatNumber(department.budget)}</p>
             </div>
             <Chip color={department.active ? 'success' : 'default'} variant="flat">
               {department.active ? 'Active' : 'Inactive'}
@@ -72,27 +72,27 @@ export default function RDDashboard({ department, companyId, onUpdate }: RDDashb
           {/* KPIs */}
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
             <div>
-              <p className="text-sm text-default-500">Efficiency</p>
+              <p className="text-sm text-default-700">Efficiency</p>
               <Progress value={department.kpis.efficiency} color="primary" className="mt-2" />
               <p className="text-xs mt-1">{department.kpis.efficiency}%</p>
             </div>
             <div>
-              <p className="text-sm text-default-500">Performance</p>
+              <p className="text-sm text-default-700">Performance</p>
               <Progress value={department.kpis.performance} color="secondary" className="mt-2" />
               <p className="text-xs mt-1">{department.kpis.performance}%</p>
             </div>
             <div>
-              <p className="text-sm text-default-500">ROI</p>
+              <p className="text-sm text-default-700">ROI</p>
               <Progress value={department.kpis.roi} color="success" className="mt-2" />
               <p className="text-xs mt-1">{department.kpis.roi}%</p>
             </div>
             <div>
-              <p className="text-sm text-default-500">Utilization</p>
+              <p className="text-sm text-default-700">Utilization</p>
               <Progress value={department.kpis.utilization} color="warning" className="mt-2" />
               <p className="text-xs mt-1">{department.kpis.utilization}%</p>
             </div>
             <div>
-              <p className="text-sm text-default-500">Quality</p>
+              <p className="text-sm text-default-700">Quality</p>
               <Progress value={department.kpis.quality} color="danger" className="mt-2" />
               <p className="text-xs mt-1">{department.kpis.quality}%</p>
             </div>
@@ -113,21 +113,21 @@ export default function RDDashboard({ department, companyId, onUpdate }: RDDashb
             <CardBody>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                 <div>
-                  <p className="text-sm text-default-500">Innovation Score</p>
+                  <p className="text-sm text-default-700">Innovation Score</p>
                   <p className="text-2xl font-bold">{department.innovationPoints || 0}/100</p>
                   <Progress value={department.innovationPoints || 0} color="primary" size="sm" className="mt-2" />
                 </div>
                 <div>
-                  <p className="text-sm text-default-500">Technology Level</p>
+                  <p className="text-sm text-default-700">Technology Level</p>
                   <p className="text-2xl font-bold">{department.technologyLevel || department.techLevel || 1}/10</p>
                   <Progress value={((department.technologyLevel || department.techLevel || 1) / 10) * 100} color="secondary" size="sm" className="mt-2" />
                 </div>
                 <div>
-                  <p className="text-sm text-default-500">Active Projects</p>
+                  <p className="text-sm text-default-700">Active Projects</p>
                   <p className="text-2xl font-bold">{department.researchProjects?.filter(p => p.status === 'active').length || 0}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-default-500">Patents Owned</p>
+                  <p className="text-sm text-default-700">Patents Owned</p>
                   <p className="text-2xl font-bold">{department.patents?.filter(p => p.status === 'approved').length || 0}</p>
                 </div>
               </div>
@@ -200,7 +200,7 @@ export default function RDDashboard({ department, companyId, onUpdate }: RDDashb
                   </TableBody>
                 </Table>
               ) : (
-                <p className="text-center text-default-500 py-8">No research projects</p>
+                <p className="text-center text-default-700 py-8">No research projects</p>
               )}
             </CardBody>
           </Card>
@@ -220,7 +220,7 @@ export default function RDDashboard({ department, companyId, onUpdate }: RDDashb
                       <div className="flex justify-between items-start mb-2">
                         <div className="flex-1">
                           <h4 className="font-semibold text-lg">{patent.name}</h4>
-                          <p className="text-sm text-default-500 mt-1">{patent.description}</p>
+                          <p className="text-sm text-default-700 mt-1">{patent.description}</p>
                         </div>
                         <Chip color={patentStatusColor(patent.status)} variant="flat" size="sm">
                           {patent.status}
@@ -228,17 +228,17 @@ export default function RDDashboard({ department, companyId, onUpdate }: RDDashb
                       </div>
                       <div className="grid grid-cols-3 gap-4 mt-4 text-sm">
                         <div>
-                          <p className="text-default-500">Filed</p>
+                          <p className="text-default-700">Filed</p>
                           <p className="font-semibold">{new Date(patent.filedAt).toLocaleDateString()}</p>
                         </div>
                         {patent.approvedAt && (
                           <div>
-                            <p className="text-default-500">Approved</p>
+                            <p className="text-default-700">Approved</p>
                             <p className="font-semibold">{new Date(patent.approvedAt).toLocaleDateString()}</p>
                           </div>
                         )}
                         <div>
-                          <p className="text-default-500">Estimated Value</p>
+                          <p className="text-default-700">Estimated Value</p>
                           <p className="font-semibold">${formatNumber(patent.value)}</p>
                         </div>
                       </div>
@@ -246,7 +246,7 @@ export default function RDDashboard({ department, companyId, onUpdate }: RDDashb
                   ))}
                 </div>
               ) : (
-                <p className="text-center text-default-500 py-8">No patents filed</p>
+                <p className="text-center text-default-700 py-8">No patents filed</p>
               )}
             </CardBody>
           </Card>
@@ -268,7 +268,7 @@ export default function RDDashboard({ department, companyId, onUpdate }: RDDashb
                     color="primary"
                     size="lg"
                   />
-                  <p className="text-sm text-default-500 mt-2">
+                  <p className="text-sm text-default-700 mt-2">
                     {department.researchSpeed || 1}x base speed
                   </p>
                 </div>
@@ -281,19 +281,19 @@ export default function RDDashboard({ department, companyId, onUpdate }: RDDashb
                       <p className="text-2xl font-bold text-success">
                         {department.researchProjects?.filter(p => p.status === 'completed').length || 0}
                       </p>
-                      <p className="text-xs text-default-500">Completed</p>
+                      <p className="text-xs text-default-700">Completed</p>
                     </div>
                     <div>
                       <p className="text-2xl font-bold text-warning">
                         {department.researchProjects?.filter(p => p.status === 'active').length || 0}
                       </p>
-                      <p className="text-xs text-default-500">Active</p>
+                      <p className="text-xs text-default-700">Active</p>
                     </div>
                     <div>
                       <p className="text-2xl font-bold text-danger">
                         {department.researchProjects?.filter(p => p.status === 'failed').length || 0}
                       </p>
-                      <p className="text-xs text-default-500">Failed</p>
+                      <p className="text-xs text-default-700">Failed</p>
                     </div>
                   </div>
                 </div>
@@ -306,19 +306,19 @@ export default function RDDashboard({ department, companyId, onUpdate }: RDDashb
                       <p className="text-2xl font-bold text-success">
                         {department.patents?.filter(p => p.status === 'approved').length || 0}
                       </p>
-                      <p className="text-xs text-default-500">Approved</p>
+                      <p className="text-xs text-default-700">Approved</p>
                     </div>
                     <div>
                       <p className="text-2xl font-bold text-warning">
                         {department.patents?.filter(p => p.status === 'pending').length || 0}
                       </p>
-                      <p className="text-xs text-default-500">Pending</p>
+                      <p className="text-xs text-default-700">Pending</p>
                     </div>
                     <div>
                       <p className="text-2xl font-bold text-danger">
                         {department.patents?.filter(p => p.status === 'rejected').length || 0}
                       </p>
-                      <p className="text-xs text-default-500">Rejected</p>
+                      <p className="text-xs text-default-700">Rejected</p>
                     </div>
                   </div>
                 </div>

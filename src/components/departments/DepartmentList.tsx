@@ -54,19 +54,19 @@ export default function DepartmentList({
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="text-center">
               <p className="text-2xl font-bold">{stats.total}</p>
-              <p className="text-sm text-default-500">Total Departments</p>
+              <p className="text-sm text-default-700">Total Departments</p>
             </div>
             <div className="text-center">
               <p className="text-2xl font-bold text-success">{stats.active}</p>
-              <p className="text-sm text-default-500">Active</p>
+              <p className="text-sm text-default-700">Active</p>
             </div>
             <div className="text-center">
               <p className="text-2xl font-bold">${stats.totalBudget.toLocaleString()}</p>
-              <p className="text-sm text-default-500">Total Budget</p>
+              <p className="text-sm text-default-700">Total Budget</p>
             </div>
             <div className="text-center">
               <p className="text-2xl font-bold">{Math.round(stats.avgEfficiency)}%</p>
-              <p className="text-sm text-default-500">Avg Efficiency</p>
+              <p className="text-sm text-default-700">Avg Efficiency</p>
             </div>
           </div>
         </CardBody>
@@ -98,7 +98,7 @@ export default function DepartmentList({
       {filteredDepts.length === 0 && (
         <Card>
           <CardBody className="text-center py-12">
-            <p className="text-default-500">No departments match this filter</p>
+            <p className="text-default-700">No departments match this filter</p>
           </CardBody>
         </Card>
       )}

@@ -204,7 +204,7 @@ export default function BudgetAllocation({
       <CardHeader className="flex justify-between items-center">
         <div>
           <h3 className="text-lg font-bold text-default-900">Budget Allocation</h3>
-          <p className="text-sm text-default-500">
+          <p className="text-sm text-default-700">
             Distribute ${(companyCash / 1000).toFixed(0)}k across departments
           </p>
         </div>

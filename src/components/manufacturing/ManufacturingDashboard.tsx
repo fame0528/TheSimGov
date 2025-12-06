@@ -71,6 +71,7 @@ interface ManufacturingDashboardProps {
 
 /**
  * KPI Card component for summary metrics
+ * Matches Banking dashboard AAA design pattern
  */
 function KPICard({ 
   title, 
@@ -88,30 +89,35 @@ function KPICard({
   color?: 'blue' | 'green' | 'yellow' | 'red' | 'purple';
 }) {
   const colorClasses = {
-    blue: 'bg-blue-100 text-blue-600',
-    green: 'bg-green-100 text-green-600',
-    yellow: 'bg-yellow-100 text-yellow-600',
-    red: 'bg-red-100 text-red-600',
-    purple: 'bg-purple-100 text-purple-600',
+    blue: 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400',
+    green: 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400',
+    yellow: 'bg-yellow-100 text-yellow-600 dark:bg-yellow-900/30 dark:text-yellow-400',
+    red: 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400',
+    purple: 'bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400',
   };
 
   return (
-    <Card className="p-4">
+    <Card className="p-4 bg-slate-800/50 border border-slate-700">
       <div className="flex items-start justify-between">
-        <div>
-          <p className="text-sm text-gray-500">{title}</p>
-          <p className="text-2xl font-bold mt-1">{value}</p>
-          {subtitle && <p className="text-xs text-gray-400 mt-1">{subtitle}</p>}
-          {trend && (
-            <div className={`flex items-center mt-2 text-xs ${trend.isPositive ? 'text-green-600' : 'text-red-600'}`}>
-              <TrendingUp className={`h-3 w-3 mr-1 ${!trend.isPositive ? 'rotate-180' : ''}`} />
-              {trend.value}% vs last period
-            </div>
-          )}
-        </div>
-        <div className={`p-3 rounded-lg ${colorClasses[color]}`}>
+        <div className={`p-3 rounded-xl ${colorClasses[color]}`}>
           <Icon className="h-6 w-6" />
         </div>
+        {trend && (
+          <Chip 
+            size="sm" 
+            color={trend.isPositive ? 'success' : 'danger'}
+            variant="flat"
+          >
+            {trend.isPositive ? '+' : ''}{trend.value}%
+          </Chip>
+        )}
+      </div>
+      <div className="mt-4">
+        <p className="text-sm text-gray-400">{title}</p>
+        <p className="text-2xl font-bold mt-1 text-white">{value}</p>
+        {subtitle && (
+          <p className="text-xs text-gray-500 mt-1">{subtitle}</p>
+        )}
       </div>
     </Card>
   );

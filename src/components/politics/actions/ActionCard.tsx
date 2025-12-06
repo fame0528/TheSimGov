@@ -197,7 +197,7 @@ export function ActionCard({
         </div>
         
         {/* Effect Preview */}
-        <div className="text-xs text-default-500">
+        <div className="text-xs text-default-700">
           <div className="flex items-center gap-1">
             <TrendingUp className="w-3 h-3" />
             <span>

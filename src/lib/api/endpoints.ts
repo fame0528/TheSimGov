@@ -173,6 +173,10 @@ export const industryEndpoints = {
   },
 } as const;
 
+  export const coreLoopEndpoints = {
+    state: '/api/core-loop', // GET: current state
+    advance: '/api/core-loop', // POST: advance tick
+  } as const;
 /**
  * AI Industry endpoints (Technology + AI subcategory)
  * Covers models, research, infrastructure, talent, marketplace
@@ -237,7 +241,7 @@ export const aiEndpoints = {
 export const energyEndpoints = {
   // Oil Wells
   oilWells: {
-    list: (companyId: string) => `/api/energy/oil-wells?companyId=${companyId}` as const,
+    list: (companyId: string) => `/api/energy/oil-wells?company=${companyId}` as const,
     create: '/api/energy/oil-wells',
     byId: (id: string) => `/api/energy/oil-wells/${id}` as const,
     update: (id: string) => `/api/energy/oil-wells/${id}` as const,
@@ -246,7 +250,7 @@ export const energyEndpoints = {
   
   // Gas Fields
   gasFields: {
-    list: (companyId: string) => `/api/energy/gas-fields?companyId=${companyId}` as const,
+    list: (companyId: string) => `/api/energy/gas-fields?company=${companyId}` as const,
     create: '/api/energy/gas-fields',
     byId: (id: string) => `/api/energy/gas-fields/${id}` as const,
     update: (id: string) => `/api/energy/gas-fields/${id}` as const,
@@ -255,7 +259,7 @@ export const energyEndpoints = {
   
   // Solar Farms
   solarFarms: {
-    list: (companyId: string) => `/api/energy/solar-farms?companyId=${companyId}` as const,
+    list: (companyId: string) => `/api/energy/solar-farms?company=${companyId}` as const,
     create: '/api/energy/solar-farms',
     byId: (id: string) => `/api/energy/solar-farms/${id}` as const,
     update: (id: string) => `/api/energy/solar-farms/${id}` as const,
@@ -264,7 +268,7 @@ export const energyEndpoints = {
   
   // Wind Turbines
   windTurbines: {
-    list: (companyId: string) => `/api/energy/wind-turbines?companyId=${companyId}` as const,
+    list: (companyId: string) => `/api/energy/wind-turbines?company=${companyId}` as const,
     create: '/api/energy/wind-turbines',
     byId: (id: string) => `/api/energy/wind-turbines/${id}` as const,
     update: (id: string) => `/api/energy/wind-turbines/${id}` as const,
@@ -273,7 +277,7 @@ export const energyEndpoints = {
   
   // Power Plants
   powerPlants: {
-    list: (companyId: string) => `/api/energy/power-plants?companyId=${companyId}` as const,
+    list: (companyId: string) => `/api/energy/power-plants?company=${companyId}` as const,
     create: '/api/energy/power-plants',
     byId: (id: string) => `/api/energy/power-plants/${id}` as const,
     update: (id: string) => `/api/energy/power-plants/${id}` as const,
@@ -282,7 +286,7 @@ export const energyEndpoints = {
   
   // Energy Storage
   storage: {
-    list: (companyId: string) => `/api/energy/storage?companyId=${companyId}` as const,
+    list: (companyId: string) => `/api/energy/storage?company=${companyId}` as const,
     create: '/api/energy/storage',
     byId: (id: string) => `/api/energy/storage/${id}` as const,
     update: (id: string) => `/api/energy/storage/${id}` as const,
@@ -291,7 +295,7 @@ export const energyEndpoints = {
   
   // Transmission Lines
   transmissionLines: {
-    list: (companyId: string) => `/api/energy/transmission-lines?companyId=${companyId}` as const,
+    list: (companyId: string) => `/api/energy/transmission-lines?company=${companyId}` as const,
     create: '/api/energy/transmission-lines',
     byId: (id: string) => `/api/energy/transmission-lines/${id}` as const,
     update: (id: string) => `/api/energy/transmission-lines/${id}` as const,
@@ -299,7 +303,7 @@ export const energyEndpoints = {
   },
   
   // Summary endpoint for dashboard
-  summary: (companyId: string) => `/api/energy/summary?companyId=${companyId}` as const,
+  summary: (companyId: string) => `/api/energy/summary?company=${companyId}` as const,
 } as const;
 
 /**
@@ -741,6 +745,49 @@ export const empireEndpoints = {
 /**
  * All endpoints consolidated
  */
+/**
+ * Logistics endpoints
+ * Covers vehicles, warehouses, routes, contracts, shipments
+ */
+export const logisticsEndpoints = {
+  vehicles: {
+    list: (companyId: string) => `/api/logistics/vehicles?company=${companyId}` as const,
+    create: '/api/logistics/vehicles',
+    byId: (id: string) => `/api/logistics/vehicle/${id}` as const,
+    update: (id: string) => `/api/logistics/vehicle/${id}` as const,
+    delete: (id: string) => `/api/logistics/vehicle/${id}` as const,
+  },
+  warehouses: {
+    list: (companyId: string) => `/api/logistics/warehouses?company=${companyId}` as const,
+    create: '/api/logistics/warehouses',
+    byId: (id: string) => `/api/logistics/warehouse/${id}` as const,
+    update: (id: string) => `/api/logistics/warehouse/${id}` as const,
+    delete: (id: string) => `/api/logistics/warehouse/${id}` as const,
+  },
+  routes: {
+    list: (companyId: string) => `/api/logistics/routes?company=${companyId}` as const,
+    create: '/api/logistics/routes',
+    byId: (id: string) => `/api/logistics/route/${id}` as const,
+    update: (id: string) => `/api/logistics/route/${id}` as const,
+    delete: (id: string) => `/api/logistics/route/${id}` as const,
+  },
+  contracts: {
+    list: (companyId: string) => `/api/logistics/contracts?company=${companyId}` as const,
+    create: '/api/logistics/contracts',
+    byId: (id: string) => `/api/logistics/contract/${id}` as const,
+    update: (id: string) => `/api/logistics/contract/${id}` as const,
+    delete: (id: string) => `/api/logistics/contract/${id}` as const,
+  },
+  shipments: {
+    list: (companyId: string) => `/api/logistics/shipments?company=${companyId}` as const,
+    create: '/api/logistics/shipments',
+    byId: (id: string) => `/api/logistics/shipment/${id}` as const,
+    update: (id: string) => `/api/logistics/shipment/${id}` as const,
+    delete: (id: string) => `/api/logistics/shipment/${id}` as const,
+  },
+  summary: (companyId: string) => `/api/logistics/summary?company=${companyId}` as const,
+} as const;
+
 export const endpoints = {
   auth: authEndpoints,
   companies: companyEndpoints,
@@ -761,6 +808,8 @@ export const endpoints = {
   admin: adminEndpoints,
   messages: messagesEndpoints,
   empire: empireEndpoints,
+  coreLoop: coreLoopEndpoints,
+  logistics: logisticsEndpoints,
 } as const;
 
 /**

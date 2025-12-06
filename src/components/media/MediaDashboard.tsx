@@ -49,6 +49,7 @@ interface MediaDashboardProps {
 
 /**
  * KPI Card component for summary metrics
+ * Matches Banking dashboard AAA design pattern
  */
 function KPICard({ 
   title, 
@@ -75,7 +76,7 @@ function KPICard({
   };
 
   return (
-    <Card className="p-4">
+    <Card className="p-4 bg-slate-800/50 border border-slate-700">
       <div className="flex items-start justify-between">
         <div className={`p-3 rounded-xl ${colorClasses[color]}`}>
           <Icon className="h-6 w-6" />
@@ -91,10 +92,10 @@ function KPICard({
         )}
       </div>
       <div className="mt-4">
-        <p className="text-sm text-gray-500 dark:text-gray-400">{title}</p>
-        <p className="text-2xl font-bold mt-1">{value}</p>
+        <p className="text-sm text-gray-400">{title}</p>
+        <p className="text-2xl font-bold mt-1 text-white">{value}</p>
         {subtitle && (
-          <p className="text-xs text-gray-400 mt-1">{subtitle}</p>
+          <p className="text-xs text-gray-500 mt-1">{subtitle}</p>
         )}
       </div>
     </Card>

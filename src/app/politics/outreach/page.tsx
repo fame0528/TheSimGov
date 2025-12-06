@@ -38,8 +38,8 @@ export default function OutreachPage() {
                 </div>
                 <div className="rounded-lg border border-default-200 p-4 flex flex-col gap-3">
                   <h2 className="font-semibold">Call Queue</h2>
-                  <p className="text-default-500">Queued: {phoneBank?.queued ?? 0}</p>
-                  <p className="text-default-500">Completed: {phoneBank?.completed ?? 0}</p>
+                  <p className="text-default-700">Queued: {phoneBank?.queued ?? 0}</p>
+                  <p className="text-default-700">Completed: {phoneBank?.completed ?? 0}</p>
                 </div>
               </div>
             </Tab>
@@ -52,7 +52,7 @@ export default function OutreachPage() {
                 </div>
                 <div className="rounded-lg border border-default-200 p-4 flex flex-col gap-3">
                   <h2 className="font-semibold">Progress</h2>
-                  <p className="text-default-500">Doors knocked: {canvass?.doors ?? 0}</p>
+                  <p className="text-default-700">Doors knocked: {canvass?.doors ?? 0}</p>
                 </div>
               </div>
             </Tab>
@@ -60,7 +60,7 @@ export default function OutreachPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="rounded-lg border border-default-200 p-4 flex flex-col gap-3">
                   <h2 className="font-semibold">Upcoming Events</h2>
-                  <p className="text-default-500">Count: {events?.length ?? 0}</p>
+                  <p className="text-default-700">Count: {events?.length ?? 0}</p>
                 </div>
                 <div className="rounded-lg border border-default-200 p-4 flex flex-col gap-3">
                   <h2 className="font-semibold">Create Event</h2>
@@ -73,7 +73,7 @@ export default function OutreachPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="rounded-lg border border-default-200 p-4 flex flex-col gap-3">
                   <h2 className="font-semibold">Roster</h2>
-                  <p className="text-default-500">Total: {volunteers?.length ?? 0}</p>
+                  <p className="text-default-700">Total: {volunteers?.length ?? 0}</p>
                 </div>
                 <div className="rounded-lg border border-default-200 p-4 flex flex-col gap-3">
                   <h2 className="font-semibold">Add Volunteer</h2>
@@ -91,7 +91,7 @@ export default function OutreachPage() {
                 </div>
                 <div className="rounded-lg border border-default-200 p-4 flex flex-col gap-3">
                   <h2 className="font-semibold">Metrics</h2>
-                  <p className="text-default-500">Contacts: {gotv?.contacts ?? 0}</p>
+                  <p className="text-default-700">Contacts: {gotv?.contacts ?? 0}</p>
                 </div>
               </div>
             </Tab>

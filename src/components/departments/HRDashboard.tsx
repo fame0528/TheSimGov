@@ -61,7 +61,7 @@ export default function HRDashboard({ department, companyId, onUpdate }: HRDashb
           <div className="flex items-center justify-between w-full">
             <div>
               <h2 className="text-2xl font-bold">{department.name} Department</h2>
-              <p className="text-default-500">Level {department.level} • Budget: ${formatNumber(department.budget)}</p>
+              <p className="text-default-700">Level {department.level} • Budget: ${formatNumber(department.budget)}</p>
             </div>
             <Chip color={department.active ? 'success' : 'default'} variant="flat">
               {department.active ? 'Active' : 'Inactive'}
@@ -72,27 +72,27 @@ export default function HRDashboard({ department, companyId, onUpdate }: HRDashb
           {/* KPIs */}
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
             <div>
-              <p className="text-sm text-default-500">Efficiency</p>
+              <p className="text-sm text-default-700">Efficiency</p>
               <Progress value={department.kpis.efficiency} color="primary" className="mt-2" />
               <p className="text-xs mt-1">{department.kpis.efficiency}%</p>
             </div>
             <div>
-              <p className="text-sm text-default-500">Performance</p>
+              <p className="text-sm text-default-700">Performance</p>
               <Progress value={department.kpis.performance} color="secondary" className="mt-2" />
               <p className="text-xs mt-1">{department.kpis.performance}%</p>
             </div>
             <div>
-              <p className="text-sm text-default-500">ROI</p>
+              <p className="text-sm text-default-700">ROI</p>
               <Progress value={department.kpis.roi} color="success" className="mt-2" />
               <p className="text-xs mt-1">{department.kpis.roi}%</p>
             </div>
             <div>
-              <p className="text-sm text-default-500">Utilization</p>
+              <p className="text-sm text-default-700">Utilization</p>
               <Progress value={department.kpis.utilization} color="warning" className="mt-2" />
               <p className="text-xs mt-1">{department.kpis.utilization}%</p>
             </div>
             <div>
-              <p className="text-sm text-default-500">Quality</p>
+              <p className="text-sm text-default-700">Quality</p>
               <Progress value={department.kpis.quality} color="danger" className="mt-2" />
               <p className="text-xs mt-1">{department.kpis.quality}%</p>
             </div>
@@ -113,11 +113,11 @@ export default function HRDashboard({ department, companyId, onUpdate }: HRDashb
             <CardBody>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                 <div>
-                  <p className="text-sm text-default-500">Total Employees</p>
+                  <p className="text-sm text-default-700">Total Employees</p>
                   <p className="text-2xl font-bold">{department.totalEmployees || 0}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-default-500">Turnover Rate</p>
+                  <p className="text-sm text-default-700">Turnover Rate</p>
                   <p className="text-2xl font-bold">{(department.employeeTurnover || 0).toFixed(1)}%</p>
                   <Chip size="sm" color={
                     (department.employeeTurnover || 0) < 10 ? 'success' :
@@ -128,11 +128,11 @@ export default function HRDashboard({ department, companyId, onUpdate }: HRDashb
                   </Chip>
                 </div>
                 <div>
-                  <p className="text-sm text-default-500">Avg Salary</p>
+                  <p className="text-sm text-default-700">Avg Salary</p>
                   <p className="text-2xl font-bold">${formatNumber(department.avgSalary || 0)}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-default-500">Training Budget</p>
+                  <p className="text-sm text-default-700">Training Budget</p>
                   <p className="text-2xl font-bold">${formatNumber(department.trainingBudget || 0)}</p>
                 </div>
               </div>
@@ -188,7 +188,7 @@ export default function HRDashboard({ department, companyId, onUpdate }: HRDashb
                   </TableBody>
                 </Table>
               ) : (
-                <p className="text-center text-default-500 py-8">No training programs</p>
+                <p className="text-center text-default-700 py-8">No training programs</p>
               )}
             </CardBody>
           </Card>
@@ -244,7 +244,7 @@ export default function HRDashboard({ department, companyId, onUpdate }: HRDashb
                   </TableBody>
                 </Table>
               ) : (
-                <p className="text-center text-default-500 py-8">No recruitment campaigns</p>
+                <p className="text-center text-default-700 py-8">No recruitment campaigns</p>
               )}
             </CardBody>
           </Card>
@@ -266,7 +266,7 @@ export default function HRDashboard({ department, companyId, onUpdate }: HRDashb
                         <Chip size="sm" variant="flat">{skill.employeeCount} employees</Chip>
                       </div>
                       <div>
-                        <p className="text-xs text-default-500 mb-1">Average Level</p>
+                        <p className="text-xs text-default-700 mb-1">Average Level</p>
                         <Progress 
                           value={(skill.avgLevel / 5) * 100} 
                           color="primary"
@@ -278,7 +278,7 @@ export default function HRDashboard({ department, companyId, onUpdate }: HRDashb
                   ))}
                 </div>
               ) : (
-                <p className="text-center text-default-500 py-8">No skills inventory data</p>
+                <p className="text-center text-default-700 py-8">No skills inventory data</p>
               )}
             </CardBody>
           </Card>

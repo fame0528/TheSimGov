@@ -159,7 +159,7 @@ export function ResearchProjectManager({
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-3xl font-bold">🔬 Research Project Manager</h2>
-          <p className="text-default-500">Manage AI research initiatives and breakthroughs</p>
+          <p className="text-default-700">Manage AI research initiatives and breakthroughs</p>
         </div>
         <Button color="primary" onPress={() => setIsCreateModalOpen(true)}>
           New Research Project
@@ -170,25 +170,25 @@ export function ResearchProjectManager({
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardBody>
-            <p className="text-sm text-default-500">Active Projects</p>
+            <p className="text-sm text-default-700">Active Projects</p>
             <p className="text-2xl font-bold text-primary">{activeProjects}</p>
           </CardBody>
         </Card>
         <Card>
           <CardBody>
-            <p className="text-sm text-default-500">Completed</p>
+            <p className="text-sm text-default-700">Completed</p>
             <p className="text-2xl font-bold text-success">{completedProjects}</p>
           </CardBody>
         </Card>
         <Card>
           <CardBody>
-            <p className="text-sm text-default-500">Total Budget</p>
+            <p className="text-sm text-default-700">Total Budget</p>
             <p className="text-2xl font-bold text-warning">{formatCurrency(totalBudget)}</p>
           </CardBody>
         </Card>
         <Card>
           <CardBody>
-            <p className="text-sm text-default-500">Breakthroughs</p>
+            <p className="text-sm text-default-700">Breakthroughs</p>
             <p className="text-2xl font-bold text-danger">{totalBreakthroughs}</p>
           </CardBody>
         </Card>
@@ -214,7 +214,7 @@ export function ResearchProjectManager({
       {filteredProjects.length === 0 ? (
         <Card>
           <CardBody>
-            <p className="text-center text-default-500 py-8">
+            <p className="text-center text-default-700 py-8">
               No research projects yet. Create your first project to start advancing AI capabilities!
             </p>
           </CardBody>
@@ -279,7 +279,7 @@ export function ResearchProjectManager({
 
                 {/* Breakthroughs */}
                 <div className="flex justify-between text-sm">
-                  <span className="text-default-500">Breakthroughs</span>
+                  <span className="text-default-700">Breakthroughs</span>
                   <span className="font-bold text-warning">{project.breakthroughs}</span>
                 </div>
 

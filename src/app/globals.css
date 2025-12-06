@@ -5,3 +5,12 @@
     text-wrap: balance;
   }
 }
+
+/* Ensure contrast for default text tokens in dark mode across HeroUI components */
+@layer base {
+  /* map often-used default token to a light gray in dark mode so default text isn't rendered black */
+  html.dark .text-default-700 { color: var(--color-gray-300) !important; }
+  html.dark .text-default-400 { color: var(--color-gray-400) !important; }
+  /* Tab defaults from HeroUI may use text-default-700; ensure they show as readable in dark mode */
+  html.dark .tab-content, html.dark .tab { color: var(--color-gray-300) !important; }
+}

@@ -162,7 +162,7 @@ const fetcher = (url: string) => fetch(url).then((res) => res.json());
 const getTrendIcon = (delta: number) => {
   if (delta > 1) return { Icon: TrendingUp, color: 'text-success' };
   if (delta < -1) return { Icon: TrendingDown, color: 'text-danger' };
-  return { Icon: Minus, color: 'text-default-500' };
+  return { Icon: Minus, color: 'text-default-700' };
 };
 
 const formatPercent = (value: number): string => `${value.toFixed(1)}%`;
@@ -230,7 +230,7 @@ export function DemographicPollingPanel({ playerId }: DemographicPollingPanelPro
     return (
       <Card>
         <CardBody>
-          <p className="text-default-500 text-center py-8">
+          <p className="text-default-700 text-center py-8">
             No polling data available. Start campaigning to see demographic breakdowns.
           </p>
         </CardBody>
@@ -293,7 +293,7 @@ export function DemographicPollingPanel({ playerId }: DemographicPollingPanelPro
             <BarChart3 className="w-6 h-6" />
             Demographic Polling
           </h2>
-          <p className="text-default-500 text-sm mt-1">
+          <p className="text-default-700 text-sm mt-1">
             Support breakdown across {metadata.demographicGroups} demographic groups
           </p>
         </div>
@@ -322,7 +322,7 @@ export function DemographicPollingPanel({ playerId }: DemographicPollingPanelPro
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardBody className="text-center">
-            <p className="text-sm text-default-500">Overall Support</p>
+            <p className="text-sm text-default-700">Overall Support</p>
             <p className="text-3xl font-bold text-primary mt-1">
               {formatPercent(playerCandidate.overallSupport)}
             </p>
@@ -330,7 +330,7 @@ export function DemographicPollingPanel({ playerId }: DemographicPollingPanelPro
         </Card>
         <Card>
           <CardBody className="text-center">
-            <p className="text-sm text-default-500">Projected Turnout</p>
+            <p className="text-sm text-default-700">Projected Turnout</p>
             <p className="text-3xl font-bold text-success mt-1">
               {formatPercent(primaryPoll.turnoutProjection * 100)}
             </p>
@@ -338,7 +338,7 @@ export function DemographicPollingPanel({ playerId }: DemographicPollingPanelPro
         </Card>
         <Card>
           <CardBody className="text-center">
-            <p className="text-sm text-default-500">Competitiveness</p>
+            <p className="text-sm text-default-700">Competitiveness</p>
             <Progress 
               value={primaryPoll.competitiveness * 100} 
               color={primaryPoll.competitiveness > 0.7 ? 'danger' : primaryPoll.competitiveness > 0.4 ? 'warning' : 'success'}
@@ -351,7 +351,7 @@ export function DemographicPollingPanel({ playerId }: DemographicPollingPanelPro
         </Card>
         <Card>
           <CardBody className="text-center">
-            <p className="text-sm text-default-500">Candidates</p>
+            <p className="text-sm text-default-700">Candidates</p>
             <p className="text-3xl font-bold mt-1">{metadata.candidateCount}</p>
             <p className="text-xs text-default-400">in this race</p>
           </CardBody>
@@ -483,7 +483,7 @@ export function DemographicPollingPanel({ playerId }: DemographicPollingPanelPro
                             <td className="text-right p-2 font-mono">
                               {formatPercent(cell.support[playerCandidate.candidateId] || 0)}
                             </td>
-                            <td className="text-right p-2 text-default-500">
+                            <td className="text-right p-2 text-default-700">
                               {formatPercent(cell.sampleShare * 100)}
                             </td>
                           </tr>
@@ -516,7 +516,7 @@ export function DemographicPollingPanel({ playerId }: DemographicPollingPanelPro
                             <td className="text-right p-2 font-mono">
                               {formatPercent(cell.support[playerCandidate.candidateId] || 0)}
                             </td>
-                            <td className="text-right p-2 text-default-500">
+                            <td className="text-right p-2 text-default-700">
                               {formatPercent(cell.sampleShare * 100)}
                             </td>
                           </tr>
@@ -556,7 +556,7 @@ export function DemographicPollingPanel({ playerId }: DemographicPollingPanelPro
                               </p>
                             </div>
                             <div className="text-right">
-                              <p className="text-sm text-default-500">States Won</p>
+                              <p className="text-sm text-default-700">States Won</p>
                               <p className="text-lg font-semibold">{projection.states.length}</p>
                             </div>
                           </div>

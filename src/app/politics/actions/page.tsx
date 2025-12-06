@@ -225,7 +225,7 @@ export default function ActionsPage() {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold">Campaign Actions</h1>
-          <p className="text-default-500">Execute political actions to influence your campaign</p>
+          <p className="text-default-700">Execute political actions to influence your campaign</p>
         </div>
         <div className="flex items-center gap-2">
           <Button
@@ -248,7 +248,7 @@ export default function ActionsPage() {
                 <Zap className="w-5 h-5 text-warning" />
               </div>
               <div className="flex-1">
-                <p className="text-sm text-default-500">Action Points</p>
+                <p className="text-sm text-default-700">Action Points</p>
                 <p className="text-xl font-bold">
                   {queueStatus.actionPointsRemaining} / {queueStatus.actionPointsMax}
                 </p>
@@ -271,7 +271,7 @@ export default function ActionsPage() {
                 <DollarSign className="w-5 h-5 text-success" />
               </div>
               <div>
-                <p className="text-sm text-default-500">Campaign Funds</p>
+                <p className="text-sm text-default-700">Campaign Funds</p>
                 <p className="text-xl font-bold">{formatMoney(playerFunds)}</p>
               </div>
             </div>
@@ -286,7 +286,7 @@ export default function ActionsPage() {
                 <Clock className="w-5 h-5 text-primary" />
               </div>
               <div>
-                <p className="text-sm text-default-500">Queued Actions</p>
+                <p className="text-sm text-default-700">Queued Actions</p>
                 <p className="text-xl font-bold">
                   {queueStatus.pendingCount + queueStatus.inProgressCount}
                 </p>
@@ -303,7 +303,7 @@ export default function ActionsPage() {
                 <TrendingUp className="w-5 h-5 text-secondary" />
               </div>
               <div>
-                <p className="text-sm text-default-500">Est. Polling Impact</p>
+                <p className="text-sm text-default-700">Est. Polling Impact</p>
                 <p className="text-xl font-bold">
                   +{queueStatus.estimatedImpact.estimatedPollingShift.toFixed(1)}%
                 </p>

@@ -189,7 +189,7 @@ export default function ProposalCard({
         </div>
 
         {/* Summary */}
-        <p className="text-sm text-default-500 line-clamp-2">
+        <p className="text-sm text-default-700 line-clamp-2">
           {proposal.summary}
         </p>
 
@@ -204,7 +204,7 @@ export default function ProposalCard({
             <p className="text-sm font-medium">{proposal.primarySponsorName}</p>
             <p className="text-xs text-default-400">Sponsor</p>
           </div>
-          <div className="flex items-center gap-1 text-xs text-default-500">
+          <div className="flex items-center gap-1 text-xs text-default-700">
             <Users className="w-3 h-3" />
             <span>{proposal.sponsorCount} sponsors</span>
           </div>
@@ -215,7 +215,7 @@ export default function ProposalCard({
           <div className="space-y-2">
             <div className="flex items-center justify-between text-sm">
               <div className="flex items-center gap-4">
-                <span className="text-default-500">Votes: {proposal.voteCount}</span>
+                <span className="text-default-700">Votes: {proposal.voteCount}</span>
                 {proposal.yeaPercentage !== undefined && (
                   <span className={proposal.yeaPercentage >= 50 ? 'text-success' : 'text-danger'}>
                     {Math.round(proposal.yeaPercentage)}% Yea

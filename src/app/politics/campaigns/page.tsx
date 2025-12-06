@@ -132,7 +132,7 @@ function PollingTab({ campaigns }: { campaigns: any[] }) {
             <span className="font-semibold">{c.name}</span>
             <Chip color="secondary">{c.polling?.trend ?? "Stable"}</Chip>
           </div>
-          <p className="text-default-500">Polling trends and charts will render here (Phase 6 later step).</p>
+          <p className="text-default-700">Polling trends and charts will render here (Phase 6 later step).</p>
         </div>
       ))}
     </div>
@@ -148,7 +148,7 @@ function MetricsTab({ campaigns }: { campaigns: any[] }) {
             <span className="font-semibold">{c.name}</span>
             <Chip color="success">{c.metrics?.score ?? 0}</Chip>
           </div>
-          <p className="text-default-500">Engagement, conversion, fundraising metrics will render here.</p>
+          <p className="text-default-700">Engagement, conversion, fundraising metrics will render here.</p>
         </div>
       ))}
     </div>

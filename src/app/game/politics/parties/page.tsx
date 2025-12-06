@@ -124,7 +124,7 @@ export default function PartiesPage() {
           </Button>
           <div>
             <h1 className="text-3xl font-bold">Political Parties</h1>
-            <p className="text-default-500">Join or create parties to shape the political landscape</p>
+            <p className="text-default-700">Join or create parties to shape the political landscape</p>
           </div>
         </div>
         <Button

@@ -166,7 +166,7 @@ export default function LeadershipElectionCard({
 
         {/* Candidate Count */}
         <div className="flex items-center gap-2">
-          <span className="text-sm text-default-500">Candidates:</span>
+          <span className="text-sm text-default-700">Candidates:</span>
           <span className="text-sm font-medium">{election.candidateCount}</span>
         </div>
 
@@ -184,7 +184,7 @@ export default function LeadershipElectionCard({
         {isVotingPhase && (
           <div className="space-y-1">
             <div className="flex items-center justify-between text-sm">
-              <span className="text-default-500">Voter Turnout</span>
+              <span className="text-default-700">Voter Turnout</span>
               <span className="font-medium">{Math.round(election.voterTurnout)}%</span>
             </div>
             <Progress

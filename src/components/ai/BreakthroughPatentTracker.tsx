@@ -320,7 +320,7 @@ export default function BreakthroughPatentTracker({
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold">Breakthroughs & Patents</h2>
-          <p className="text-default-500">
+          <p className="text-default-700">
             {project.name} - {project.type}
           </p>
         </div>
@@ -352,7 +352,7 @@ export default function BreakthroughPatentTracker({
                   <FiFileText className="w-6 h-6 text-primary" />
                 </div>
                 <div>
-                  <p className="text-sm text-default-500">Breakthroughs</p>
+                  <p className="text-sm text-default-700">Breakthroughs</p>
                   <p className="text-2xl font-bold">{stats.totalBreakthroughs}</p>
                   <p className="text-xs text-default-400">
                     {stats.publicationReady} publication-ready
@@ -369,7 +369,7 @@ export default function BreakthroughPatentTracker({
                   <FiAward className="w-6 h-6 text-secondary" />
                 </div>
                 <div>
-                  <p className="text-sm text-default-500">Patents</p>
+                  <p className="text-sm text-default-700">Patents</p>
                   <p className="text-2xl font-bold">{stats.totalPatents}</p>
                   <p className="text-xs text-default-400">
                     {stats.pendingPatents} pending, {stats.approvedPatents} approved
@@ -386,7 +386,7 @@ export default function BreakthroughPatentTracker({
                   <FiTrendingUp className="w-6 h-6 text-success" />
                 </div>
                 <div>
-                  <p className="text-sm text-default-500">Breakthrough Value</p>
+                  <p className="text-sm text-default-700">Breakthrough Value</p>
                   <p className="text-2xl font-bold">
                     {formatCurrency(stats.totalBreakthroughValue)}
                   </p>
@@ -403,7 +403,7 @@ export default function BreakthroughPatentTracker({
                   <FiAward className="w-6 h-6 text-warning" />
                 </div>
                 <div>
-                  <p className="text-sm text-default-500">Patent Value</p>
+                  <p className="text-sm text-default-700">Patent Value</p>
                   <p className="text-2xl font-bold">
                     {formatCurrency(stats.totalPatentValue)}
                   </p>
@@ -437,7 +437,7 @@ export default function BreakthroughPatentTracker({
                     <CardBody>
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1">
-                          <p className="text-sm text-default-500 mb-1">
+                          <p className="text-sm text-default-700 mb-1">
                             {new Date(breakthrough.createdAt).toLocaleDateString('en-US', {
                               year: 'numeric',
                               month: 'long',
@@ -517,7 +517,7 @@ export default function BreakthroughPatentTracker({
                 {
                   header: 'Filed Date',
                   accessor: (patent: Patent) => (
-                    <span className="text-sm text-default-500">
+                    <span className="text-sm text-default-700">
                       {new Date(patent.filedAt).toLocaleDateString('en-US', {
                         year: 'numeric',
                         month: 'short',

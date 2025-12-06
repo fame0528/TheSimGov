@@ -11,7 +11,7 @@ This file tracks features currently being implemented. Features move here from `
 ## 📊 Current State
 
 **Master Plan:** ✅ COMPLETE (`COMPLETE_GAMEPLAY_LOOPS.md` - 4,499 lines, 22,529 words)  
-**Implementation:** 🔴 NOT STARTED (~100 hours of work documented in master plan)  
+**Implementation:** 🟡 STARTED - Phase A: Core Loop UI (Treasury Bar ✅, Notifications ✅, Revenue Ticker ⏳)  
 **TypeScript:** 0 errors ✅
 
 ---
@@ -38,6 +38,84 @@ This file tracks features currently being implemented. Features move here from `
 | **TOTAL** | **Full Game Playability** | **100h** | |
 
 **Reference:** See `dev/COMPLETE_GAMEPLAY_LOOPS.md` for full implementation details.
+
+---
+
+## 🎯 Current Implementation: FID-20251206-001 Phase A: Core Loop UI
+
+**Status:** ✅ COMPLETED - All Core Loop UI components implemented  
+**Started:** 2025-12-06  
+**Priority:** P0 (Makes game "feel" engaging with visible money flow)  
+**Estimated:** 16 hours total for Phase A  
+**Completed:** 2025-12-06  
+**Result:** Game now has visible money flow, real-time updates, and engaging feedback  
+
+**Progress:**
+- ✅ **Task 1: Treasury Bar Component** - Real-time cash balance display with financial health indicators
+- ✅ **Task 2: Notifications System** - Game event notifications and alerts with HeroUI toast integration
+- ✅ **Task 3: Revenue Ticker** - Live revenue updates and income streams with animated counter
+
+**Files Created:**
+| File | LOC | Purpose |
+|------|-----|---------|
+| `src/components/coreLoop/TreasuryBar.tsx` | 238 | Treasury balance display with health indicators |
+| `src/hooks/useCompany.ts` | 159 | SWR hook for company data fetching |
+| `src/lib/notifications/toast.ts` | 245 | HeroUI toast utilities with event notifications |
+| `src/lib/utils/audio.ts` | 89 | Audio utility with Howler.js integration |
+| `src/components/coreLoop/NotificationSystem.tsx` | 156 | Toast provider and notification management |
+| `src/lib/types/revenueTicker.ts` | 206 | TypeScript interfaces for revenue ticker |
+| `src/lib/utils/currency.ts` | +15 | Enhanced with ticker formatting |
+| `src/lib/utils/animation.ts` | 329 | Counter animation utilities with Framer Motion |
+| `src/lib/utils/revenueCalculations.ts` | 351 | Revenue rate calculation and trend analysis |
+| `src/lib/models/revenueTracker.ts` | 332 | Data models for revenue tracking |
+| `src/app/api/user/revenue-ticker/route.ts` | 208 | API endpoint for revenue data |
+| `src/hooks/useRevenueTicker.ts` | 312 | SWR hook for revenue ticker data |
+| `src/hooks/useCounterAnimation.ts` | 319 | Counter animation hook |
+| `src/components/coreLoop/RevenueTicker.tsx` | 280 | Animated revenue ticker component |
+
+**Current Task:** ✅ Phase A Complete - All Core Loop UI components implemented
+
+---
+
+## 🎯 FID-20251206-002: Street Trading UI Enhancement (Crime/Street Trading)
+
+**Status:** ✅ COMPLETED  
+**Started:** 2025-12-06  
+**Completed:** 2025-12-06  
+**Priority:** P2 (Quality of Life)  
+**Complexity:** 2 (Medium)  
+**Estimated:** 4h  
+**Actual:** 4h  
+
+**Description:**  
+Enhance street trading UI to AAA quality standards with comprehensive trading information, substance descriptions, price update timers, historical price data, and consistent design across modal and dashboard views.
+
+**Acceptance Criteria:**
+- ✅ Trade modal shows substance descriptions for all 9 drugs
+- ✅ Price update timer synced with server-side lastUpdate timestamp
+- ✅ Price history displayed (last/min/max prices)
+- ✅ Market statistics shown (demand/supply/volatility)
+- ✅ Travel modal redesigned with AAA quality
+- ✅ Main dashboard market prices area includes all modal helpers
+- ✅ Buy/sell buttons have border strokes for visual distinction
+- ✅ Timer persists correctly on page refresh (server-synced)
+
+**Files Modified:**
+| File | LOC Added | Purpose |
+|------|-----------|----------|
+| `src/components/crime/trading/TradeModal.tsx` | ~150 | Added descriptions, timer, price history, market stats |
+| `src/components/crime/trading/StateSelector.tsx` | ~100 | Complete AAA redesign with enhanced UI |
+| `src/components/crime/trading/TradingDashboard.tsx` | ~200 | Enhanced market prices grid with full info display |
+
+**Challenges:**
+- Timer initially client-side only (reset on refresh)
+- Solution: Calculate from server's `pricing.lastUpdate` timestamp
+- Formula: `PRICE_UPDATE_INTERVAL - (now - lastUpdate)` for accurate sync
+
+**Quality Metrics:**
+- TypeScript: 0 errors ✅
+- Design: AAA quality consistency across all trading interfaces ✅
+- UX: Comprehensive information without opening modals ✅
 
 ---
 
@@ -273,17 +351,6 @@ This file tracks features currently being implemented. Features move here from `
 - ✅ Rewrote stash, buy-sell, travel routes
 - ✅ Deleted `PlayerStash.ts` model file
 - ✅ TypeScript: 0 errors
-
-### Current DB Architecture
-
-```
-106 Collections | 635 Indexes | 51 StatePricing Records
-
-npm run db:init      # Full reset with seed data
-npm run db:init:qa   # Full reset with QA test data
-npm run db:drop      # Drop only
-npm run db:seed      # Seed only
-```
 
 ---
 

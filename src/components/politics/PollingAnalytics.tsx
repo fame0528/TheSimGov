@@ -120,7 +120,7 @@ const TIME_WINDOWS = [
 const getTrendIcon = (trend: string) => {
   if (trend === 'up') return { Icon: TrendingUp, color: 'text-success' };
   if (trend === 'down') return { Icon: TrendingDown, color: 'text-danger' };
-  return { Icon: Minus, color: 'text-default-500' };
+  return { Icon: Minus, color: 'text-default-700' };
 };
 
 /**
@@ -240,7 +240,7 @@ export default function PollingAnalytics({ playerId }: PollingAnalyticsProps) {
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold">Polling Analytics</h2>
-          <p className="text-default-500 text-sm mt-1">
+          <p className="text-default-700 text-sm mt-1">
             {snapshots.length} data points over{' '}
             {TIME_WINDOWS.find((w) => w.key === timeWindow)?.label.toLowerCase()}
           </p>
@@ -267,7 +267,7 @@ export default function PollingAnalytics({ playerId }: PollingAnalyticsProps) {
           <CardBody>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-default-500">Average Support</p>
+                <p className="text-sm text-default-700">Average Support</p>
                 <p className="text-3xl font-bold text-primary mt-1">
                   {formatPercent(aggregate.mean)}
                 </p>
@@ -282,7 +282,7 @@ export default function PollingAnalytics({ playerId }: PollingAnalyticsProps) {
           <CardBody>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-default-500">Volatility</p>
+                <p className="text-sm text-default-700">Volatility</p>
                 <p className="text-3xl font-bold text-warning mt-1">
                   {formatPercent(aggregate.volatility)}
                 </p>
@@ -297,7 +297,7 @@ export default function PollingAnalytics({ playerId }: PollingAnalyticsProps) {
           <CardBody>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-default-500">Trend Direction</p>
+                <p className="text-sm text-default-700">Trend Direction</p>
                 <Chip
                   size="lg"
                   variant="flat"

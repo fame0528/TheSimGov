@@ -61,7 +61,7 @@ export default function FinanceDashboard({ department, companyId, onUpdate }: Fi
           <div className="flex items-center justify-between w-full">
             <div>
               <h2 className="text-2xl font-bold">{department.name} Department</h2>
-              <p className="text-default-500">Level {department.level} • Budget: ${formatNumber(department.budget)}</p>
+              <p className="text-default-700">Level {department.level} • Budget: ${formatNumber(department.budget)}</p>
             </div>
             <Chip color={department.active ? 'success' : 'default'} variant="flat">
               {department.active ? 'Active' : 'Inactive'}
@@ -72,27 +72,27 @@ export default function FinanceDashboard({ department, companyId, onUpdate }: Fi
           {/* KPIs */}
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
             <div>
-              <p className="text-sm text-default-500">Efficiency</p>
+              <p className="text-sm text-default-700">Efficiency</p>
               <Progress value={department.kpis.efficiency} color="primary" className="mt-2" />
               <p className="text-xs mt-1">{department.kpis.efficiency}%</p>
             </div>
             <div>
-              <p className="text-sm text-default-500">Performance</p>
+              <p className="text-sm text-default-700">Performance</p>
               <Progress value={department.kpis.performance} color="secondary" className="mt-2" />
               <p className="text-xs mt-1">{department.kpis.performance}%</p>
             </div>
             <div>
-              <p className="text-sm text-default-500">ROI</p>
+              <p className="text-sm text-default-700">ROI</p>
               <Progress value={department.kpis.roi} color="success" className="mt-2" />
               <p className="text-xs mt-1">{department.kpis.roi}%</p>
             </div>
             <div>
-              <p className="text-sm text-default-500">Utilization</p>
+              <p className="text-sm text-default-700">Utilization</p>
               <Progress value={department.kpis.utilization} color="warning" className="mt-2" />
               <p className="text-xs mt-1">{department.kpis.utilization}%</p>
             </div>
             <div>
-              <p className="text-sm text-default-500">Quality</p>
+              <p className="text-sm text-default-700">Quality</p>
               <Progress value={department.kpis.quality} color="danger" className="mt-2" />
               <p className="text-xs mt-1">{department.kpis.quality}%</p>
             </div>
@@ -113,7 +113,7 @@ export default function FinanceDashboard({ department, companyId, onUpdate }: Fi
             <CardBody>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                 <div>
-                  <p className="text-sm text-default-500">Credit Score</p>
+                  <p className="text-sm text-default-700">Credit Score</p>
                   <p className="text-2xl font-bold">{department.creditScore || 0}</p>
                   <Chip size="sm" color={
                     (department.creditScore || 0) >= 750 ? 'success' :
@@ -124,15 +124,15 @@ export default function FinanceDashboard({ department, companyId, onUpdate }: Fi
                   </Chip>
                 </div>
                 <div>
-                  <p className="text-sm text-default-500">Cash Reserves</p>
+                  <p className="text-sm text-default-700">Cash Reserves</p>
                   <p className="text-2xl font-bold">${formatNumber(department.cashReserves || 0)}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-default-500">Total Revenue</p>
+                  <p className="text-sm text-default-700">Total Revenue</p>
                   <p className="text-2xl font-bold text-success">${formatNumber(department.totalRevenue || 0)}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-default-500">Total Expenses</p>
+                  <p className="text-sm text-default-700">Total Expenses</p>
                   <p className="text-2xl font-bold text-danger">${formatNumber(department.totalExpenses || 0)}</p>
                 </div>
               </div>
@@ -178,7 +178,7 @@ export default function FinanceDashboard({ department, companyId, onUpdate }: Fi
                   </TableBody>
                 </Table>
               ) : (
-                <p className="text-center text-default-500 py-8">No active loans</p>
+                <p className="text-center text-default-700 py-8">No active loans</p>
               )}
             </CardBody>
           </Card>
@@ -226,7 +226,7 @@ export default function FinanceDashboard({ department, companyId, onUpdate }: Fi
                   </TableBody>
                 </Table>
               ) : (
-                <p className="text-center text-default-500 py-8">No investments</p>
+                <p className="text-center text-default-700 py-8">No investments</p>
               )}
             </CardBody>
           </Card>
@@ -249,19 +249,19 @@ export default function FinanceDashboard({ department, companyId, onUpdate }: Fi
                       </div>
                       <div className="grid grid-cols-4 gap-4 text-sm">
                         <div>
-                          <p className="text-default-500">Current Cash</p>
+                          <p className="text-default-700">Current Cash</p>
                           <p className="font-semibold">${formatNumber(forecast.currentCash)}</p>
                         </div>
                         <div>
-                          <p className="text-default-500">Projected Inflows</p>
+                          <p className="text-default-700">Projected Inflows</p>
                           <p className="font-semibold text-success">+${formatNumber(forecast.projectedInflows)}</p>
                         </div>
                         <div>
-                          <p className="text-default-500">Projected Outflows</p>
+                          <p className="text-default-700">Projected Outflows</p>
                           <p className="font-semibold text-danger">-${formatNumber(forecast.projectedOutflows)}</p>
                         </div>
                         <div>
-                          <p className="text-default-500">Ending Cash</p>
+                          <p className="text-default-700">Ending Cash</p>
                           <p className="font-semibold">${formatNumber(forecast.projectedEndingCash)}</p>
                         </div>
                       </div>
@@ -278,7 +278,7 @@ export default function FinanceDashboard({ department, companyId, onUpdate }: Fi
                   ))}
                 </div>
               ) : (
-                <p className="text-center text-default-500 py-8">No cashflow forecasts available</p>
+                <p className="text-center text-default-700 py-8">No cashflow forecasts available</p>
               )}
             </CardBody>
           </Card>

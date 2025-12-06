@@ -362,7 +362,7 @@ export default function LobbiesGrid({
       {!isLoading && !error && lobbies.length === 0 && (
         <Card>
           <CardBody className="text-center py-12">
-            <p className="text-default-500 mb-4">
+            <p className="text-default-700 mb-4">
               {hasActiveFilters
                 ? 'No lobbies match your filters.'
                 : 'No lobbies found. Be the first to create one!'}

@@ -107,32 +107,32 @@ export function RevenueAnalytics({
       {/* Header */}
       <div>
         <h2 className="text-3xl font-bold">💰 Revenue Analytics</h2>
-        <p className="text-default-500">API usage, customer metrics, and revenue tracking</p>
+        <p className="text-default-700">API usage, customer metrics, and revenue tracking</p>
       </div>
 
       {/* Stats Summary */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardBody>
-            <p className="text-sm text-default-500">MRR</p>
+            <p className="text-sm text-default-700">MRR</p>
             <p className="text-2xl font-bold text-success">{formatCurrency(mrr)}</p>
           </CardBody>
         </Card>
         <Card>
           <CardBody>
-            <p className="text-sm text-default-500">ARR</p>
+            <p className="text-sm text-default-700">ARR</p>
             <p className="text-2xl font-bold text-primary">{formatCurrency(arr)}</p>
           </CardBody>
         </Card>
         <Card>
           <CardBody>
-            <p className="text-sm text-default-500">Customers</p>
+            <p className="text-sm text-default-700">Customers</p>
             <p className="text-2xl font-bold text-warning">{formatNumber(customers)}</p>
           </CardBody>
         </Card>
         <Card>
           <CardBody>
-            <p className="text-sm text-default-500">Churn Rate</p>
+            <p className="text-sm text-default-700">Churn Rate</p>
             <div className="flex items-center gap-2">
               <p className="text-2xl font-bold">{churnRate.toFixed(1)}%</p>
               <Chip size="sm" color={churnColor}>
@@ -154,7 +154,7 @@ export function RevenueAnalytics({
               </CardHeader>
               <CardBody className="space-y-3">
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-default-500">
+                  <span className="text-sm text-default-700">
                     {formatNumber(apiCalls)} / {formatNumber(apiLimit)} calls
                   </span>
                   <span className="font-bold">{apiUsagePercent.toFixed(1)}%</span>
@@ -182,7 +182,7 @@ export function RevenueAnalytics({
               </CardHeader>
               <CardBody>
                 {topModels.length === 0 ? (
-                  <p className="text-center text-default-500 py-4">No model usage data available</p>
+                  <p className="text-center text-default-700 py-4">No model usage data available</p>
                 ) : (
                   <Table aria-label="Top Models">
                     <TableHeader>
@@ -216,13 +216,13 @@ export function RevenueAnalytics({
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Card>
                 <CardBody>
-                  <p className="text-sm text-default-500">Total Customers</p>
+                  <p className="text-sm text-default-700">Total Customers</p>
                   <p className="text-3xl font-bold text-primary">{formatNumber(customers)}</p>
                 </CardBody>
               </Card>
               <Card>
                 <CardBody>
-                  <p className="text-sm text-default-500">Churn Rate</p>
+                  <p className="text-sm text-default-700">Churn Rate</p>
                   <p className="text-3xl font-bold">{churnRate.toFixed(1)}%</p>
                   <Chip size="sm" color={churnColor} className="mt-1">
                     {churnRate < 3 ? 'Excellent' : churnRate < 5 ? 'Good' : churnRate < 10 ? 'Needs Improvement' : 'Critical'}
@@ -231,7 +231,7 @@ export function RevenueAnalytics({
               </Card>
               <Card>
                 <CardBody>
-                  <p className="text-sm text-default-500">Avg Revenue per Customer</p>
+                  <p className="text-sm text-default-700">Avg Revenue per Customer</p>
                   <p className="text-3xl font-bold text-success">
                     {customers > 0 ? formatCurrency(mrr / customers) : '$0'}
                   </p>
@@ -246,7 +246,7 @@ export function RevenueAnalytics({
               </CardHeader>
               <CardBody>
                 {tierDistribution.length === 0 ? (
-                  <p className="text-center text-default-500 py-4">No tier data available</p>
+                  <p className="text-center text-default-700 py-4">No tier data available</p>
                 ) : (
                   <div className="space-y-3">
                     {tierDistribution.map((tier) => (
@@ -254,7 +254,7 @@ export function RevenueAnalytics({
                         <div className="flex justify-between items-center mb-1">
                           <span className="font-medium">{tier.tier}</span>
                           <div className="flex gap-3 text-sm">
-                            <span className="text-default-500">{tier.count} customers</span>
+                            <span className="text-default-700">{tier.count} customers</span>
                             <span className="font-bold">{formatCurrency(tier.revenue)}/mo</span>
                           </div>
                         </div>
@@ -282,14 +282,14 @@ export function RevenueAnalytics({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Card>
                 <CardBody>
-                  <p className="text-sm text-default-500">Monthly Recurring Revenue</p>
+                  <p className="text-sm text-default-700">Monthly Recurring Revenue</p>
                   <p className="text-4xl font-bold text-success">{formatCurrency(mrr)}</p>
                   <p className="text-xs text-default-400 mt-1">MRR</p>
                 </CardBody>
               </Card>
               <Card>
                 <CardBody>
-                  <p className="text-sm text-default-500">Annual Recurring Revenue</p>
+                  <p className="text-sm text-default-700">Annual Recurring Revenue</p>
                   <p className="text-4xl font-bold text-primary">{formatCurrency(arr)}</p>
                   <p className="text-xs text-default-400 mt-1">ARR = MRR × 12</p>
                 </CardBody>
@@ -303,7 +303,7 @@ export function RevenueAnalytics({
               </CardHeader>
               <CardBody>
                 {topModels.length === 0 ? (
-                  <p className="text-center text-default-500 py-4">No revenue data available</p>
+                  <p className="text-center text-default-700 py-4">No revenue data available</p>
                 ) : (
                   <Table aria-label="Revenue by Model">
                     <TableHeader>

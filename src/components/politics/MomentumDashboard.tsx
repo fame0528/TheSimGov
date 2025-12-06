@@ -246,7 +246,7 @@ export default function MomentumDashboard({ playerId }: MomentumDashboardProps) 
         <Award className="w-8 h-8 text-primary" />
         <div>
           <h2 className="text-2xl font-bold">Political Momentum Dashboard</h2>
-          <p className="text-default-500 text-sm mt-1">
+          <p className="text-default-700 text-sm mt-1">
             Electoral landscape and momentum analysis
           </p>
         </div>
@@ -259,7 +259,7 @@ export default function MomentumDashboard({ playerId }: MomentumDashboardProps) 
           <CardBody>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-default-500">Momentum Score</p>
+                <p className="text-sm text-default-700">Momentum Score</p>
                 <motion.p
                   className="text-4xl font-bold text-primary mt-1"
                   initial={{ scale: 0.5, opacity: 0 }}
@@ -285,9 +285,9 @@ export default function MomentumDashboard({ playerId }: MomentumDashboardProps) 
           <CardBody>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-default-500">Swing States</p>
+                <p className="text-sm text-default-700">Swing States</p>
                 <p className="text-4xl font-bold text-warning mt-1">{swingStates.length}</p>
-                <p className="text-xs text-default-500 mt-1">
+                <p className="text-xs text-default-700 mt-1">
                   {swingStates.map((s) => s.stateCode).join(', ')}
                 </p>
               </div>
@@ -301,11 +301,11 @@ export default function MomentumDashboard({ playerId }: MomentumDashboardProps) 
           <CardBody>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-default-500">Next Election</p>
+                <p className="text-sm text-default-700">Next Election</p>
                 <p className="text-2xl font-bold text-secondary mt-1">
                   Week {nextElection.nextWeek}
                 </p>
-                <p className="text-xs text-default-500 mt-1">{nextElection.description}</p>
+                <p className="text-xs text-default-700 mt-1">{nextElection.description}</p>
               </div>
               <Calendar className="w-10 h-10 text-secondary" />
             </div>

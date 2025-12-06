@@ -94,7 +94,7 @@ export default function ElectionDetailPage() {
           <h1 className="text-xl font-semibold">
             {election.officeType} {election.district ? `- ${election.district}` : "(Statewide)"}
           </h1>
-          <p className="text-default-500">
+          <p className="text-default-700">
             {new Date(election.electionDate).toLocaleDateString()} • {election.electionType}
           </p>
         </div>
@@ -116,7 +116,7 @@ export default function ElectionDetailPage() {
     <div className="p-4 md:p-6">
       <Card>
         <CardHeader>
-          {header ?? <span className="text-default-500">Loading...</span>}
+          {header ?? <span className="text-default-700">Loading...</span>}
         </CardHeader>
         <Divider />
         <CardBody className="flex flex-col gap-6">
@@ -142,7 +142,7 @@ export default function ElectionDetailPage() {
             <Tab key="results" title="Results">
               <div className="flex flex-col gap-3">
                 {election?.status !== "Completed" ? (
-                  <p className="text-default-500">Results available after completion.</p>
+                  <p className="text-default-700">Results available after completion.</p>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {election?.candidates?.map((c: Candidate) => (
@@ -153,7 +153,7 @@ export default function ElectionDetailPage() {
               </div>
             </Tab>
             <Tab key="analytics" title="Analytics">
-              <p className="text-default-500">Polling trends, district breakdowns, and turnout analytics (Phase 6 later step).</p>
+              <p className="text-default-700">Polling trends, district breakdowns, and turnout analytics (Phase 6 later step).</p>
             </Tab>
           </Tabs>
         </CardBody>
@@ -165,7 +165,7 @@ export default function ElectionDetailPage() {
 function SummaryStat({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-lg border border-default-200 p-4">
-      <p className="text-default-500 text-sm">{label}</p>
+      <p className="text-default-700 text-sm">{label}</p>
       <p className="text-lg font-semibold">{value}</p>
     </div>
   );
@@ -179,15 +179,15 @@ function CandidateCard({ c }: { c: Candidate }) {
         <Chip color={partyColor(c.party)}>{c.party}</Chip>
       </div>
       <div className="flex items-center justify-between">
-        <span className="text-default-500">Status</span>
+        <span className="text-default-700">Status</span>
         <StatusChip label={c.status} color={statusColor(c.status)} />
       </div>
       <div className="flex items-center justify-between">
-        <span className="text-default-500">Votes</span>
+        <span className="text-default-700">Votes</span>
         <span>{c.votes ?? "—"}</span>
       </div>
       <div className="flex items-center justify-between">
-        <span className="text-default-500">Vote %</span>
+        <span className="text-default-700">Vote %</span>
         <span>{c.votePercentage != null ? `${c.votePercentage}%` : "—"}</span>
       </div>
     </div>
@@ -202,11 +202,11 @@ function ResultCard({ c }: { c: Candidate }) {
         <Chip color={partyColor(c.party)}>{c.party}</Chip>
       </div>
       <div className="flex items-center justify-between">
-        <span className="text-default-500">Final Votes</span>
+        <span className="text-default-700">Final Votes</span>
         <span>{c.votes ?? "—"}</span>
       </div>
       <div className="flex items-center justify-between">
-        <span className="text-default-500">Final %</span>
+        <span className="text-default-700">Final %</span>
         <span>{c.votePercentage != null ? `${c.votePercentage}%` : "—"}</span>
       </div>
     </div>

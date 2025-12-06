@@ -44,7 +44,7 @@ export default function DepartmentCard({ department, onSelect, onUpgrade }: Depa
           <span className="text-3xl">{config.icon}</span>
           <div>
             <h3 className="text-lg font-bold">{department.name}</h3>
-            <p className="text-sm text-default-500">Level {department.level}</p>
+            <p className="text-sm text-default-700">Level {department.level}</p>
           </div>
         </div>
         <Chip color={department.active ? 'success' : 'default'} variant="flat" size="sm">
@@ -55,7 +55,7 @@ export default function DepartmentCard({ department, onSelect, onUpgrade }: Depa
         {/* Budget */}
         <div>
           <div className="flex justify-between items-center mb-2">
-            <p className="text-sm text-default-500">Budget</p>
+            <p className="text-sm text-default-700">Budget</p>
             <p className="text-sm font-semibold">${formatNumber(department.budget)}</p>
           </div>
           <Progress 
@@ -68,11 +68,11 @@ export default function DepartmentCard({ department, onSelect, onUpgrade }: Depa
         {/* KPIs Summary */}
         <div className="grid grid-cols-2 gap-2">
           <div className="text-center p-2 bg-default-100 rounded">
-            <p className="text-xs text-default-500">Efficiency</p>
+            <p className="text-xs text-default-700">Efficiency</p>
             <p className="text-lg font-bold">{department.kpis.efficiency}%</p>
           </div>
           <div className="text-center p-2 bg-default-100 rounded">
-            <p className="text-xs text-default-500">ROI</p>
+            <p className="text-xs text-default-700">ROI</p>
             <p className="text-lg font-bold">{department.kpis.roi}%</p>
           </div>
         </div>

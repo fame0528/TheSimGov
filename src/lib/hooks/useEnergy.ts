@@ -532,9 +532,9 @@ export function useEnergySummary(companyId: string | null, options?: UseAPIOptio
     
     data.totalCapacityMW = solarMW + windMW + plantMW;
     
-    const solarOutput = solarFarms.data?.reduce((sum, f) => sum + f.currentOutputMW, 0) ?? 0;
-    const windOutput = windTurbines.data?.reduce((sum, t) => sum + t.currentOutputMW, 0) ?? 0;
-    const plantOutput = powerPlants.data?.reduce((sum, p) => sum + p.currentOutput, 0) ?? 0;
+    const solarOutput = solarFarmsArr.reduce((sum, f) => sum + (f.currentOutputMW ?? 0), 0);
+    const windOutput = windTurbinesArr.reduce((sum, t) => sum + (t.currentOutputMW ?? 0), 0);
+    const plantOutput = powerPlantsArr.reduce((sum, p) => sum + (p.currentOutput ?? 0), 0);
     
     data.currentOutputMW = solarOutput + windOutput + plantOutput;
     

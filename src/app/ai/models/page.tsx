@@ -35,7 +35,7 @@ export default function AIModelsPage() {
   return (
     <div className="p-6 space-y-8">
       <h1 className="text-3xl font-bold">🧪 Models & Training</h1>
-      <p className="text-default-500">Configure new model training jobs and monitor revenue performance.</p>
+      <p className="text-default-700">Configure new model training jobs and monitor revenue performance.</p>
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 items-start">
         <div className="space-y-6">

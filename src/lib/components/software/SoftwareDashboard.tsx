@@ -287,7 +287,7 @@ export function SoftwareDashboard({
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold">Software Operations</h1>
-          {companyName && <p className="text-default-500">{companyName}</p>}
+          {companyName && <p className="text-default-700">{companyName}</p>}
         </div>
         <div className="flex gap-2">
           <Button color="primary" onPress={onNewProduct}>
@@ -304,42 +304,42 @@ export function SoftwareDashboard({
         <Card className="bg-gradient-to-br from-blue-500/10 to-blue-600/5">
           <CardBody className="text-center">
             <div className="text-3xl font-bold text-blue-600">{totalProductCount}</div>
-            <div className="text-xs text-default-500">Products</div>
+            <div className="text-xs text-default-700">Products</div>
           </CardBody>
         </Card>
 
         <Card className="bg-gradient-to-br from-green-500/10 to-green-600/5">
           <CardBody className="text-center">
             <div className="text-3xl font-bold text-green-600">{activeProductCount}</div>
-            <div className="text-xs text-default-500">Active</div>
+            <div className="text-xs text-default-700">Active</div>
           </CardBody>
         </Card>
 
         <Card className="bg-gradient-to-br from-yellow-500/10 to-yellow-600/5">
           <CardBody className="text-center">
             <div className="text-3xl font-bold text-yellow-600">{avgQuality.toFixed(0)}</div>
-            <div className="text-xs text-default-500">Avg Quality</div>
+            <div className="text-xs text-default-700">Avg Quality</div>
           </CardBody>
         </Card>
 
         <Card className="bg-gradient-to-br from-red-500/10 to-red-600/5">
           <CardBody className="text-center">
             <div className="text-3xl font-bold text-red-600">{bugs.open}</div>
-            <div className="text-xs text-default-500">Open Bugs</div>
+            <div className="text-xs text-default-700">Open Bugs</div>
           </CardBody>
         </Card>
 
         <Card className="bg-gradient-to-br from-purple-500/10 to-purple-600/5">
           <CardBody className="text-center">
             <div className="text-3xl font-bold text-purple-600">{features.inProgress}</div>
-            <div className="text-xs text-default-500">In Progress</div>
+            <div className="text-xs text-default-700">In Progress</div>
           </CardBody>
         </Card>
 
         <Card className="bg-gradient-to-br from-cyan-500/10 to-cyan-600/5">
           <CardBody className="text-center">
             <div className="text-3xl font-bold text-cyan-600">{formatCurrency(saas.mrr)}</div>
-            <div className="text-xs text-default-500">MRR</div>
+            <div className="text-xs text-default-700">MRR</div>
           </CardBody>
         </Card>
       </div>
@@ -362,7 +362,7 @@ export function SoftwareDashboard({
                   <div key={product.id} className="flex justify-between items-center">
                     <div>
                       <div className="font-medium">{product.name}</div>
-                      <div className="text-xs text-default-500">v{product.version}</div>
+                      <div className="text-xs text-default-700">v{product.version}</div>
                     </div>
                     <div className="flex items-center gap-2">
                       <Chip size="sm" color={getStatusColor(product.status)}>
@@ -391,11 +391,11 @@ export function SoftwareDashboard({
                 <div className="grid grid-cols-2 gap-3">
                   <div className="text-center p-3 bg-default-100 rounded-lg">
                     <div className="text-2xl font-bold">{bugs.total}</div>
-                    <div className="text-xs text-default-500">Total</div>
+                    <div className="text-xs text-default-700">Total</div>
                   </div>
                   <div className="text-center p-3 bg-danger-100 rounded-lg">
                     <div className="text-2xl font-bold text-danger">{bugs.critical}</div>
-                    <div className="text-xs text-default-500">Critical</div>
+                    <div className="text-xs text-default-700">Critical</div>
                   </div>
                 </div>
                 <div>
@@ -424,11 +424,11 @@ export function SoftwareDashboard({
                 <div className="grid grid-cols-2 gap-3">
                   <div className="text-center p-3 bg-default-100 rounded-lg">
                     <div className="text-2xl font-bold">{features.total}</div>
-                    <div className="text-xs text-default-500">Backlog</div>
+                    <div className="text-xs text-default-700">Backlog</div>
                   </div>
                   <div className="text-center p-3 bg-primary-100 rounded-lg">
                     <div className="text-2xl font-bold text-primary">{features.inProgress}</div>
-                    <div className="text-xs text-default-500">In Progress</div>
+                    <div className="text-xs text-default-700">In Progress</div>
                   </div>
                 </div>
                 <div className="flex justify-between items-center">
@@ -453,31 +453,31 @@ export function SoftwareDashboard({
                           {product.status}
                         </Chip>
                       </div>
-                      <div className="text-sm text-default-500">
+                      <div className="text-sm text-default-700">
                         Version {product.version} • {product.category}
                       </div>
                     </div>
                     <div className="text-right">
                       <div className="text-xl font-bold">{formatCurrency(product.totalRevenue)}</div>
-                      <div className="text-xs text-default-500">Total Revenue</div>
+                      <div className="text-xs text-default-700">Total Revenue</div>
                     </div>
                   </div>
                   <div className="grid grid-cols-4 gap-4 mt-4">
                     <div className="text-center">
                       <div className="text-lg font-semibold">{product.qualityScore}</div>
-                      <div className="text-xs text-default-500">Quality Score</div>
+                      <div className="text-xs text-default-700">Quality Score</div>
                     </div>
                     <div className="text-center">
                       <div className="text-lg font-semibold">{product.licenseSales}</div>
-                      <div className="text-xs text-default-500">Licenses Sold</div>
+                      <div className="text-xs text-default-700">Licenses Sold</div>
                     </div>
                     <div className="text-center">
                       <div className="text-lg font-semibold">{product.activeSubscriptions}</div>
-                      <div className="text-xs text-default-500">Subscriptions</div>
+                      <div className="text-xs text-default-700">Subscriptions</div>
                     </div>
                     <div className="text-center">
                       <div className="text-lg font-semibold">{formatCurrency(product.pricing.monthly)}/mo</div>
-                      <div className="text-xs text-default-500">SaaS Price</div>
+                      <div className="text-xs text-default-700">SaaS Price</div>
                     </div>
                   </div>
                 </CardBody>
@@ -500,33 +500,33 @@ export function SoftwareDashboard({
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
             <Card className="bg-gradient-to-br from-green-500/10 to-green-600/5">
               <CardBody>
-                <div className="text-sm text-default-500 mb-1">MRR</div>
+                <div className="text-sm text-default-700 mb-1">MRR</div>
                 <div className="text-3xl font-bold text-green-600">{formatCurrency(saas.mrr)}</div>
-                <div className="text-xs text-default-500 mt-1">Monthly Recurring Revenue</div>
+                <div className="text-xs text-default-700 mt-1">Monthly Recurring Revenue</div>
               </CardBody>
             </Card>
 
             <Card className="bg-gradient-to-br from-blue-500/10 to-blue-600/5">
               <CardBody>
-                <div className="text-sm text-default-500 mb-1">ARR</div>
+                <div className="text-sm text-default-700 mb-1">ARR</div>
                 <div className="text-3xl font-bold text-blue-600">{formatCurrency(saas.arr)}</div>
-                <div className="text-xs text-default-500 mt-1">Annual Recurring Revenue</div>
+                <div className="text-xs text-default-700 mt-1">Annual Recurring Revenue</div>
               </CardBody>
             </Card>
 
             <Card className="bg-gradient-to-br from-orange-500/10 to-orange-600/5">
               <CardBody>
-                <div className="text-sm text-default-500 mb-1">Churn Rate</div>
+                <div className="text-sm text-default-700 mb-1">Churn Rate</div>
                 <div className="text-3xl font-bold text-orange-600">{formatPercent(saas.churnRate)}</div>
-                <div className="text-xs text-default-500 mt-1">Monthly churn</div>
+                <div className="text-xs text-default-700 mt-1">Monthly churn</div>
               </CardBody>
             </Card>
 
             <Card className="bg-gradient-to-br from-purple-500/10 to-purple-600/5">
               <CardBody>
-                <div className="text-sm text-default-500 mb-1">Average LTV</div>
+                <div className="text-sm text-default-700 mb-1">Average LTV</div>
                 <div className="text-3xl font-bold text-purple-600">{formatCurrency(saas.avgLTV)}</div>
-                <div className="text-xs text-default-500 mt-1">Lifetime Value</div>
+                <div className="text-xs text-default-700 mt-1">Lifetime Value</div>
               </CardBody>
             </Card>
           </div>
@@ -539,13 +539,13 @@ export function SoftwareDashboard({
               <div className="flex items-center justify-between">
                 <div>
                   <div className="text-2xl font-bold">{saas.activeSubscriptions}</div>
-                  <div className="text-sm text-default-500">Active Subscriptions</div>
+                  <div className="text-sm text-default-700">Active Subscriptions</div>
                 </div>
                 <div className="text-right">
                   <div className="text-lg font-semibold">
                     {formatCurrency(saas.mrr / (saas.activeSubscriptions || 1))}
                   </div>
-                  <div className="text-sm text-default-500">Avg Revenue Per User</div>
+                  <div className="text-sm text-default-700">Avg Revenue Per User</div>
                 </div>
               </div>
             </CardBody>

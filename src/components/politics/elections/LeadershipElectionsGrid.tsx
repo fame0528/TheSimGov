@@ -63,7 +63,7 @@ function EmptyState({ hasFilters }: { hasFilters: boolean }) {
       <h3 className="text-lg font-medium text-default-700">
         {hasFilters ? 'No elections match your filters' : 'No elections found'}
       </h3>
-      <p className="text-default-500 mt-1">
+      <p className="text-default-700 mt-1">
         {hasFilters
           ? 'Try adjusting your search or filter criteria'
           : 'Check back later for upcoming elections'
@@ -80,7 +80,7 @@ function LoadingState() {
   return (
     <div className="flex flex-col items-center justify-center py-12">
       <Spinner size="lg" />
-      <p className="text-default-500 mt-4">Loading elections...</p>
+      <p className="text-default-700 mt-4">Loading elections...</p>
     </div>
   );
 }
@@ -221,7 +221,7 @@ export default function LeadershipElectionsGrid({
       </div>
 
       {/* Results count */}
-      <div className="text-sm text-default-500">
+      <div className="text-sm text-default-700">
         Showing {paginatedElections.length} of {filteredElections.length} election{filteredElections.length !== 1 ? 's' : ''}
       </div>
 

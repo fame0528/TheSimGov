@@ -176,7 +176,7 @@ export function ProjectCard({
           <div className="flex items-center justify-between gap-2">
             <div className="flex-1 min-w-0">
               <p className="font-medium text-sm truncate">{project.projectName}</p>
-              <p className="text-xs text-default-500 truncate">{project.client}</p>
+              <p className="text-xs text-default-700 truncate">{project.client}</p>
             </div>
             <div className="flex items-center gap-2">
               <Chip size="sm" color={getStatusColor(project.status)} variant="flat">
@@ -200,7 +200,7 @@ export function ProjectCard({
         <div className="flex w-full items-start justify-between gap-2">
           <div className="flex-1 min-w-0">
             <h4 className="font-semibold text-lg truncate">{project.projectName}</h4>
-            <p className="text-default-500 text-sm">{project.client}</p>
+            <p className="text-default-700 text-sm">{project.client}</p>
           </div>
           
           {/* Status & Type Badges */}
@@ -234,7 +234,7 @@ export function ProjectCard({
           </Chip>
           <div className="text-right">
             <p className="font-semibold text-lg">{formatCurrency(project.totalRevenue, project.currency)}</p>
-            <p className="text-xs text-default-500">
+            <p className="text-xs text-default-700">
               {project.profitMargin.toFixed(1)}% margin
             </p>
           </div>

@@ -101,7 +101,7 @@ function ElectionCard({ election, onSelect }: ElectionCardProps) {
             {election.status}
           </Chip>
         </div>
-        <div className="flex items-center gap-4 text-sm text-default-500">
+        <div className="flex items-center gap-4 text-sm text-default-700">
           <span>{election.state ?? 'National'}</span>
           <span>•</span>
           <span>{election.electionType}</span>
@@ -155,7 +155,7 @@ function ElectionDetail({ election, onClose, onRefresh }: ElectionDetailProps) {
       <div className="flex items-start justify-between">
         <div>
           <h2 className="text-2xl font-bold">{ui.officeName ?? ''}</h2>
-          <p className="text-default-500">
+          <p className="text-default-700">
             {ui.state ?? 'National'} • {election.electionType} •{' '}
             {new Date(election.electionDate).toLocaleDateString()}
           </p>
@@ -170,7 +170,7 @@ function ElectionDetail({ election, onClose, onRefresh }: ElectionDetailProps) {
       {/* Key Dates */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="text-center">
-          <p className="text-sm text-default-500">Filing Deadline</p>
+          <p className="text-sm text-default-700">Filing Deadline</p>
           <p className="font-semibold">
             {ui.filingDeadline
               ? new Date(ui.filingDeadline as Date).toLocaleDateString()
@@ -179,7 +179,7 @@ function ElectionDetail({ election, onClose, onRefresh }: ElectionDetailProps) {
         </div>
         {ui.earlyVotingStart && (
           <div className="text-center">
-            <p className="text-sm text-default-500">Early Voting</p>
+            <p className="text-sm text-default-700">Early Voting</p>
             <p className="font-semibold">
               {ui.earlyVotingStart
                 ? new Date(ui.earlyVotingStart as Date).toLocaleDateString()
@@ -188,13 +188,13 @@ function ElectionDetail({ election, onClose, onRefresh }: ElectionDetailProps) {
           </div>
         )}
         <div className="text-center">
-          <p className="text-sm text-default-500">Election Day</p>
+          <p className="text-sm text-default-700">Election Day</p>
           <p className="font-semibold">
             {new Date(election.electionDate).toLocaleDateString()}
           </p>
         </div>
         <div className="text-center">
-          <p className="text-sm text-default-500">Term Length</p>
+          <p className="text-sm text-default-700">Term Length</p>
           <p className="font-semibold">{ui.termLength ?? 0} years</p>
         </div>
       </div>
@@ -272,7 +272,7 @@ function ElectionDetail({ election, onClose, onRefresh }: ElectionDetailProps) {
             </TableBody>
           </Table>
         ) : (
-          <p className="text-default-500 text-center py-4">
+          <p className="text-default-700 text-center py-4">
             No candidates filed yet
           </p>
         )}
@@ -286,22 +286,22 @@ function ElectionDetail({ election, onClose, onRefresh }: ElectionDetailProps) {
             <h3 className="text-lg font-semibold mb-3">Results</h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
               <div className="text-center">
-                <p className="text-sm text-default-500">Total Votes</p>
+                <p className="text-sm text-default-700">Total Votes</p>
                 <p className="text-xl font-bold">
                   {ui.totalVotes?.toLocaleString?.() ?? '0'}
                 </p>
               </div>
               <div className="text-center">
-                <p className="text-sm text-default-500">Turnout</p>
+                <p className="text-sm text-default-700">Turnout</p>
                 <p className="text-xl font-bold">{ui.turnout?.toFixed?.(1) ?? '0'}%</p>
               </div>
               <div className="text-center">
-                <p className="text-sm text-default-500">Margin</p>
+                <p className="text-sm text-default-700">Margin</p>
                 <p className="text-xl font-bold">{ui.margin?.toFixed?.(1) ?? '0'}%</p>
               </div>
               {ui.winner && (
                 <div className="text-center">
-                  <p className="text-sm text-default-500">Winner</p>
+                  <p className="text-sm text-default-700">Winner</p>
                   <p className="text-xl font-bold text-success">
                     {ui.winner?.candidateName ?? ''}
                   </p>
@@ -434,7 +434,7 @@ export default function ElectionDashboard() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Elections</h1>
-          <p className="text-default-500">Manage elections and track results</p>
+          <p className="text-default-700">Manage elections and track results</p>
         </div>
         <Button color="primary" onPress={() => {}}>
           New Election
@@ -535,7 +535,7 @@ export default function ElectionDashboard() {
       ) : (
         <Card>
           <CardBody className="text-center py-12">
-            <p className="text-default-500">No elections found</p>
+            <p className="text-default-700">No elections found</p>
           </CardBody>
         </Card>
       )}
@@ -546,25 +546,25 @@ export default function ElectionDashboard() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
             <div>
               <p className="text-2xl font-bold">{total}</p>
-              <p className="text-sm text-default-500">Total Elections</p>
+              <p className="text-sm text-default-700">Total Elections</p>
             </div>
             <div>
               <p className="text-2xl font-bold">
                 {elections.filter((e) => e.status === 'Active').length}
               </p>
-              <p className="text-sm text-default-500">Active Now</p>
+              <p className="text-sm text-default-700">Active Now</p>
             </div>
             <div>
               <p className="text-2xl font-bold">
                 {elections.filter((e) => (e.daysUntil ?? 0) > 0 && (e.daysUntil ?? 0) <= 30).length}
               </p>
-              <p className="text-sm text-default-500">Coming in 30 Days</p>
+              <p className="text-sm text-default-700">Coming in 30 Days</p>
             </div>
             <div>
               <p className="text-2xl font-bold">
                 {elections.reduce((sum, e) => sum + (e.candidateCount ?? 0), 0)}
               </p>
-              <p className="text-sm text-default-500">Total Candidates</p>
+              <p className="text-sm text-default-700">Total Candidates</p>
             </div>
           </div>
         </CardBody>
@@ -587,7 +587,7 @@ export default function ElectionDashboard() {
               />
             ) : (
               <div className="h-64 flex items-center justify-center">
-                <p className="text-default-500">Loading election details...</p>
+                <p className="text-default-700">Loading election details...</p>
               </div>
             )}
           </ModalBody>

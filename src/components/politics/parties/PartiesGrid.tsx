@@ -380,7 +380,7 @@ export function PartiesGrid({
       {data && data.data.length === 0 && (
         <Card>
           <CardBody className="text-center py-12">
-            <p className="text-default-500 mb-4">
+            <p className="text-default-700 mb-4">
               {hasActiveFilters
                 ? 'No parties found matching your filters.'
                 : 'No political parties have been created yet.'}

@@ -78,7 +78,7 @@ export default function MarketingDashboard({ department, onRefresh }: MarketingD
             <FaChartLine size={32} className="text-warning" />
             {department.name}
           </h1>
-          <p className="text-default-500">Level {department.level} • {department.budgetPercentage}% Budget Allocation</p>
+          <p className="text-default-700">Level {department.level} • {department.budgetPercentage}% Budget Allocation</p>
         </div>
         <Chip color="warning" variant="flat" size="lg">
           Budget: ${(department.budget / 1000).toFixed(0)}k
@@ -223,7 +223,7 @@ export default function MarketingDashboard({ department, onRefresh }: MarketingD
                       <div className="flex justify-between items-start">
                         <div>
                           <p className="font-semibold">{campaign.name}</p>
-                          <p className="text-sm text-default-500 capitalize">
+                          <p className="text-sm text-default-700 capitalize">
                             {campaign.type.replace('-', ' ')}
                           </p>
                         </div>

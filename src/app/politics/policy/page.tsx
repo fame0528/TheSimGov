@@ -46,7 +46,7 @@ export default function PolicyTrackerPage() {
                 </div>
                 <div className="rounded-lg border border-default-200 p-4 flex flex-col gap-4">
                   <h2 className="font-semibold">Effects Preview</h2>
-                  <p className="text-default-500">Policy effects simulation will render here.</p>
+                  <p className="text-default-700">Policy effects simulation will render here.</p>
                 </div>
               </div>
             </Tab>
@@ -56,7 +56,7 @@ export default function PolicyTrackerPage() {
                   <div key={b._id} className="rounded-lg border border-default-200 p-4 flex flex-col gap-3">
                     <div className="flex items-center justify-between">
                       <span className="font-semibold">{b.title}</span>
-                      <span className="text-default-500">{b.status}</span>
+                      <span className="text-default-700">{b.status}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <Button size="sm" onPress={() => voteBill(b._id, "YEA")}>YEA</Button>
@@ -67,7 +67,7 @@ export default function PolicyTrackerPage() {
               </div>
             </Tab>
             <Tab key="effects" title="Policy Effects">
-              <p className="text-default-500">Policy effects views across industries (Phase 6 later step).</p>
+              <p className="text-default-700">Policy effects views across industries (Phase 6 later step).</p>
             </Tab>
           </Tabs>
         </CardBody>

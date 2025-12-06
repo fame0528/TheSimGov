@@ -200,136 +200,193 @@ export function StateSelector({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      size="3xl"
+      size="4xl"
+      placement="center"
       scrollBehavior="inside"
       classNames={{
-        base: 'bg-slate-900 border border-white/10',
-        header: 'border-b border-white/10',
-        footer: 'border-t border-white/10',
+        base: 'bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border border-white/20 shadow-2xl',
+        header: 'border-b border-white/10 bg-slate-800/50',
+        body: 'bg-slate-900/50',
+        footer: 'border-t border-white/10 bg-slate-800/50',
       }}
     >
       <ModalContent>
-        <ModalHeader className="flex items-center gap-2">
-          <Plane className="h-5 w-5 text-blue-400" />
-          <span>Travel to Another State</span>
+        <ModalHeader className="flex items-center gap-3 text-white">
+          <Plane className="h-6 w-6 text-blue-400" />
+          <span className="text-xl font-bold">Travel to Another State</span>
         </ModalHeader>
 
-        <ModalBody className="py-4">
+        <ModalBody className="py-6 space-y-6">
           {/* Current Location */}
-          <div className="flex items-center gap-2 mb-4 p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
-            <MapPin className="h-5 w-5 text-blue-400" />
-            <span className="text-slate-400">Current Location:</span>
-            <span className="font-semibold text-white">{currentState}</span>
-            <span className="text-slate-500 ml-auto">
-              Cash: {formatCurrency(playerCash)}
-            </span>
-          </div>
+          <Card className="bg-gradient-to-br from-blue-500/10 to-blue-600/5 backdrop-blur-xl border border-blue-500/30 shadow-lg">
+            <CardBody className="p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-xl bg-blue-500/20">
+                    <MapPin className="h-6 w-6 text-blue-400" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-slate-400 uppercase tracking-wider">Current Location</p>
+                    <p className="text-2xl font-black text-white">{currentState}</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm font-medium text-slate-400 uppercase tracking-wider">Available Cash</p>
+                  <p className="text-2xl font-black text-green-400">
+                    {formatCurrency(playerCash)}
+                  </p>
+                </div>
+              </div>
+            </CardBody>
+          </Card>
 
           {/* Search */}
           <Input
-            placeholder="Search states..."
+            placeholder="Search states by name or code..."
             value={searchQuery}
             onValueChange={setSearchQuery}
-            startContent={<Search className="h-4 w-4 text-slate-400" />}
+            startContent={<Search className="h-5 w-5 text-slate-400" />}
+            size="lg"
             classNames={{
-              input: 'bg-transparent',
-              inputWrapper: 'bg-white/5 border border-white/10',
+              input: 'text-white font-medium',
+              inputWrapper: 'bg-slate-800/50 border border-white/20 hover:border-blue-500/50 transition-colors',
             }}
           />
 
           {/* State Grid */}
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-4 max-h-[400px] overflow-y-auto">
-            {filteredStates.map((state) => {
-              const isAffordable = playerCash >= state.cost;
-              const isSelected = selectedState === state.code;
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-bold text-white">Select Destination</h3>
+              <Chip size="md" className="bg-slate-700/50 text-slate-300 border border-white/10">
+                {filteredStates.length} states
+              </Chip>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 max-h-[450px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-slate-900">
+              {filteredStates.map((state) => {
+                const isAffordable = playerCash >= state.cost;
+                const isSelected = selectedState === state.code;
 
-              return (
-                <Card
-                  key={state.code}
-                  isPressable
-                  isHoverable
-                  className={`
-                    ${isSelected ? 'border-2 border-blue-500 bg-blue-500/10' : 'border border-white/10 bg-white/5'}
-                    ${!isAffordable ? 'opacity-50' : ''}
-                    transition-all
-                  `}
-                  onPress={() => isAffordable && setSelectedState(state.code)}
-                >
-                  <CardBody className="p-3">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <p className="font-semibold text-white">{state.code}</p>
-                        <p className="text-xs text-slate-400">{state.name}</p>
+                return (
+                  <Card
+                    key={state.code}
+                    isPressable
+                    isHoverable
+                    className={`
+                      ${isSelected 
+                        ? 'border-2 border-blue-500 bg-gradient-to-br from-blue-500/20 to-blue-600/10 shadow-lg shadow-blue-500/30' 
+                        : 'border border-white/10 bg-gradient-to-br from-slate-800/50 to-slate-900/50 hover:border-blue-500/50'}
+                      ${!isAffordable ? 'opacity-40 cursor-not-allowed' : 'hover:scale-105'}
+                      transition-all duration-300
+                    `}
+                    onPress={() => isAffordable && setSelectedState(state.code)}
+                  >
+                    <CardBody className="p-3">
+                      <div className="flex items-start justify-between mb-2">
+                        <div>
+                          <p className="text-lg font-black text-white">{state.code}</p>
+                          <p className="text-xs text-slate-300 font-medium">{state.name}</p>
+                        </div>
+                        {!isAffordable && (
+                          <Chip size="sm" className="bg-red-500/20 text-red-400 border border-red-500/30">
+                            💰
+                          </Chip>
+                        )}
                       </div>
-                      {!isAffordable && (
-                        <Chip size="sm" color="danger" variant="flat">
-                          $$$
-                        </Chip>
-                      )}
-                    </div>
-                    
-                    <div className="mt-2 flex items-center gap-3 text-xs text-slate-400">
-                      <span className="flex items-center gap-1">
-                        <DollarSign className="h-3 w-3" />
-                        {formatCurrency(state.cost)}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
-                        {state.time}h
-                      </span>
-                    </div>
-                  </CardBody>
-                </Card>
-              );
-            })}
+                      
+                      <div className="space-y-1.5">
+                        <div className="flex items-center gap-1.5 text-xs">
+                          <DollarSign className="h-3.5 w-3.5 text-green-400" />
+                          <span className="text-green-400 font-bold">{formatCurrency(state.cost)}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 text-xs">
+                          <Clock className="h-3.5 w-3.5 text-blue-400" />
+                          <span className="text-blue-400 font-bold">{state.time}h</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 text-xs">
+                          <MapPin className="h-3.5 w-3.5 text-slate-400" />
+                          <span className="text-slate-400 font-medium">{state.distance}mi</span>
+                        </div>
+                      </div>
+                    </CardBody>
+                  </Card>
+                );
+              })}
+            </div>
           </div>
 
           {/* Selected State Summary */}
           {selectedInfo && selectedState && (
-            <Card className="mt-4 bg-gradient-to-br from-blue-500/10 via-blue-600/5 to-transparent border border-blue-500/20">
-              <CardBody className="p-4">
-                <div className="flex items-center justify-between">
+            <Card className="bg-gradient-to-br from-blue-500/20 via-purple-500/10 to-slate-800/50 backdrop-blur-xl border border-blue-500/30 shadow-xl">
+              <CardBody className="p-6">
+                <div className="flex items-center justify-between mb-6">
                   <div>
-                    <p className="text-sm text-slate-400">Traveling to</p>
-                    <p className="text-2xl font-bold text-white">
+                    <p className="text-sm font-medium text-blue-300 uppercase tracking-wider mb-1">Traveling to</p>
+                    <p className="text-3xl font-black text-white">
                       {ALL_STATES.find(s => s.code === selectedState)?.name}
                     </p>
+                    <p className="text-lg text-slate-400 mt-1">{selectedState}</p>
                   </div>
-                  <div className="text-right">
-                    <p className="text-sm text-slate-400">Distance</p>
-                    <p className="text-xl font-semibold text-blue-400">
-                      {selectedInfo.distance.toLocaleString()} miles
-                    </p>
+                  <div className="p-4 rounded-2xl bg-blue-500/20 border border-blue-500/30">
+                    <Plane className="h-10 w-10 text-blue-400" />
                   </div>
                 </div>
 
-                <div className="flex items-center gap-6 mt-4">
-                  <div>
-                    <p className="text-xs text-slate-400 uppercase">Cost</p>
-                    <p className={`text-lg font-semibold ${canAfford ? 'text-green-400' : 'text-red-400'}`}>
-                      {formatCurrency(selectedInfo.cost)}
+                <div className="grid grid-cols-3 gap-4 mb-6">
+                  <div className="p-4 rounded-xl bg-gradient-to-br from-slate-800/80 to-slate-900/80 border border-white/10">
+                    <p className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">Distance</p>
+                    <p className="text-2xl font-black text-blue-400">
+                      {selectedInfo.distance.toLocaleString()}
                     </p>
+                    <p className="text-xs text-slate-500 mt-1">miles</p>
                   </div>
-                  <div>
-                    <p className="text-xs text-slate-400 uppercase">Travel Time</p>
-                    <p className="text-lg font-semibold text-white">
-                      {selectedInfo.time} hours
+                  <div className="p-4 rounded-xl bg-gradient-to-br from-slate-800/80 to-slate-900/80 border border-white/10">
+                    <p className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">Travel Time</p>
+                    <p className="text-2xl font-black text-white">
+                      {selectedInfo.time}
                     </p>
+                    <p className="text-xs text-slate-500 mt-1">hours</p>
                   </div>
-                  <div>
-                    <p className="text-xs text-slate-400 uppercase">Heat Reduction</p>
-                    <p className="text-lg font-semibold text-green-400">
+                  <div className="p-4 rounded-xl bg-gradient-to-br from-slate-800/80 to-slate-900/80 border border-white/10">
+                    <p className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">Heat Reduction</p>
+                    <p className="text-2xl font-black text-green-400">
                       -5%
                     </p>
+                    <p className="text-xs text-slate-500 mt-1">bonus</p>
+                  </div>
+                </div>
+
+                <div className="p-4 rounded-xl bg-gradient-to-r from-green-500/10 to-transparent border border-green-500/20">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <DollarSign className="h-6 w-6 text-green-400" />
+                      <div>
+                        <p className="text-sm text-slate-400">Travel Cost</p>
+                        <p className={`text-2xl font-black ${canAfford ? 'text-green-400' : 'text-red-400'}`}>
+                          {formatCurrency(selectedInfo.cost)}
+                        </p>
+                      </div>
+                    </div>
+                    {canAfford ? (
+                      <Chip size="lg" className="bg-green-500/20 text-green-400 border border-green-500/30 font-bold">
+                        ✓ Affordable
+                      </Chip>
+                    ) : (
+                      <Chip size="lg" className="bg-red-500/20 text-red-400 border border-red-500/30 font-bold">
+                        ✗ Too Expensive
+                      </Chip>
+                    )}
                   </div>
                 </div>
 
                 {!canAfford && (
-                  <div className="mt-4 flex items-center gap-2 text-red-400 text-sm">
-                    <AlertTriangle className="h-4 w-4" />
-                    <span>
-                      Insufficient funds. You need {formatCurrency(selectedInfo.cost - playerCash)} more.
-                    </span>
+                  <div className="mt-4 flex items-start gap-3 p-4 rounded-lg bg-red-500/10 border border-red-500/30">
+                    <AlertTriangle className="h-6 w-6 text-red-400 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-bold text-red-400 mb-1">Insufficient Funds</p>
+                      <p className="text-sm text-red-300">
+                        You need {formatCurrency(selectedInfo.cost - playerCash)} more to travel to this state.
+                      </p>
+                    </div>
                   </div>
                 )}
               </CardBody>
@@ -337,10 +394,12 @@ export function StateSelector({
           )}
         </ModalBody>
 
-        <ModalFooter>
+        <ModalFooter className="gap-3">
           <Button
             variant="flat"
             onPress={onClose}
+            className="bg-slate-700/50 text-white hover:bg-slate-700 font-bold"
+            size="lg"
           >
             Cancel
           </Button>
@@ -348,8 +407,10 @@ export function StateSelector({
             color="primary"
             isDisabled={!selectedState || !canAfford || isLoading}
             isLoading={isLoading}
-            startContent={!isLoading && <Plane className="h-4 w-4" />}
+            startContent={!isLoading && <Plane className="h-5 w-5" />}
             onPress={() => selectedState && onSelectState(selectedState)}
+            className="font-bold text-white"
+            size="lg"
           >
             {isLoading ? 'Traveling...' : 'Travel Now'}
           </Button>

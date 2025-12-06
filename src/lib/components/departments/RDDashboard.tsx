@@ -96,7 +96,7 @@ export function RDDashboard({
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-3xl font-bold">🔬 R&D Department</h2>
-          <p className="text-default-500">Level {department.level} • {formatCurrency(department.budget)} Budget</p>
+          <p className="text-default-700">Level {department.level} • {formatCurrency(department.budget)} Budget</p>
         </div>
         {onRefresh && <Button size="sm" variant="flat" onPress={onRefresh}>Refresh</Button>}
       </div>
@@ -108,13 +108,13 @@ export function RDDashboard({
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardBody>
-            <p className="text-sm text-default-500">Innovation Points</p>
+            <p className="text-sm text-default-700">Innovation Points</p>
             <p className="text-2xl font-bold">{formatNumber(department.innovationPoints || 0)}</p>
           </CardBody>
         </Card>
         <Card>
           <CardBody>
-            <p className="text-sm text-default-500">Research Speed</p>
+            <p className="text-sm text-default-700">Research Speed</p>
             <p className="text-2xl font-bold">
               <Chip color={(department.researchSpeed || 1.0) >= 1.5 ? 'success' : (department.researchSpeed || 1.0) >= 1.0 ? 'warning' : 'default'}>
                 {(department.researchSpeed || 1.0).toFixed(2)}x
@@ -124,13 +124,13 @@ export function RDDashboard({
         </Card>
         <Card>
           <CardBody>
-            <p className="text-sm text-default-500">Technology Level</p>
+            <p className="text-sm text-default-700">Technology Level</p>
             <p className="text-2xl font-bold">{department.technologyLevel || 1}</p>
           </CardBody>
         </Card>
         <Card>
           <CardBody>
-            <p className="text-sm text-default-500">Active Patents</p>
+            <p className="text-sm text-default-700">Active Patents</p>
             <p className="text-2xl font-bold">{approvedPatents.length}</p>
           </CardBody>
         </Card>
@@ -144,15 +144,15 @@ export function RDDashboard({
           </CardHeader>
           <CardBody className="space-y-3">
             <div className="flex justify-between">
-              <span className="text-default-500">Total Patents</span>
+              <span className="text-default-700">Total Patents</span>
               <span className="font-semibold">{department.patents?.length || 0}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-default-500">Granted</span>
+              <span className="text-default-700">Granted</span>
               <span className="font-semibold text-success">{approvedPatents.length}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-default-500">Total Value</span>
+              <span className="text-default-700">Total Value</span>
               <span className="font-semibold">{formatCurrency(totalPatentValue)}</span>
             </div>
           </CardBody>
@@ -168,11 +168,11 @@ export function RDDashboard({
               <div key={project.id} className="flex justify-between items-center py-2 border-b border-divider last:border-0">
                 <div>
                   <p className="font-medium">{project.name}</p>
-                  <p className="text-xs text-default-500">{project.category}</p>
+                  <p className="text-xs text-default-700">{project.category}</p>
                 </div>
                 <div className="text-right">
                   <Progress value={project.progress} maxValue={100} size="sm" className="w-20" />
-                  <p className="text-xs text-default-500 mt-1">{project.progress.toFixed(0)}%</p>
+                  <p className="text-xs text-default-700 mt-1">{project.progress.toFixed(0)}%</p>
                 </div>
               </div>
             ))}

@@ -176,7 +176,7 @@ export function InvestmentModal({
                 <p className="text-2xl font-bold text-success">
                   ${expectedReturn().toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                 </p>
-                <p className="text-xs text-default-500 mt-1">
+                <p className="text-xs text-default-700 mt-1">
                   Based on {formData.riskLevel} risk level over {formData.duration} months
                 </p>
               </div>

@@ -30,7 +30,7 @@ export default function DistrictMapPage() {
           <Tabs aria-label="District tabs">
             <Tab key="map" title="Map">
               <div className="rounded-lg border border-default-200 p-4">
-                <p className="text-default-500">Interactive district map will render here.</p>
+                <p className="text-default-700">Interactive district map will render here.</p>
               </div>
             </Tab>
             <Tab key="demographics" title="Demographics">
@@ -51,7 +51,7 @@ export default function DistrictMapPage() {
                   <Input label="District" placeholder="12" />
                 </div>
                 <div className="rounded-lg border border-default-200 p-4">
-                  <p className="text-default-500">Demographic charts will render here.</p>
+                  <p className="text-default-700">Demographic charts will render here.</p>
                 </div>
               </div>
             </Tab>

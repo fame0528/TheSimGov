@@ -1,0 +1,563 @@
+/**
+ * @fileoverview Software Industry Dashboard Component
+ * @module lib/components/software/SoftwareDashboard
+ * 
+ * OVERVIEW:
+ * Main Software industry dashboard that aggregates all software operations.
+ * Provides unified view of products, releases, bugs, features, and SaaS metrics.
+ * Entry point for Software company management.
+ * 
+ * @created 2025-11-29
+ * @author ECHO v1.3.1
+ */
+
+'use client';
+
+import { useState, useEffect, useCallback } from 'react';
+import { Card, CardBody, CardHeader } from '@heroui/card';
+import { Button } from '@heroui/button';
+import { Chip } from '@heroui/chip';
+import { Tabs, Tab } from '@heroui/tabs';
+import { Progress } from '@heroui/progress';
+import { addToast } from '@heroui/toast';
+import { LoadingSpinner } from '@/lib/components/shared/LoadingSpinner';
+
+// ============================================================================
+// TYPE DEFINITIONS
+// ============================================================================
+
+/**
+ * Software product summary
+ */
+interface SoftwareProduct {
+  id: string;
+  name: string;
+  version: string;
+  status: string;
+  category: string;
+  qualityScore: number;
+  activeSubscriptions: number;
+  licenseSales: number;
+  totalRevenue: number;
+  pricing: {
+    perpetual: number;
+    monthly: number;
+  };
+}
+
+/**
+ * Bug summary
+ */
+interface BugSummary {
+  total: number;
+  open: number;
+  critical: number;
+  avgResolutionHours: number;
+}
+
+/**
+ * Feature summary
+ */
+interface FeatureSummary {
+  total: number;
+  inProgress: number;
+  completed: number;
+  velocity: number;
+  totalStoryPoints: number;
+}
+
+/**
+ * SaaS metrics
+ */
+interface SaaSMetrics {
+  mrr: number;
+  arr: number;
+  churnRate: number;
+  avgLTV: number;
+  activeSubscriptions: number;
+}
+
+/**
+ * Component props
+ */
+export interface SoftwareDashboardProps {
+  /** Company ID for data lookup */
+  companyId: string;
+  /** Company name for display */
+  companyName?: string;
+  /** Callback when data changes */
+  onDataChange?: () => void;
+  
+  // Pre-fetched summary data (optional)
+  totalProducts?: number;
+  activeProducts?: number;
+  avgQualityScore?: number;
+  totalBugs?: number;
+  openBugs?: number;
+  criticalBugs?: number;
+  totalFeatures?: number;
+  featuresInProgress?: number;
+  mrr?: number;
+  arr?: number;
+  churnRate?: number;
+  totalRevenue?: number;
+  
+  // Action callbacks
+  onNewProduct?: () => void;
+  onViewBugs?: () => void;
+  onViewFeatures?: () => void;
+}
+
+// ============================================================================
+// UTILITY FUNCTIONS
+// ============================================================================
+
+/**
+ * Format currency values
+ */
+const formatCurrency = (amount: number): string => {
+  if (amount >= 1000000) {
+    return `$${(amount / 1000000).toFixed(1)}M`;
+  }
+  if (amount >= 1000) {
+    return `$${(amount / 1000).toFixed(0)}K`;
+  }
+  return `$${amount.toFixed(0)}`;
+};
+
+/**
+ * Format percentage
+ */
+const formatPercent = (value: number): string => {
+  return `${value.toFixed(1)}%`;
+};
+
+/**
+ * Get status color
+ */
+const getStatusColor = (status: string): 'success' | 'warning' | 'danger' | 'default' => {
+  switch (status) {
+    case 'Active':
+      return 'success';
+    case 'Beta':
+    case 'Alpha':
+      return 'warning';
+    case 'Deprecated':
+    case 'Sunset':
+      return 'danger';
+    default:
+      return 'default';
+  }
+};
+
+/**
+ * Get severity color
+ */
+const getSeverityColor = (severity: string): 'danger' | 'warning' | 'primary' | 'default' => {
+  switch (severity) {
+    case 'Critical':
+      return 'danger';
+    case 'High':
+      return 'warning';
+    case 'Medium':
+      return 'primary';
+    default:
+      return 'default';
+  }
+};
+
+// ============================================================================
+// MAIN COMPONENT
+// ============================================================================
+
+/**
+ * SoftwareDashboard Component
+ * 
+ * Main dashboard for Software industry companies.
+ * Aggregates all software operations into unified interface.
+ */
+export function SoftwareDashboard({ 
+  companyId, 
+  companyName, 
+  onDataChange,
+  // Pre-fetched data
+  totalProducts: prefetchedProducts,
+  activeProducts: prefetchedActive,
+  avgQualityScore: prefetchedQuality,
+  totalBugs: prefetchedBugs,
+  openBugs: prefetchedOpenBugs,
+  criticalBugs: prefetchedCritical,
+  totalFeatures: prefetchedFeatures,
+  featuresInProgress: prefetchedInProgress,
+  mrr: prefetchedMRR,
+  arr: prefetchedARR,
+  churnRate: prefetchedChurn,
+  totalRevenue: prefetchedRevenue,
+  // Actions
+  onNewProduct,
+  onViewBugs,
+  onViewFeatures,
+}: SoftwareDashboardProps) {
+  // Check if pre-fetched data is available
+  const hasPrefetchedData = prefetchedProducts !== undefined;
+  
+  const [loading, setLoading] = useState(!hasPrefetchedData);
+  const [products, setProducts] = useState<SoftwareProduct[]>([]);
+  const [bugs, setBugs] = useState<BugSummary>({
+    total: prefetchedBugs ?? 0,
+    open: prefetchedOpenBugs ?? 0,
+    critical: prefetchedCritical ?? 0,
+    avgResolutionHours: 0,
+  });
+  const [features, setFeatures] = useState<FeatureSummary>({
+    total: prefetchedFeatures ?? 0,
+    inProgress: prefetchedInProgress ?? 0,
+    completed: 0,
+    velocity: 0,
+    totalStoryPoints: 0,
+  });
+  const [saas, setSaas] = useState<SaaSMetrics>({
+    mrr: prefetchedMRR ?? 0,
+    arr: prefetchedARR ?? 0,
+    churnRate: prefetchedChurn ?? 0,
+    avgLTV: 0,
+    activeSubscriptions: 0,
+  });
+  const [activeTab, setActiveTab] = useState('overview');
+
+  /**
+   * Fetch software summary data
+   */
+  const fetchSummary = useCallback(async () => {
+    setLoading(true);
+    try {
+      const productsRes = await fetch(`/api/software/products?company=${companyId}`);
+      
+      if (productsRes.ok) {
+        const data = await productsRes.json();
+        setProducts(data.products || []);
+        
+        // Calculate summary from products
+        const activeProducts = data.products?.filter((p: SoftwareProduct) => p.status === 'Active') || [];
+        const totalQuality = data.products?.reduce((sum: number, p: SoftwareProduct) => sum + (p.qualityScore || 0), 0) || 0;
+        const avgQuality = data.products?.length > 0 ? totalQuality / data.products.length : 0;
+        
+        // Update SaaS metrics from aggregated product data
+        const totalMRR = data.products?.reduce((sum: number, p: SoftwareProduct) => {
+          return sum + ((p.activeSubscriptions || 0) * (p.pricing?.monthly || 0));
+        }, 0) || 0;
+        
+        setSaas(prev => ({
+          ...prev,
+          mrr: totalMRR,
+          arr: totalMRR * 12,
+          activeSubscriptions: data.products?.reduce((sum: number, p: SoftwareProduct) => sum + (p.activeSubscriptions || 0), 0) || 0,
+        }));
+      }
+    } catch (error) {
+      addToast({
+        title: 'Error loading software data',
+        description: error instanceof Error ? error.message : 'Failed to fetch software summary',
+        color: 'danger',
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [companyId]);
+
+  useEffect(() => {
+    if (!hasPrefetchedData) {
+      fetchSummary();
+    }
+  }, [fetchSummary, hasPrefetchedData]);
+
+  const totalProductCount = products.length || prefetchedProducts || 0;
+  const activeProductCount = products.filter(p => p.status === 'Active').length || prefetchedActive || 0;
+  const avgQuality = products.length > 0 
+    ? products.reduce((sum, p) => sum + (p.qualityScore || 0), 0) / products.length 
+    : prefetchedQuality || 0;
+
+  if (loading) {
+    return <LoadingSpinner />;
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-2xl font-bold">Software Operations</h1>
+          {companyName && <p className="text-default-700">{companyName}</p>}
+        </div>
+        <div className="flex gap-2">
+          <Button color="primary" onPress={onNewProduct}>
+            New Product
+          </Button>
+          <Button variant="flat" onPress={fetchSummary}>
+            Refresh
+          </Button>
+        </div>
+      </div>
+
+      {/* Portfolio Overview */}
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+        <Card className="bg-gradient-to-br from-blue-500/10 to-blue-600/5">
+          <CardBody className="text-center">
+            <div className="text-3xl font-bold text-blue-600">{totalProductCount}</div>
+            <div className="text-xs text-default-700">Products</div>
+          </CardBody>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-green-500/10 to-green-600/5">
+          <CardBody className="text-center">
+            <div className="text-3xl font-bold text-green-600">{activeProductCount}</div>
+            <div className="text-xs text-default-700">Active</div>
+          </CardBody>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-yellow-500/10 to-yellow-600/5">
+          <CardBody className="text-center">
+            <div className="text-3xl font-bold text-yellow-600">{avgQuality.toFixed(0)}</div>
+            <div className="text-xs text-default-700">Avg Quality</div>
+          </CardBody>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-red-500/10 to-red-600/5">
+          <CardBody className="text-center">
+            <div className="text-3xl font-bold text-red-600">{bugs.open}</div>
+            <div className="text-xs text-default-700">Open Bugs</div>
+          </CardBody>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-purple-500/10 to-purple-600/5">
+          <CardBody className="text-center">
+            <div className="text-3xl font-bold text-purple-600">{features.inProgress}</div>
+            <div className="text-xs text-default-700">In Progress</div>
+          </CardBody>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-cyan-500/10 to-cyan-600/5">
+          <CardBody className="text-center">
+            <div className="text-3xl font-bold text-cyan-600">{formatCurrency(saas.mrr)}</div>
+            <div className="text-xs text-default-700">MRR</div>
+          </CardBody>
+        </Card>
+      </div>
+
+      {/* Tabs for detailed views */}
+      <Tabs 
+        selectedKey={activeTab} 
+        onSelectionChange={(key) => setActiveTab(key as string)}
+        className="mt-6"
+      >
+        <Tab key="overview" title="Overview">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+            {/* Products Card */}
+            <Card>
+              <CardHeader>
+                <h3 className="text-lg font-semibold">Products</h3>
+              </CardHeader>
+              <CardBody className="space-y-3">
+                {products.slice(0, 5).map((product) => (
+                  <div key={product.id} className="flex justify-between items-center">
+                    <div>
+                      <div className="font-medium">{product.name}</div>
+                      <div className="text-xs text-default-700">v{product.version}</div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Chip size="sm" color={getStatusColor(product.status)}>
+                        {product.status}
+                      </Chip>
+                    </div>
+                  </div>
+                ))}
+                {products.length === 0 && (
+                  <div className="text-center py-4 text-default-400">
+                    No products yet
+                  </div>
+                )}
+              </CardBody>
+            </Card>
+
+            {/* Bug Tracker Card */}
+            <Card>
+              <CardHeader className="flex justify-between">
+                <h3 className="text-lg font-semibold">Bug Tracker</h3>
+                <Button size="sm" variant="light" onPress={onViewBugs}>
+                  View All
+                </Button>
+              </CardHeader>
+              <CardBody className="space-y-4">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="text-center p-3 bg-default-100 rounded-lg">
+                    <div className="text-2xl font-bold">{bugs.total}</div>
+                    <div className="text-xs text-default-700">Total</div>
+                  </div>
+                  <div className="text-center p-3 bg-danger-100 rounded-lg">
+                    <div className="text-2xl font-bold text-danger">{bugs.critical}</div>
+                    <div className="text-xs text-default-700">Critical</div>
+                  </div>
+                </div>
+                <div>
+                  <div className="flex justify-between text-sm mb-1">
+                    <span>Resolution Progress</span>
+                    <span>{bugs.total > 0 ? Math.round(((bugs.total - bugs.open) / bugs.total) * 100) : 100}%</span>
+                  </div>
+                  <Progress 
+                    value={bugs.total > 0 ? ((bugs.total - bugs.open) / bugs.total) * 100 : 100} 
+                    color="success"
+                    size="sm"
+                  />
+                </div>
+              </CardBody>
+            </Card>
+
+            {/* Feature Development Card */}
+            <Card>
+              <CardHeader className="flex justify-between">
+                <h3 className="text-lg font-semibold">Feature Development</h3>
+                <Button size="sm" variant="light" onPress={onViewFeatures}>
+                  View All
+                </Button>
+              </CardHeader>
+              <CardBody className="space-y-4">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="text-center p-3 bg-default-100 rounded-lg">
+                    <div className="text-2xl font-bold">{features.total}</div>
+                    <div className="text-xs text-default-700">Backlog</div>
+                  </div>
+                  <div className="text-center p-3 bg-primary-100 rounded-lg">
+                    <div className="text-2xl font-bold text-primary">{features.inProgress}</div>
+                    <div className="text-xs text-default-700">In Progress</div>
+                  </div>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm">Velocity</span>
+                  <Chip size="sm" color="success">{features.velocity} pts/sprint</Chip>
+                </div>
+              </CardBody>
+            </Card>
+          </div>
+        </Tab>
+
+        <Tab key="products" title="Products">
+          <div className="mt-4 space-y-4">
+            {products.map((product) => (
+              <Card key={product.id}>
+                <CardBody>
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-semibold text-lg">{product.name}</h3>
+                        <Chip size="sm" color={getStatusColor(product.status)}>
+                          {product.status}
+                        </Chip>
+                      </div>
+                      <div className="text-sm text-default-700">
+                        Version {product.version} • {product.category}
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-xl font-bold">{formatCurrency(product.totalRevenue)}</div>
+                      <div className="text-xs text-default-500">Total Revenue</div>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-4 gap-4 mt-4">
+                    <div className="text-center">
+                      <div className="text-lg font-semibold">{product.qualityScore}</div>
+                      <div className="text-xs text-default-500">Quality Score</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-lg font-semibold">{product.licenseSales}</div>
+                      <div className="text-xs text-default-500">Licenses Sold</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-lg font-semibold">{product.activeSubscriptions}</div>
+                      <div className="text-xs text-default-500">Subscriptions</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-lg font-semibold">{formatCurrency(product.pricing.monthly)}/mo</div>
+                      <div className="text-xs text-default-500">SaaS Price</div>
+                    </div>
+                  </div>
+                </CardBody>
+              </Card>
+            ))}
+            {products.length === 0 && (
+              <Card>
+                <CardBody className="text-center py-8">
+                  <div className="text-default-400 mb-4">No products yet</div>
+                  <Button color="primary" onPress={onNewProduct}>
+                    Create First Product
+                  </Button>
+                </CardBody>
+              </Card>
+            )}
+          </div>
+        </Tab>
+
+        <Tab key="saas" title="SaaS Metrics">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
+            <Card className="bg-gradient-to-br from-green-500/10 to-green-600/5">
+              <CardBody>
+                <div className="text-sm text-default-500 mb-1">MRR</div>
+                <div className="text-3xl font-bold text-green-600">{formatCurrency(saas.mrr)}</div>
+                <div className="text-xs text-default-500 mt-1">Monthly Recurring Revenue</div>
+              </CardBody>
+            </Card>
+
+            <Card className="bg-gradient-to-br from-blue-500/10 to-blue-600/5">
+              <CardBody>
+                <div className="text-sm text-default-500 mb-1">ARR</div>
+                <div className="text-3xl font-bold text-blue-600">{formatCurrency(saas.arr)}</div>
+                <div className="text-xs text-default-500 mt-1">Annual Recurring Revenue</div>
+              </CardBody>
+            </Card>
+
+            <Card className="bg-gradient-to-br from-orange-500/10 to-orange-600/5">
+              <CardBody>
+                <div className="text-sm text-default-500 mb-1">Churn Rate</div>
+                <div className="text-3xl font-bold text-orange-600">{formatPercent(saas.churnRate)}</div>
+                <div className="text-xs text-default-500 mt-1">Monthly churn</div>
+              </CardBody>
+            </Card>
+
+            <Card className="bg-gradient-to-br from-purple-500/10 to-purple-600/5">
+              <CardBody>
+                <div className="text-sm text-default-500 mb-1">Average LTV</div>
+                <div className="text-3xl font-bold text-purple-600">{formatCurrency(saas.avgLTV)}</div>
+                <div className="text-xs text-default-500 mt-1">Lifetime Value</div>
+              </CardBody>
+            </Card>
+          </div>
+
+          <Card className="mt-4">
+            <CardHeader>
+              <h3 className="text-lg font-semibold">Subscription Overview</h3>
+            </CardHeader>
+            <CardBody>
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-2xl font-bold">{saas.activeSubscriptions}</div>
+                  <div className="text-sm text-default-500">Active Subscriptions</div>
+                </div>
+                <div className="text-right">
+                  <div className="text-lg font-semibold">
+                    {formatCurrency(saas.mrr / (saas.activeSubscriptions || 1))}
+                  </div>
+                  <div className="text-sm text-default-500">Avg Revenue Per User</div>
+                </div>
+              </div>
+            </CardBody>
+          </Card>
+        </Tab>
+      </Tabs>
+    </div>
+  );
+}
+
+// ============================================================================
+// EXPORTS
+// ============================================================================
+
+export default SoftwareDashboard;

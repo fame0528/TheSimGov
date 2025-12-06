@@ -165,14 +165,14 @@ export function ModelTrainingWizard({
       {/* Header */}
       <div>
         <h2 className="text-3xl font-bold">🧠 Model Training Wizard</h2>
-        <p className="text-default-500">Configure and submit a new AI model training job</p>
+        <p className="text-default-700">Configure and submit a new AI model training job</p>
       </div>
 
       {/* Progress Stepper */}
       <div className="space-y-2">
         <div className="flex justify-between items-center">
           <span className="text-sm font-medium">Step {currentStep} of {totalSteps}</span>
-          <span className="text-sm text-default-500">
+          <span className="text-sm text-default-700">
             {currentStep === 1 && 'Dataset Selection'}
             {currentStep === 2 && 'Architecture'}
             {currentStep === 3 && 'Training Configuration'}
@@ -284,12 +284,12 @@ export function ModelTrainingWizard({
                 <div className="bg-default-100 p-4 rounded-lg">
                   <p className="text-sm font-medium mb-1">Estimated Time</p>
                   <p className="text-2xl font-bold text-warning">{estimatedTime}h</p>
-                  <p className="text-xs text-default-500 mt-1">Training duration</p>
+                  <p className="text-xs text-default-700 mt-1">Training duration</p>
                 </div>
                 <div className="bg-default-100 p-4 rounded-lg">
                   <p className="text-sm font-medium mb-1">Estimated Cost</p>
                   <p className="text-2xl font-bold text-danger">{formatCurrency(estimatedCost)}</p>
-                  <p className="text-xs text-default-500 mt-1">Total training cost</p>
+                  <p className="text-xs text-default-700 mt-1">Total training cost</p>
                 </div>
               </div>
             </div>

@@ -22,6 +22,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Card, CardBody, CardHeader } from '@heroui/card';
+import { TrendingUp, Flame, DollarSign, BarChart3, Layers } from 'lucide-react';
 import { Button } from '@heroui/button';
 import { Chip } from '@heroui/chip';
 import { Progress } from '@heroui/progress';
@@ -172,6 +173,43 @@ const getQualityColor = (grade: QualityGrade): 'success' | 'primary' | 'warning'
 // ============================================================================
 
 /**
+ * AAA KPI Card for overview stats (matches Banking dashboard)
+ */
+function KPICard({
+  title,
+  value,
+  subtitle,
+  icon: Icon,
+  color = 'emerald',
+}: {
+  title: string;
+  value: string | number;
+  subtitle?: string;
+  icon: React.ElementType;
+  color?: 'emerald' | 'blue' | 'yellow' | 'red' | 'purple';
+}) {
+  const colorClasses = {
+    emerald: 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400',
+    blue: 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400',
+    yellow: 'bg-yellow-100 text-yellow-600 dark:bg-yellow-900/30 dark:text-yellow-400',
+    red: 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400',
+    purple: 'bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400',
+  };
+  return (
+    <Card className="p-4 bg-slate-800/50 border border-slate-700">
+      <div className="flex items-start justify-between">
+        <div className={`p-3 rounded-xl ${colorClasses[color]}`}> <Icon className="h-6 w-6" /> </div>
+      </div>
+      <div className="mt-4">
+        <p className="text-sm text-gray-400">{title}</p>
+        <p className="text-2xl font-bold mt-1 text-white">{value}</p>
+        {subtitle && <p className="text-xs text-gray-500 mt-1">{subtitle}</p>}
+      </div>
+    </Card>
+  );
+}
+
+/**
  * OilGasOperations Component
  * 
  * Oil & Gas operations management dashboard with production tracking,
@@ -224,61 +262,14 @@ export function OilGasOperations({ companyId, onDataChange }: OilGasOperationsPr
       setGasFields(gasData.fields || []);
     } catch (error) {
       addToast({
-        title: 'Error loading data',
-        description: error instanceof Error ? error.message : 'Failed to fetch operations data',
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Network error',
         color: 'danger',
       });
     } finally {
       setLoading(false);
     }
   }, [companyId]);
-
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
-
-  /**
-   * Handle extraction operation
-   */
-  const handleExtract = async () => {
-    if (!selectedWell) return;
-
-    setIsOperating(true);
-    try {
-      const response = await fetch(`/api/energy/oil-wells/${selectedWell._id}/extract`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ duration: extractionDuration }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        addToast({
-          title: 'Extraction complete',
-          description: `Produced ${formatNumber(data.production)} barrels, Revenue: ${formatCurrency(data.revenue)}`,
-          color: 'success',
-        });
-        fetchData();
-        onDataChange?.();
-        onExtractClose();
-      } else {
-        addToast({
-          title: 'Extraction failed',
-          description: data.error || 'Operation failed',
-          color: 'danger',
-        });
-      }
-    } catch (error) {
-      addToast({
-        title: 'Error',
-        description: error instanceof Error ? error.message : 'Network error',
-        color: 'danger',
-      });
-    } finally {
-      setIsOperating(false);
-    }
-  };
 
   /**
    * Handle maintenance operation
@@ -308,6 +299,49 @@ export function OilGasOperations({ companyId, onDataChange }: OilGasOperationsPr
       } else {
         addToast({
           title: 'Maintenance failed',
+          description: data.error || 'Operation failed',
+          color: 'danger',
+        });
+      }
+    } catch (error) {
+      addToast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Network error',
+        color: 'danger',
+      });
+    } finally {
+      setIsOperating(false);
+    }
+  };
+
+  /**
+   * Handle extraction operation
+   */
+  const handleExtract = async () => {
+    if (!selectedWell) return;
+
+    setIsOperating(true);
+    try {
+      const response = await fetch(`/api/energy/oil-wells/${selectedWell._id}/extract`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ duration: extractionDuration }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        addToast({
+          title: 'Extraction started',
+          description: `Extracting for ${extractionDuration} hours. Expected: ${formatNumber(data.expectedBarrels)} barrels`,
+          color: 'success',
+        });
+        fetchData();
+        onDataChange?.();
+        onExtractClose();
+      } else {
+        addToast({
+          title: 'Extraction failed',
           description: data.error || 'Operation failed',
           color: 'danger',
         });
@@ -404,14 +438,14 @@ export function OilGasOperations({ companyId, onDataChange }: OilGasOperationsPr
 
   return (
     <div className="space-y-6">
-      {/* Overview Stats */}
+      {/* Overview Stats - AAA Design */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardBody>
-            <div className="text-sm text-default-500">Oil Production</div>
-            <div className="text-2xl font-bold">{formatNumber(totalOilProduction)} bbl/day</div>
-            <div className="text-xs text-default-400 flex items-center gap-1">
-              <span className={avgDepletion < 5 ? 'text-success' : 'text-danger'}>
+        <Card className="p-4 bg-slate-800/50 border border-slate-700">
+          <CardBody className="p-0">
+            <div className="text-sm text-gray-400">Oil Production</div>
+            <div className="text-2xl font-bold text-white">{formatNumber(totalOilProduction)} bbl/day</div>
+            <div className="text-xs text-gray-500 flex items-center gap-1">
+              <span className={avgDepletion < 5 ? 'text-emerald-400' : 'text-red-400'}>
                 {avgDepletion < 5 ? '↑' : '↓'}
               </span>
               {avgDepletion.toFixed(2)}% depletion
@@ -419,39 +453,45 @@ export function OilGasOperations({ companyId, onDataChange }: OilGasOperationsPr
           </CardBody>
         </Card>
 
-        <Card>
-          <CardBody>
-            <div className="text-sm text-default-500">Gas Production</div>
-            <div className="text-2xl font-bold">{formatNumber(totalGasProduction)} MCF/day</div>
-            <div className="text-xs text-default-400">{gasFields.length} active fields</div>
+        <Card className="p-4 bg-slate-800/50 border border-slate-700">
+          <CardBody className="p-0">
+            <div className="text-sm text-gray-400">Gas Production</div>
+            <div className="text-2xl font-bold text-white">{formatNumber(totalGasProduction)} MCF/day</div>
+            <div className="text-xs text-gray-500">{gasFields.length} active fields</div>
           </CardBody>
         </Card>
 
-        <Card>
-          <CardBody>
-            <div className="text-sm text-default-500">Total Revenue</div>
-            <div className="text-2xl font-bold text-success">{formatCurrency(totalRevenue)}</div>
-            <div className="text-xs text-default-400">Daily production value</div>
+        <Card className="p-4 bg-slate-800/50 border border-slate-700">
+          <CardBody className="p-0">
+            <div className="text-sm text-gray-400">Total Revenue</div>
+            <div className="text-2xl font-bold text-green-400">{formatCurrency(totalRevenue)}</div>
+            <div className="text-xs text-gray-500">Daily production value</div>
           </CardBody>
         </Card>
 
-        <Card>
-          <CardBody>
-            <div className="text-sm text-default-500">Active Assets</div>
-            <div className="text-2xl font-bold">{wells.length + gasFields.length}</div>
-            <div className="text-xs text-default-400">
+        <Card className="p-4 bg-slate-800/50 border border-slate-700">
+          <CardBody className="p-0">
+            <div className="text-sm text-gray-400">Active Assets</div>
+            <div className="text-2xl font-bold text-white">{wells.length + gasFields.length}</div>
+            <div className="text-xs text-gray-500">
               {wells.length} wells, {gasFields.length} fields
             </div>
           </CardBody>
         </Card>
       </div>
 
-      {/* Tabbed Content */}
-      <Card>
+      {/* Tabs - AAA Design */}
+      <Card className="bg-slate-800/50 border border-slate-700">
         <CardBody>
           <Tabs
             selectedKey={activeTab}
             onSelectionChange={(key) => setActiveTab(key as string)}
+            color="primary"
+            classNames={{
+              tabList: "bg-slate-700/50",
+              cursor: "bg-primary",
+              tab: "text-gray-400 data-[selected=true]:text-white",
+            }}
           >
             <Tab key="wells" title={`Oil Wells (${wells.length})`}>
               <div className="pt-4">
@@ -489,7 +529,7 @@ export function OilGasOperations({ companyId, onDataChange }: OilGasOperationsPr
           <ModalBody>
             <div className="space-y-4">
               <div>
-                <p className="text-sm text-default-500 mb-2">
+                <p className="text-sm text-gray-400 mb-2">
                   Run extraction operation on this well. Duration affects production and depletion.
                 </p>
               </div>
@@ -504,8 +544,8 @@ export function OilGasOperations({ companyId, onDataChange }: OilGasOperationsPr
               />
 
               {selectedWell && (
-                <Card className="bg-default-100">
-                  <CardBody className="text-sm">
+                <Card className="bg-slate-700/50 border border-slate-600">
+                  <CardBody className="text-sm text-gray-300">
                     <div className="flex justify-between">
                       <span>Current Production:</span>
                       <span>{formatNumber(selectedWell.currentProduction)} bbl/day</span>
@@ -546,7 +586,7 @@ export function OilGasOperations({ companyId, onDataChange }: OilGasOperationsPr
           <ModalHeader>Maintenance - {selectedWell?.name}</ModalHeader>
           <ModalBody>
             <div className="space-y-4">
-              <p className="text-sm text-default-500">
+              <p className="text-sm text-gray-400">
                 Perform maintenance to improve equipment efficiency and prevent breakdowns.
               </p>
 
@@ -564,8 +604,8 @@ export function OilGasOperations({ companyId, onDataChange }: OilGasOperationsPr
               </Select>
 
               {selectedWell && (
-                <Card className="bg-default-100">
-                  <CardBody className="text-sm">
+                <Card className="bg-slate-700/50 border border-slate-600">
+                  <CardBody className="text-sm text-gray-300">
                     <div className="flex justify-between">
                       <span>Current Efficiency:</span>
                       <span>{selectedWell.equipment.efficiency}%</span>

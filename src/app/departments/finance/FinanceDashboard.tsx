@@ -111,7 +111,7 @@ export default function FinanceDashboard({ department, onRefresh }: FinanceDashb
             <FaDollarSign size={32} className="text-success" />
             {department.name}
           </h1>
-          <p className="text-default-500">Level {department.level} • {department.budgetPercentage}% Budget Allocation</p>
+          <p className="text-default-700">Level {department.level} • {department.budgetPercentage}% Budget Allocation</p>
         </div>
         <Chip color="success" variant="flat" size="lg">
           Budget: ${(department.budget / 1000).toFixed(0)}k
@@ -157,7 +157,7 @@ export default function FinanceDashboard({ department, onRefresh }: FinanceDashb
                     <span className="text-lg font-semibold">Net Profit</span>
                     <span className="text-2xl font-bold text-success">$74,700</span>
                   </div>
-                  <p className="text-sm text-default-500 mt-1">64% profit margin</p>
+                  <p className="text-sm text-default-700 mt-1">64% profit margin</p>
                 </div>
               </CardBody>
             </Card>
@@ -262,7 +262,7 @@ export default function FinanceDashboard({ department, onRefresh }: FinanceDashb
                     <div className="flex justify-between items-center">
                       <div>
                         <p className="font-semibold">{loan.purpose.replace('-', ' ').toUpperCase()}</p>
-                        <p className="text-sm text-default-500">{loan.termMonths} months @ {loan.interestRate}% APR</p>
+                        <p className="text-sm text-default-700">{loan.termMonths} months @ {loan.interestRate}% APR</p>
                       </div>
                       <div className="text-right">
                         <p className="font-bold text-lg">${(loan.amount / 1000).toFixed(1)}k</p>
@@ -355,15 +355,15 @@ export default function FinanceDashboard({ department, onRefresh }: FinanceDashb
                     </div>
                     <div className="space-y-1">
                       <div className="flex justify-between">
-                        <span className="text-sm text-default-500">Principal</span>
+                        <span className="text-sm text-default-700">Principal</span>
                         <span className="font-semibold">${(inv.principal / 1000).toFixed(1)}k</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-sm text-default-500">Current Value</span>
+                        <span className="text-sm text-default-700">Current Value</span>
                         <span className="font-semibold">${(inv.currentValue / 1000).toFixed(1)}k</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-sm text-default-500">Return Rate</span>
+                        <span className="text-sm text-default-700">Return Rate</span>
                         <span className="font-semibold text-success">+{inv.returnRate}%</span>
                       </div>
                     </div>

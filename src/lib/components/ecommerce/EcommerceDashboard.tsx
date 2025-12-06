@@ -128,7 +128,7 @@ export function EcommerceDashboard({
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold">E-Commerce Operations</h1>
-          {companyName && <p className="text-default-500">{companyName}</p>}
+          {companyName && <p className="text-default-700">{companyName}</p>}
         </div>
         <div className="flex gap-2">
           <Button color="primary" onPress={onNewProduct}>New Product</Button>
@@ -140,28 +140,28 @@ export function EcommerceDashboard({
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardBody>
-            <p className="text-sm text-default-500">Total Products</p>
+            <p className="text-sm text-default-700">Total Products</p>
             <p className="text-2xl font-bold">{products.total}</p>
             <p className="text-xs text-success">{products.active} active</p>
           </CardBody>
         </Card>
         <Card>
           <CardBody>
-            <p className="text-sm text-default-500">Total Revenue</p>
+            <p className="text-sm text-default-700">Total Revenue</p>
             <p className="text-2xl font-bold">{formatCurrency(orders.totalRevenue)}</p>
-            <p className="text-xs text-default-500">{orders.total} orders</p>
+            <p className="text-xs text-default-700">{orders.total} orders</p>
           </CardBody>
         </Card>
         <Card>
           <CardBody>
-            <p className="text-sm text-default-500">Avg Rating</p>
+            <p className="text-sm text-default-700">Avg Rating</p>
             <p className="text-2xl font-bold">{products.avgRating.toFixed(1)} ⭐</p>
-            <p className="text-xs text-default-500">{reviews.total} reviews</p>
+            <p className="text-xs text-default-700">{reviews.total} reviews</p>
           </CardBody>
         </Card>
         <Card>
           <CardBody>
-            <p className="text-sm text-default-500">Marketing ROI</p>
+            <p className="text-sm text-default-700">Marketing ROI</p>
             <p className="text-2xl font-bold">{formatPercent(campaigns.roi)}</p>
             <p className="text-xs text-success">{campaigns.active} campaigns</p>
           </CardBody>
@@ -180,7 +180,7 @@ export function EcommerceDashboard({
                     <div key={product._id} className="flex justify-between items-center p-2 hover:bg-default-100 rounded">
                       <div>
                         <p className="font-medium">{product.name}</p>
-                        <p className="text-xs text-default-500">{product.category}</p>
+                        <p className="text-xs text-default-700">{product.category}</p>
                       </div>
                       <div className="text-right">
                         <p className="font-semibold">{formatCurrency(product.totalRevenue)}</p>

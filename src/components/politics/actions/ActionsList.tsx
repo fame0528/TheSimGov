@@ -177,7 +177,7 @@ export function ActionsList({
       {/* Empty State */}
       {filteredActions.length === 0 && (
         <Card>
-          <CardBody className="text-center py-8 text-default-500">
+          <CardBody className="text-center py-8 text-default-700">
             <p>No actions found matching your search.</p>
           </CardBody>
         </Card>

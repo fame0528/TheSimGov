@@ -166,7 +166,7 @@ export function ResearchProjectModal({
                 <p className="text-2xl font-bold text-primary">
                   {calculateInnovationPoints()} IP
                 </p>
-                <p className="text-xs text-default-500 mt-1">
+                <p className="text-xs text-default-700 mt-1">
                   Based on {formData.successChance}% success probability
                 </p>
               </div>

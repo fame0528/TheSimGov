@@ -131,7 +131,7 @@ export function PartyCard({
 
       <CardBody className="gap-4">
         {party.description && (
-          <p className="text-sm text-default-500 line-clamp-2">
+          <p className="text-sm text-default-700 line-clamp-2">
             {party.description}
           </p>
         )}
@@ -139,7 +139,7 @@ export function PartyCard({
         {/* Strength Progress */}
         <div className="space-y-1">
           <div className="flex justify-between text-sm">
-            <span className="text-default-500">Party Strength</span>
+            <span className="text-default-700">Party Strength</span>
             <span className="font-medium">{party.strength}%</span>
           </div>
           <Progress
@@ -152,7 +152,7 @@ export function PartyCard({
 
         {/* Stats */}
         <div className="flex justify-between items-center text-sm">
-          <div className="flex items-center gap-1 text-default-500">
+          <div className="flex items-center gap-1 text-default-700">
             <Users className="w-4 h-4" />
             <span>{party.memberCount.toLocaleString()} members</span>
           </div>
