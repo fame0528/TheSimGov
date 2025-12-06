@@ -13,13 +13,22 @@
 // Main Dashboard
 export { BankingDashboard, default as BankingDashboardDefault } from './BankingDashboard';
 
-// Individual Components
+// Individual Components (Player as Borrower)
 export { default as LoanApplicationForm } from './LoanApplicationForm';
 export { default as PaymentInterface } from './PaymentInterface';
 export { default as InvestmentDashboard } from './InvestmentDashboard';
 export { default as BankSelector } from './BankSelector';
 export { default as CreditScoreMonitor } from './CreditScoreMonitor';
 export { default as PlayerBankCreator } from './PlayerBankCreator';
+
+// Player as Lender Components (Phase 3)
+export { LoanApplicantsPanel } from './LoanApplicantsPanel';
+export { ActiveLoansTable } from './ActiveLoansTable';
+export { DepositsPanel } from './DepositsPanel';
+export { BankLevelProgress } from './BankLevelProgress';
+export { InterestRateControls } from './InterestRateControls';
+export { BankEventsPanel } from './BankEventsPanel';
+export { InvestmentPanel } from './InvestmentPanel';
 
 /**
  * USAGE:
@@ -30,5 +39,14 @@ export { default as PlayerBankCreator } from './PlayerBankCreator';
  * 
  * // Import individual components
  * import { LoanApplicationForm, CreditScoreMonitor } from '@/components/banking';
+ * 
+ * // Import Player-as-Lender components
+ * import { 
+ *   LoanApplicantsPanel, 
+ *   ActiveLoansTable, 
+ *   DepositsPanel,
+ *   BankEventsPanel,
+ *   InvestmentPanel 
+ * } from '@/components/banking';
  * ```
  */

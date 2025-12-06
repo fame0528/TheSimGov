@@ -66,7 +66,7 @@ export const contractEndpoints = {
 } as const;
 
 /**
- * Banking endpoints
+ * Banking endpoints (player as borrower - existing system)
  */
 export const bankingEndpoints = {
   banks: '/api/banking/banks',
@@ -76,6 +76,41 @@ export const bankingEndpoints = {
   payLoan: (id: string) => `/api/banking/loans/${id}/pay` as const,
   creditScore: (companyId: string) => `/api/banking/credit-score/${companyId}` as const,
   loanHistory: (companyId: string) => `/api/banking/loans/history/${companyId}` as const,
+} as const;
+
+/**
+ * Player Banking endpoints (player as lender - new empire system)
+ * Player runs their own bank, issues loans to NPCs, accepts deposits
+ */
+export const playerBankingEndpoints = {
+  // Bank Settings & Configuration
+  settings: {
+    get: '/api/banking/player/settings',
+    update: '/api/banking/player/settings',
+    levelUp: '/api/banking/player/settings', // POST with action: 'levelUp'
+  },
+  
+  // Loan Applicants (NPCs wanting loans from player's bank)
+  applicants: {
+    list: '/api/banking/player/applicants',
+    generate: '/api/banking/player/applicants', // POST to generate new applicants
+    approve: (id: string) => `/api/banking/player/applicants/${id}` as const, // POST with action: 'approve'
+    reject: (id: string) => `/api/banking/player/applicants/${id}` as const, // POST with action: 'reject'
+  },
+  
+  // Bank Loans (loans issued BY player's bank to NPCs)
+  bankLoans: {
+    list: '/api/banking/player/bank-loans',
+    byId: (id: string) => `/api/banking/player/bank-loans/${id}` as const,
+    processPayment: (id: string) => `/api/banking/player/bank-loans/${id}/payment` as const,
+    writeOff: (id: string) => `/api/banking/player/bank-loans/${id}` as const, // DELETE
+  },
+  
+  // Deposits (customer deposits INTO player's bank)
+  deposits: {
+    list: '/api/banking/player/deposits',
+    accept: '/api/banking/player/deposits', // POST to accept new deposit
+  },
 } as const;
 
 /**
@@ -276,6 +311,39 @@ export const adminEndpoints = {
   diagnostics: '/api/admin/diagnostics',
   metrics: '/api/admin/metrics',
   banUser: (userId: string) => `/api/admin/users/${userId}/ban` as const,
+} as const;
+
+/**
+ * Messages endpoints
+ * In-game player-to-player messaging system
+ */
+export const messagesEndpoints = {
+  // Core CRUD
+  list: '/api/messages',
+  create: '/api/messages',
+  byId: (id: string) => `/api/messages/${id}` as const,
+  update: (id: string) => `/api/messages/${id}` as const,
+  delete: (id: string) => `/api/messages/${id}` as const,
+  
+  // Folder views
+  inbox: '/api/messages?folder=inbox',
+  sent: '/api/messages?folder=sent',
+  starred: '/api/messages?folder=starred',
+  trash: '/api/messages?folder=trash',
+  
+  // Folder with pagination
+  folder: (folder: string, page: number = 1, limit: number = 20) =>
+    `/api/messages?folder=${folder}&page=${page}&limit=${limit}` as const,
+  
+  // Thread view
+  thread: (threadId: string) => `/api/messages?threadId=${threadId}` as const,
+  
+  // Search
+  search: (query: string, folder: string = 'inbox') =>
+    `/api/messages?folder=${folder}&search=${encodeURIComponent(query)}` as const,
+  
+  // Unread count
+  unread: '/api/messages/unread',
 } as const;
 
 /**
@@ -633,6 +701,44 @@ export const politicsEndpoints = {
 } as const;
 
 /**
+ * Empire endpoints (Interconnected Empire System)
+ * Tracks player-owned companies, synergies, and resource flows
+ */
+export const empireEndpoints = {
+  // Synergies
+  synergies: {
+    list: '/api/empire/synergies',
+    calculate: '/api/empire/synergies', // POST to recalculate
+    definitions: '/api/empire/synergies/definitions',
+    withProjections: '/api/empire/synergies?includeProjections=true',
+    withSummary: '/api/empire/synergies?includeSummary=true',
+  },
+  
+  // Empire Companies
+  companies: {
+    list: '/api/empire/companies',
+    add: '/api/empire/companies', // POST
+    update: '/api/empire/companies', // PATCH
+    remove: (companyId: string) => `/api/empire/companies?companyId=${companyId}` as const, // DELETE
+    withFlows: '/api/empire/companies?includeFlows=true',
+  },
+  
+  // Resource Flows
+  flows: {
+    list: '/api/empire/flows',
+    create: '/api/empire/flows', // POST
+    byId: (id: string) => `/api/empire/flows/${id}` as const,
+    pause: (id: string) => `/api/empire/flows/${id}/pause` as const,
+    resume: (id: string) => `/api/empire/flows/${id}/resume` as const,
+    cancel: (id: string) => `/api/empire/flows/${id}` as const, // DELETE
+  },
+  
+  // Empire Overview
+  dashboard: '/api/empire/dashboard',
+  leaderboard: '/api/empire/leaderboard',
+} as const;
+
+/**
  * All endpoints consolidated
  */
 export const endpoints = {
@@ -641,6 +747,7 @@ export const endpoints = {
   employees: employeeEndpoints,
   contracts: contractEndpoints,
   banking: bankingEndpoints,
+  playerBanking: playerBankingEndpoints,
   users: userEndpoints,
   industries: industryEndpoints,
   ai: aiEndpoints,
@@ -652,6 +759,8 @@ export const endpoints = {
   crime: crimeEndpoints,
   politics: politicsEndpoints,
   admin: adminEndpoints,
+  messages: messagesEndpoints,
+  empire: empireEndpoints,
 } as const;
 
 /**

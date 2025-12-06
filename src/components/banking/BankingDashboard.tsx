@@ -75,7 +75,7 @@ function KPICard({
   };
 
   return (
-    <Card className="p-4">
+    <Card className="p-4 bg-slate-800/50 border border-slate-700">
       <div className="flex items-start justify-between">
         <div className={`p-3 rounded-xl ${colorClasses[color]}`}>
           <Icon className="h-6 w-6" />
@@ -91,10 +91,10 @@ function KPICard({
         )}
       </div>
       <div className="mt-4">
-        <p className="text-sm text-gray-500 dark:text-gray-400">{title}</p>
-        <p className="text-2xl font-bold mt-1">{value}</p>
+        <p className="text-sm text-gray-400">{title}</p>
+        <p className="text-2xl font-bold mt-1 text-white">{value}</p>
         {subtitle && (
-          <p className="text-xs text-gray-400 mt-1">{subtitle}</p>
+          <p className="text-xs text-gray-500 mt-1">{subtitle}</p>
         )}
       </div>
     </Card>
@@ -185,6 +185,7 @@ export function BankingDashboard({
       <div className="flex flex-wrap gap-3">
         <Button 
           color="primary" 
+          className="text-white"
           startContent={<Plus className="h-4 w-4" />}
           onPress={onApplyLoan}
         >
@@ -193,6 +194,7 @@ export function BankingDashboard({
         <Button 
           color="secondary" 
           variant="flat"
+          className="text-purple-300 bg-purple-900/30 hover:bg-purple-900/50"
           startContent={<CreditCard className="h-4 w-4" />}
           onPress={onMakePayment}
         >
@@ -201,14 +203,15 @@ export function BankingDashboard({
         <Button 
           color="secondary" 
           variant="flat"
+          className="text-blue-300 bg-blue-900/30 hover:bg-blue-900/50"
           startContent={<TrendingUp className="h-4 w-4" />}
           onPress={onViewInvestments}
         >
           Investments
         </Button>
         <Button 
-          color="default" 
           variant="bordered"
+          className="text-gray-300 border-gray-600 hover:bg-gray-700"
           startContent={<FileText className="h-4 w-4" />}
           onPress={onViewTransactions}
         >
@@ -221,6 +224,12 @@ export function BankingDashboard({
         selectedKey={activeTab} 
         onSelectionChange={(key) => setActiveTab(key as string)}
         color="primary"
+        classNames={{
+          tabList: "bg-slate-800/50 border border-slate-700",
+          cursor: "bg-primary",
+          tab: "text-gray-400 data-[selected=true]:text-white",
+          tabContent: "group-data-[selected=true]:text-white"
+        }}
       >
         <Tab key="overview" title="Overview" />
         <Tab key="loans" title="Loans" />
@@ -264,9 +273,9 @@ export function BankingDashboard({
           </div>
 
           {/* Credit Score Card */}
-          <Card className="p-6">
+          <Card className="p-6 bg-slate-800/50 border border-slate-700">
             <CardHeader>
-              <h3 className="text-lg font-semibold flex items-center gap-2">
+              <h3 className="text-lg font-semibold flex items-center gap-2 text-white">
                 <BarChart3 className="h-5 w-5 text-emerald-500" />
                 Credit Overview
               </h3>
@@ -301,30 +310,30 @@ export function BankingDashboard({
                       />
                     </svg>
                     <div className="absolute inset-0 flex flex-col items-center justify-center">
-                      <span className="text-3xl font-bold">{score}</span>
-                      <span className="text-xs text-gray-500">/ 850</span>
+                      <span className="text-3xl font-bold text-white">{score}</span>
+                      <span className="text-xs text-gray-400">/ 850</span>
                     </div>
                   </div>
                 </div>
                 <div className="flex-1 space-y-4">
                   <div>
                     <div className="flex justify-between text-sm mb-1">
-                      <span>Payment History</span>
-                      <span className="text-green-500">Excellent</span>
+                      <span className="text-gray-300">Payment History</span>
+                      <span className="text-green-400">Excellent</span>
                     </div>
                     <Progress value={95} color="success" size="sm" />
                   </div>
                   <div>
                     <div className="flex justify-between text-sm mb-1">
-                      <span>Credit Utilization</span>
-                      <span className="text-yellow-500">Moderate</span>
+                      <span className="text-gray-300">Credit Utilization</span>
+                      <span className="text-yellow-400">Moderate</span>
                     </div>
                     <Progress value={45} color="warning" size="sm" />
                   </div>
                   <div>
                     <div className="flex justify-between text-sm mb-1">
-                      <span>Credit Age</span>
-                      <span className="text-blue-500">Good</span>
+                      <span className="text-gray-300">Credit Age</span>
+                      <span className="text-blue-400">Good</span>
                     </div>
                     <Progress value={70} color="primary" size="sm" />
                   </div>
@@ -334,30 +343,30 @@ export function BankingDashboard({
           </Card>
 
           {/* Loans Summary */}
-          <Card className="p-4">
+          <Card className="p-4 bg-slate-800/50 border border-slate-700">
             <CardHeader>
-              <h3 className="text-lg font-semibold flex items-center gap-2">
-                <PiggyBank className="h-5 w-5 text-blue-500" />
+              <h3 className="text-lg font-semibold flex items-center gap-2 text-white">
+                <PiggyBank className="h-5 w-5 text-blue-400" />
                 Loan Summary
               </h3>
             </CardHeader>
             <CardBody>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 <div>
-                  <p className="text-sm text-gray-500">Total Loans</p>
-                  <p className="text-2xl font-bold">{totalLoans}</p>
+                  <p className="text-sm text-gray-400">Total Loans</p>
+                  <p className="text-2xl font-bold text-white">{totalLoans}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500">Active Loans</p>
-                  <p className="text-2xl font-bold text-blue-500">{activeLoans}</p>
+                  <p className="text-sm text-gray-400">Active Loans</p>
+                  <p className="text-2xl font-bold text-blue-400">{activeLoans}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500">Total Debt</p>
-                  <p className="text-2xl font-bold text-red-500">{formatCurrency(totalDebt)}</p>
+                  <p className="text-sm text-gray-400">Total Debt</p>
+                  <p className="text-2xl font-bold text-red-400">{formatCurrency(totalDebt)}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500">Monthly Due</p>
-                  <p className="text-2xl font-bold text-yellow-500">{formatCurrency(monthlyPayments)}</p>
+                  <p className="text-sm text-gray-400">Monthly Due</p>
+                  <p className="text-2xl font-bold text-yellow-400">{formatCurrency(monthlyPayments)}</p>
                 </div>
               </div>
             </CardBody>
@@ -394,8 +403,8 @@ export function BankingDashboard({
               color="yellow"
             />
           </div>
-          <Card className="p-6">
-            <p className="text-gray-500 text-center">
+          <Card className="p-6 bg-slate-800/50 border border-slate-700">
+            <p className="text-gray-400 text-center">
               Loan details will be shown here. Click &quot;Apply for Loan&quot; to request financing.
             </p>
           </Card>
@@ -432,8 +441,8 @@ export function BankingDashboard({
               color="green"
             />
           </div>
-          <Card className="p-6">
-            <p className="text-gray-500 text-center">
+          <Card className="p-6 bg-slate-800/50 border border-slate-700">
+            <p className="text-gray-400 text-center">
               Detailed credit history and factors affecting your score.
             </p>
           </Card>
@@ -464,8 +473,8 @@ export function BankingDashboard({
               color="purple"
             />
           </div>
-          <Card className="p-6">
-            <p className="text-gray-500 text-center">
+          <Card className="p-6 bg-slate-800/50 border border-slate-700">
+            <p className="text-gray-400 text-center">
               Available banking partners and their offerings will be shown here.
             </p>
           </Card>

@@ -16,11 +16,30 @@ export { default as Company } from './Company';
 export { default as Employee } from './Employee';
 export { default as Contract } from './Contract';
 
-// Banking system models
+// Banking system models (NPC banks - player as borrower)
 export { default as Bank } from './Bank';
 export { default as Loan } from './Loan';
 export { default as Investment } from './Investment';
 export { default as InvestmentPortfolio } from './InvestmentPortfolio';
+
+// Banking gameplay models (player's bank - player as lender)
+export {
+  LoanApplicant,
+  BankDeposit,
+  BankSettings,
+  BankLoan,
+  LoanPurpose,
+  ApplicantStatus,
+  EmploymentType,
+  RiskTier,
+  AccountType,
+  DepositStatus,
+  CustomerType,
+  ApprovalPolicy,
+  BankLoanStatus,
+  BANK_LEVELS,
+  XP_PER_LEVEL,
+} from './banking';
 
 // Healthcare models
 export { default as Hospital } from './healthcare/Hospital';
@@ -144,3 +163,21 @@ export type {
   IBug, BugSeverity, BugStatus, Reproducibility,
   IFeature, FeatureStatus, FeatureType,
 } from './software';
+
+// ============================================================================
+// BANKING GAMEPLAY MODELS (Player as Lender)
+// ============================================================================
+export type {
+  ILoanApplicant,
+  ILoanApplicantModel,
+  IBankDeposit,
+  IBankDepositModel,
+  IDepositTransaction,
+  IBankSettings,
+  IBankSettingsModel,
+  BankLevelUnlock,
+  DailyStats,
+  IBankLoan,
+  IBankLoanModel,
+  IBankLoanPayment,
+} from './banking';

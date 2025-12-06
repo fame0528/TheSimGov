@@ -218,24 +218,24 @@ export async function POST(req: NextRequest) {
       loans: [],
     });
 
+    // Return company directly (not wrapped in { company: ... })
+    // This ensures useMutation onSuccess receives the company object directly
     return createSuccessResponse(
       {
-        company: {
-          id: company._id.toString(),
-          userId: company.userId,
-          name: company.name,
-          industry: company.industry,
-          level: company.level,
-          revenue: company.revenue,
-          expenses: company.expenses,
-          profit: company.profit,
-          cash: company.cash,
-          employees: company.employees,
-          contracts: company.contracts,
-          loans: company.loans,
-          createdAt: company.createdAt,
-          updatedAt: company.updatedAt,
-        },
+        id: company._id.toString(),
+        userId: company.userId,
+        name: company.name,
+        industry: company.industry,
+        level: company.level,
+        revenue: company.revenue,
+        expenses: company.expenses,
+        profit: company.profit,
+        cash: company.cash,
+        employees: company.employees,
+        contracts: company.contracts,
+        loans: company.loans,
+        createdAt: company.createdAt,
+        updatedAt: company.updatedAt,
       },
       undefined,
       201

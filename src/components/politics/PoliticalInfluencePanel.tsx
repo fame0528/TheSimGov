@@ -71,6 +71,12 @@ export default function PoliticalInfluencePanel({
   // Load political data
   useEffect(() => {
     const loadPoliticalData = async () => {
+      // Guard: Don't fetch if no companyId
+      if (!companyId) {
+        setLoading(false);
+        return;
+      }
+      
       try {
         setLoading(true);
 

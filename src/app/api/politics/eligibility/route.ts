@@ -34,8 +34,8 @@ export async function GET(request: Request) {
     const url = new URL(request.url);
     const companyId = url.searchParams.get('companyId');
 
-    if (!companyId) {
-      return createErrorResponse('Missing companyId parameter', ErrorCode.BAD_REQUEST, 400);
+    if (!companyId || companyId === 'undefined') {
+      return createErrorResponse('Missing or invalid companyId parameter', ErrorCode.BAD_REQUEST, 400);
     }
 
     await connectDB();

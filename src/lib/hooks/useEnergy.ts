@@ -462,37 +462,63 @@ export function useEnergySummary(companyId: string | null, options?: UseAPIOptio
     storage.error ||
     transmission.error;
 
+  // Helper to safely extract array from API response
+  // Handles: array, { data: array }, { [key]: array }, or null/undefined
+  const safeArray = <T,>(data: unknown): T[] => {
+    if (!data) return [];
+    if (Array.isArray(data)) return data;
+    if (typeof data === 'object') {
+      // Check for common wrapper patterns
+      const obj = data as Record<string, unknown>;
+      if (Array.isArray(obj.data)) return obj.data;
+      // Find first array property
+      for (const key of Object.keys(obj)) {
+        if (Array.isArray(obj[key])) return obj[key] as T[];
+      }
+    }
+    return [];
+  };
+
+  // Extract arrays safely
+  const oilWellsArr = safeArray<OilWell>(oilWells.data);
+  const gasFieldsArr = safeArray<GasField>(gasFields.data);
+  const solarFarmsArr = safeArray<SolarFarm>(solarFarms.data);
+  const windTurbinesArr = safeArray<WindTurbine>(windTurbines.data);
+  const powerPlantsArr = safeArray<PowerPlant>(powerPlants.data);
+  const storageArr = safeArray<EnergyStorage>(storage.data);
+  const transmissionArr = safeArray<TransmissionLine>(transmission.data);
+
   // Calculate summary data
   const data: EnergyCompanySummary | null = !isLoading ? {
     // Oil & Gas
-    totalOilWells: oilWells.data?.length ?? 0,
-    activeOilWells: oilWells.data?.filter(w => w.status === 'producing').length ?? 0,
-    dailyOilProduction: oilWells.data?.reduce((sum, w) => sum + w.dailyProduction, 0) ?? 0,
-    totalGasFields: gasFields.data?.length ?? 0,
-    dailyGasProduction: gasFields.data?.reduce((sum, f) => sum + f.dailyProduction, 0) ?? 0,
+    totalOilWells: oilWellsArr.length,
+    activeOilWells: oilWellsArr.filter(w => w.status === 'producing').length,
+    dailyOilProduction: oilWellsArr.reduce((sum, w) => sum + (w.dailyProduction ?? 0), 0),
+    totalGasFields: gasFieldsArr.length,
+    dailyGasProduction: gasFieldsArr.reduce((sum, f) => sum + (f.dailyProduction ?? 0), 0),
     
     // Renewables
-    totalSolarFarms: solarFarms.data?.length ?? 0,
-    solarCapacityMW: solarFarms.data?.reduce((sum, f) => sum + f.capacityMW, 0) ?? 0,
-    totalWindTurbines: windTurbines.data?.length ?? 0,
-    windCapacityMW: windTurbines.data?.reduce((sum, t) => sum + t.capacityMW, 0) ?? 0,
+    totalSolarFarms: solarFarmsArr.length,
+    solarCapacityMW: solarFarmsArr.reduce((sum, f) => sum + (f.capacityMW ?? 0), 0),
+    totalWindTurbines: windTurbinesArr.length,
+    windCapacityMW: windTurbinesArr.reduce((sum, t) => sum + (t.capacityMW ?? 0), 0),
     renewablePercentage: 0, // Calculated below
     
     // Traditional Power
-    totalPowerPlants: powerPlants.data?.length ?? 0,
-    powerPlantCapacityMW: powerPlants.data?.reduce((sum, p) => sum + p.nameplateCapacity, 0) ?? 0,
+    totalPowerPlants: powerPlantsArr.length,
+    powerPlantCapacityMW: powerPlantsArr.reduce((sum, p) => sum + (p.nameplateCapacity ?? 0), 0),
     
     // Grid Infrastructure
-    totalStorageUnits: storage.data?.length ?? 0,
-    storageCapacityMWh: storage.data?.reduce((sum, s) => sum + s.capacityMWh, 0) ?? 0,
-    totalTransmissionLines: transmission.data?.length ?? 0,
-    transmissionCapacityMW: transmission.data?.reduce((sum, t) => sum + t.capacityMW, 0) ?? 0,
+    totalStorageUnits: storageArr.length,
+    storageCapacityMWh: storageArr.reduce((sum, s) => sum + (s.capacityMWh ?? 0), 0),
+    totalTransmissionLines: transmissionArr.length,
+    transmissionCapacityMW: transmissionArr.reduce((sum, t) => sum + (t.capacityMW ?? 0), 0),
     
     // Aggregates
     totalCapacityMW: 0, // Calculated below
     currentOutputMW: 0, // Calculated below
     monthlyRevenue: 0, // Would need to be calculated from market prices
-    carbonEmissions: powerPlants.data?.reduce((sum, p) => sum + (p.currentOutput * p.emissionsRate), 0) ?? 0,
+    carbonEmissions: powerPlantsArr.reduce((sum, p) => sum + ((p.currentOutput ?? 0) * (p.emissionsRate ?? 0)), 0),
     
     // Recent Activity
     recentActivity: [], // Would be populated from activity log

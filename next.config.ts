@@ -49,6 +49,17 @@ const nextConfig: NextConfig = {
       fullUrl: process.env.NODE_ENV === 'development',
     },
   },
+  
+  // Suppress source map warnings from node_modules
+  // These are cosmetic warnings from Next.js/mongoose internals
+  webpack: (config, { isServer }) => {
+    // Ignore source-map-loader warnings for node_modules
+    config.ignoreWarnings = [
+      { module: /node_modules/ },
+      { message: /source map/ },
+    ];
+    return config;
+  },
 };
 
 export default nextConfig;

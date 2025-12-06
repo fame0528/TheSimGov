@@ -159,7 +159,7 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const companyId = searchParams.get('companyId');
 
-    if (!companyId) {
+    if (!companyId || companyId === 'undefined') {
       return createErrorResponse('Company ID required', ErrorCode.BAD_REQUEST, 400);
     }
 

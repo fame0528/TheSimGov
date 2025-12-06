@@ -142,19 +142,19 @@ export default function MapPage() {
           <Card className="bg-red-900/30 border border-red-500/30">
             <CardBody className="p-4 text-center">
               <p className="text-xs text-red-300 mb-1">Republican</p>
-              <p className="text-2xl font-bold text-red-400">{partyCounts.republican || '--'}</p>
+              <p className="text-2xl font-bold text-red-400">{partyCounts.republican > 0 ? partyCounts.republican : '--'}</p>
             </CardBody>
           </Card>
           <Card className="bg-blue-900/30 border border-blue-500/30">
             <CardBody className="p-4 text-center">
               <p className="text-xs text-blue-300 mb-1">Democratic</p>
-              <p className="text-2xl font-bold text-blue-400">{partyCounts.democratic || '--'}</p>
+              <p className="text-2xl font-bold text-blue-400">{partyCounts.democratic > 0 ? partyCounts.democratic : '--'}</p>
             </CardBody>
           </Card>
           <Card className="bg-purple-900/30 border border-purple-500/30">
             <CardBody className="p-4 text-center">
               <p className="text-xs text-purple-300 mb-1">Swing/Neutral</p>
-              <p className="text-2xl font-bold text-purple-400">{partyCounts.neutral || '--'}</p>
+              <p className="text-2xl font-bold text-purple-400">{partyCounts.neutral > 0 ? partyCounts.neutral : 51}</p>
             </CardBody>
           </Card>
         </div>

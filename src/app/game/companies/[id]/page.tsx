@@ -628,10 +628,10 @@ function BankingDashboardWrapper({
     >
       <BankingDashboard
         companyId={companyId}
-        onApplyLoan={() => router.push(`/game/companies/${companyId}/banking/loans/apply`)}
-        onMakePayment={() => router.push(`/game/companies/${companyId}/banking/payments`)}
-        onViewInvestments={() => router.push(`/game/companies/${companyId}/banking/investments`)}
-        onViewTransactions={() => router.push(`/game/companies/${companyId}/banking/transactions`)}
+        onApplyLoan={() => alert('Loan application coming soon!')}
+        onMakePayment={() => alert('Payment system coming soon!')}
+        onViewInvestments={() => alert('Investment tracking coming soon!')}
+        onViewTransactions={() => alert('Transaction history coming soon!')}
       />
     </DashboardLayout>
   );
@@ -698,17 +698,17 @@ function GenericCompanyDashboard({
     : 100;
   
   const employeeProgress = nextLevel && nextLevel.maxEmployees !== -1
-    ? Math.min(100, (company.employees.length / nextLevel.maxEmployees) * 100)
+    ? Math.min(100, ((company.employees?.length ?? 0) / nextLevel.maxEmployees) * 100)
     : 100;
   
   const capitalProgress = levelUpCost > 0
-    ? Math.min(100, (company.cash / levelUpCost) * 100)
+    ? Math.min(100, ((company.cash ?? 0) / levelUpCost) * 100)
     : 100;
 
   const canLevelUp = nextLevel && 
-    company.revenue >= nextLevel.minRevenue &&
-    (nextLevel.maxEmployees === -1 || company.employees.length <= nextLevel.maxEmployees) &&
-    company.cash >= levelUpCost;
+    (company.revenue ?? 0) >= nextLevel.minRevenue &&
+    (nextLevel.maxEmployees === -1 || (company.employees?.length ?? 0) <= nextLevel.maxEmployees) &&
+    (company.cash ?? 0) >= levelUpCost;
 
   return (
     <DashboardLayout
@@ -770,11 +770,11 @@ function GenericCompanyDashboard({
 
           <Card title="Profit" showDivider>
             <div className={`text-3xl font-bold ${
-              company.revenue - company.expenses >= 0
+              (company.revenue ?? 0) - (company.expenses ?? 0) >= 0
                 ? 'text-green-600 dark:text-green-400'
                 : 'text-red-600 dark:text-red-400'
             }`}>
-              {formatCurrency(company.revenue - company.expenses)}
+              {formatCurrency((company.revenue ?? 0) - (company.expenses ?? 0))}
             </div>
             <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Net income</p>
           </Card>
@@ -789,7 +789,7 @@ function GenericCompanyDashboard({
                   Level {company.level}: {currentLevel?.name || 'Unknown'}
                 </h3>
                 <p className="text-gray-600 dark:text-gray-400">
-                  {company.employees.length} employees • {company.contracts.length} contracts • {company.loans.length} loans
+                  {(company.employees?.length ?? 0)} employees • {(company.contracts?.length ?? 0)} contracts • {(company.loans?.length ?? 0)} loans
                 </p>
               </div>
               {nextLevel && (
@@ -815,7 +815,7 @@ function GenericCompanyDashboard({
                 {nextLevel.maxEmployees !== -1 && (
                   <div>
                     <div className="flex justify-between text-sm mb-1">
-                      <span>Employees: {company.employees.length} / {nextLevel.maxEmployees} max</span>
+                      <span>Employees: {company.employees?.length ?? 0} / {nextLevel.maxEmployees} max</span>
                       <span>{employeeProgress.toFixed(0)}%</span>
                     </div>
                     <Progress value={employeeProgress} color={employeeProgress <= 100 ? 'success' : 'warning'} size="sm" className="h-2" />
